@@ -1,3 +1,11 @@
 nimcache/
 nimblecache/
 htmldocs/
+*.csproj
+*.sln
+.vscode
+*.log
+bin/
+examples/
+docs/
+*.exe

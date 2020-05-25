@@ -1,0 +1,12 @@
+# this can be used if future to import all modules from folder by once
+import os
+
+proc main() =
+  for i in 1..paramCount():
+    let dir = paramStr(i)
+    let module = open(dir & ".nim", fmWrite)
+    for file in walkFiles(dir & "/*.nim"):
+      module.write("import " & file[0..^5] & "\n")
+    module.close
+
+main()
