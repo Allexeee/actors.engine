@@ -1,4 +1,3 @@
-{.experimental: "codeReordering".}
 #@head
 import actors/actors_engine as engine
 import actors/actors_components as components
@@ -9,26 +8,29 @@ export engine except
 export components except
   used
 
-
 template start*(this: App, code: untyped): untyped =
-  engine.backend.start(this, this.settings.display_size, this.settings.name)
+  this.start()
   code
 
+proc start*(this: App) {.inline.} =
+  engine.platform.start(this, this.settings.display_size, this.settings.name)
+
+#renderer.start(app.window)
 template run*(this: App, code: untyped): untyped =
   var dt {.inject, used.} = 1/this.settings.fps
   var input {.inject, used.} = app.input
-  while not engine.backend.shouldQuit():
+  while not engine.platform.shouldQuit():
     ecs.process_operations(lr_ecs_core.int)
     ecs.process_operations()
     code
-    engine.backend.updateImpl()
-  engine.backend.dispose()
+    engine.platform.updateImpl()
+  engine.platform.dispose()
 
 template close*(this: App, code: untyped): untyped =
   code
 
 proc quit*(this: App) =
-  engine.backend.release()
+  engine.platform.release()
 
 
 #@logs

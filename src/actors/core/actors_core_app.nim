@@ -1,7 +1,7 @@
 {.experimental: "codeReordering".}
 
 
-from   ../actors_backend import AppBase
+from   ../actors_platform import AppBase
 from      actors_core_input import
   Input,
   InputIndex,
@@ -9,8 +9,7 @@ from      actors_core_input import
 import    actors_core_base
 
 
-type #@tapp
-  App* = ref object of AppBase
+type App* = ref object of AppBase
     layers: seq[AppLayer]
     scenes: seq[Actor]
     inputs: seq[Input]
@@ -18,7 +17,7 @@ type #@tapp
     display*: Display
     input*: InputIndex
 
-  AppSettings* = object
+type AppSettings* = object
     name*: string
     fps*: float32
     display_size*: tuple[width: int, height: int]

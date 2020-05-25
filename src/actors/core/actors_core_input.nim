@@ -1,7 +1,7 @@
 {.experimental: "codeReordering".}
 
 #@header
-import ../actors_backend
+import ../actors_platform
 
 
 type #@tkeys

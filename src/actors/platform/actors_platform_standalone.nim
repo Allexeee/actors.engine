@@ -5,10 +5,11 @@ import ../actors_utils
 when defined(opengl):
   import ../graphics/actors_renderer_opengl as renderer
 
+type Window* = GLFWWindow
 
 type
   AppBase* = ref object of RootObj
-    window: GLFWWindow
+    window*: Window
 
 var 
   app: AppBase
@@ -19,10 +20,11 @@ proc start*(this: AppBase, screensize: tuple[width: int, height: int], name: str
   glfwWindowHint(GLFWContextVersionMajor, 3)
   glfwWindowHint(GLFWContextVersionMinor, 3)
   glfwWindowHint(GLFWOpenglForwardCompat, GLFW_TRUE)
-  glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
   glfwWindowHint(GLFWResizable, GLFW_FALSE)
+  glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
   app.window =  glfwCreateWindow((cint)screensize.width, (cint)screensize.height, name, nil, nil)
   renderer.start(app.window)
+
 
 
 proc shouldQuit*():bool {.inline.} = app.window.windowShouldClose
