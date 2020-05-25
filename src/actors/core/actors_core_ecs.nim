@@ -294,17 +294,18 @@ macro add*(this: EcsInstance, component: untyped, component_kind: static[Compone
             )
 
     var name_alias = $component
-    formatComponentAlias(name_alias)
-  
-    let node = nnkTypeSection.newTree(
-      nnkTypeDef.newTree(
-         nnkPostfix.newTree(
-             newIdentNode("*"),
-             newIdentNode(name_alias)),
-             newEmptyNode(),
-      newIdentNode($component)
-    ))
-    result.add(node)
+    if (name_alias.contains("Component")):
+        formatComponentAlias(name_alias)
+        
+        let node = nnkTypeSection.newTree(
+        nnkTypeDef.newTree(
+            nnkPostfix.newTree(
+                newIdentNode("*"),
+                newIdentNode(name_alias)),
+                newEmptyNode(),
+        newIdentNode($component)
+        ))
+        result.add(node)
 
 
 #@groups
