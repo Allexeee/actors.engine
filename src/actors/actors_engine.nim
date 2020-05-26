@@ -1,3 +1,5 @@
+{.used.}
+
 import actors_utils
 import actors_math
 import actors_platform as platform
@@ -10,4 +12,4 @@ export platform
 export actors_graphics
 export actors_core
 
-#platform.used()
+platform.used()

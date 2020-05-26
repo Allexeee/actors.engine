@@ -5,8 +5,7 @@ import strformat
 import nimgl/opengl
 
 import ../../actors_utils
-from ../../actors_math import Vec, Matrix
-
+import ../../actors_math
 
 
 type ShaderIndex* = distinct uint32

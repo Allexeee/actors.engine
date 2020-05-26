@@ -13,9 +13,9 @@ template start*(this: App, code: untyped): untyped =
   code
 
 proc start*(this: App) {.inline.} =
-  engine.platform.start(this, this.settings.display_size, this.settings.name)
+  engine.platform.start(this.settings.display_size, this.settings.name)
 
-#renderer.start(app.window)
+
 template run*(this: App, code: untyped): untyped =
   var dt {.inject, used.} = 1/this.settings.fps
   var input {.inject, used.} = app.input
