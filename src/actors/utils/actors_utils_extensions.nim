@@ -17,12 +17,6 @@ proc add_new_ref*[T](this: var seq[T]): var T {.inline.} =
     this.add(T())
     this[this.high]
 
-proc `++`*(x: var SomeNumber): SomeNumber = 
-  # Prefix Increment and decrement operators from C
-  result = x; inc(x)
-
-proc `--`*(x: var SomeNumber): SomeNumber = result = x; dec(x)
-
 proc toString*(str: var seq[cchar], len: int = 0): string =
   var lenCalculated = 0
   if len == 0:
