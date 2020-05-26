@@ -1,12 +1,12 @@
 {.used.}
-#system
 import os
 import strformat
-#vendor
+
 import nimgl/opengl
-#local
+
 import ../../actors_utils
 from ../../actors_math import Vec, Matrix
+
 
 
 type ShaderIndex* = distinct uint32
