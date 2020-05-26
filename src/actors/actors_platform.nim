@@ -1,5 +1,8 @@
-when defined(opengl):
-  import platforms/actors_platform_standalone
-  import graphics/actors_renderer_opengl
-  export actors_platform_standalone
-  export actors_renderer_opengl
+when defined(renderer_opengl):
+  import platform/renderer/actors_opengl
+  export actors_opengl
+
+when defined(target_windows):
+  import platform/target/actors_windows
+  export actors_windows 
+

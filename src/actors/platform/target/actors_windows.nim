@@ -1,1 +1,2 @@
-import ../../actors_utils
+when defined(renderer_opengl):
+  include actors_windows_opengl
