@@ -19,7 +19,6 @@ proc loadImage*(filename: string, desired_channels: int = 0): TImage =
     let data = stbi_load(app.settings.path_assets & filename, width, height, components, desired_channels)
     let actual_channels = if desired_channels > 0: desired_channels else: components.int
 
-      # Check for a bad read
     if data == nil:
         raise newException(STBIException, failureReason())
 
@@ -29,7 +28,6 @@ proc loadImage*(filename: string, desired_channels: int = 0): TImage =
     newSeq(pixelData, width * height * actual_channels)
     copyMem(pixelData[0].addr, data, pixelData.len)
 
-    # Free loaded image data
     stbi_image_free(data)
 
     result = TImage(

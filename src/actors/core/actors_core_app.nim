@@ -1,24 +1,22 @@
 {.experimental: "codeReordering".}
 
 
-from   ../actors_backend import AppBase
-from      actors_core_input import
+from actors_core_input import
   Input,
   InputIndex,
   addInput
 import    actors_core_base
 
 
-type #@tapp
-  App* = ref object of AppBase
+type App* = ref object
     layers: seq[AppLayer]
     scenes: seq[Actor]
     inputs: seq[Input]
     settings*: AppSettings
-    display*: Display
-    input*: InputIndex
+    display* : Display
+    input*   : InputIndex
 
-  AppSettings* = object
+type AppSettings* = object
     name*: string
     fps*: float32
     display_size*: tuple[width: int, height: int]
@@ -37,5 +35,3 @@ proc getLayersPtr*(this: App):ptr seq[AppLayer] {.inline.} = addr this.layers
 
 proc getApp*(): App {.inline.} =
   app
-
-

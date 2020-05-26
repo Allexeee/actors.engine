@@ -325,18 +325,18 @@ macro group*(this: EcsInstance, name : untyped, code : untyped): untyped =
     else: layer = newIdentNode("lr_ecs_main")
     
     var components = newNimNode(nnkCurly)
-    if tree_components[1].kind == nnkStmtList:
-        for f in tree_components[1]:
-            var node = nnkDotExpr.newTree(
-                newIdentNode($f),
-                newIdentNode("Id"))
-            components.add(node)
-    else:       
-        for f in tree_components[1][0]:
-            var node = nnkDotExpr.newTree(
-                newIdentNode($f),
-                newIdentNode("Id"))
-            components.add(node)
+    # if tree_components[1].kind == nnkStmtList:
+    #     for f in tree_components[1]:
+    #         var node = nnkDotExpr.newTree(
+    #             newIdentNode($f),
+    #             newIdentNode("Id"))
+    #         components.add(node)
+    # else:       
+    for f in tree_components[1][0]:
+        var node = nnkDotExpr.newTree(
+            newIdentNode($f),
+            newIdentNode("Id"))
+        components.add(node)
 
     var inject_group = nnkIdentDefs.newTree()
     
