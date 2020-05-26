@@ -147,10 +147,6 @@ type InputSystem = object
 type InputIndex* = distinct int
 
 
-# converter toint32*(x: Key): int32 = x.int32
-# converter toint32*(x: MouseButton): int32 = x.int32
-
-#@v
 var storage =newSeq[Input](0) 
 var input_system = InputSystem()
 

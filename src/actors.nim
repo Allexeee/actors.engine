@@ -8,6 +8,8 @@ export engine except
 export components except
   used
 
+components.used()
+
 template start*(this: App, code: untyped): untyped =
   this.start()
   code
