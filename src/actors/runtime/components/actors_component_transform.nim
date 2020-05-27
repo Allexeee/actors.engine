@@ -1,5 +1,7 @@
-import ../actors_engine
-
+{.used.}
+import ../../a_engine
+import math
+#import math
 type ComponentTransform* = object
   model* : Matrix
   pos*   : Vec

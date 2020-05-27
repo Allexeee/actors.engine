@@ -1,4 +1,5 @@
-import ../actors_engine
+{.used.}
+import ../../a_engine
 import actors_component_transform
 
 type ComponentCamera* = object
