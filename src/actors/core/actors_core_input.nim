@@ -1,7 +1,6 @@
-{.experimental: "codeReordering".}
-
-#@header
+{.used.}
 import ../actors_platform
+
 
 type Key* {.pure, size: int32.sizeof.} = enum
   Space = 32
@@ -134,6 +133,10 @@ type MouseButton* {.pure, size: int32.sizeof.} = enum
   Mb7 = 6
   Mb8 = 7
 
+type InputIndex* = distinct int
+type InputSystem = object
+  mouse_press: array[MouseButton.high.int32,bool]
+  mouse_up: array[MouseButton.high.int32,bool]  
 type Input* = object
   id: InputIndex
   keycode_press: array[Key.high.int32,bool]
@@ -141,13 +144,9 @@ type Input* = object
   keycode_down:  array[Key.high.int32,bool] 
   keycode_hold:  array[Key.high.int32,bool] 
   keyhold_time:  array[Key.high.int32,float]
-type InputSystem = object
-  mouse_press: array[MouseButton.high.int32,bool]
-  mouse_up: array[MouseButton.high.int32,bool]  
-type InputIndex* = distinct int
 
 
-var storage =newSeq[Input](0) 
+var storage      = newSeq[Input](0) 
 var input_system = InputSystem()
 
 
