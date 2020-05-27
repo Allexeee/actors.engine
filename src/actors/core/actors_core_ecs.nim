@@ -17,9 +17,9 @@ from actors_core_base import Layer
 from actors_core_base import `+`
 from sugar import `=>`
 
-const
-    public* = true
-    private* = false
+const public* = true
+const private* = false
+
 
 
 # type  possibly good for custom seqs

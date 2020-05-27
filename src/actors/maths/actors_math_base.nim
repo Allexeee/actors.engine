@@ -1,3 +1,4 @@
+{.used.}
 {.compile: "actors_math_base.c".}
 
 import math

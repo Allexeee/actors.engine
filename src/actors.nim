@@ -1,14 +1,11 @@
-#@head
-import actors/actors_engine as engine
-import actors/actors_components as components
+{.used.}
 
-export engine except
-  app
+import actors/a_engine as engine
+import actors/a_runtime as runtime
 
-export components except
-  used
+export engine
+export runtime
 
-components.used()
 
 template start*(this: App, code: untyped): untyped =
   this.start()
