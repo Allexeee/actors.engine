@@ -94,7 +94,6 @@ proc shader*(shader_path: string): ShaderIndex =
     var geom: GLuint = 0
     ##vertex
     vertex = glCreateShader(GL_VERTEX_SHADER)
-
     glShaderSource(vertex,1, cast[cstringArray](vert_code.addr), nil)
     glCompileShader(vertex)
     checkErrorShaderCompile(vertex, VERTEX)
