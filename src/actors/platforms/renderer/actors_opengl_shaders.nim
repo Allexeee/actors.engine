@@ -2,7 +2,7 @@
 import os
 import strformat
 
-import nimgl/opengl
+import ../../vendor/glad/gl
 
 import ../../actors_utils
 import ../../actors_math
@@ -94,18 +94,19 @@ proc shader*(shader_path: string): ShaderIndex =
     var geom: GLuint = 0
     ##vertex
     vertex = glCreateShader(GL_VERTEX_SHADER)
-    glShaderSource(vertex,1'i32,vert_code.addr, nil)
+
+    glShaderSource(vertex,1, cast[cstringArray](vert_code.addr), nil)
     glCompileShader(vertex)
     checkErrorShaderCompile(vertex, VERTEX)
     ##fragment
     fragment = glCreateShader(GL_FRAGMENT_SHADER)
-    glShaderSource(fragment,1'i32,frag_code.addr, nil)
+    glShaderSource(fragment,1'i32,cast[cstringArray](frag_code.addr), nil)
     glCompileShader(fragment)
     checkErrorShaderCompile(fragment, FRAGMENT)
     ##geom
     if geom_code!=default(cstring):
        geom = glCreateShader(GL_GEOMETRY_SHADER)
-       glShaderSource(geom, 1'i32, geom_code.addr, nil)
+       glShaderSource(geom, 1'i32, cast[cstringArray](geom_code.addr), nil)
        glCompileShader(geom)
        checkErrorShaderCompile(geom, GEOMETRY)
     ##program

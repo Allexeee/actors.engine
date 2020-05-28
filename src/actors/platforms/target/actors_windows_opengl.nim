@@ -1,4 +1,6 @@
-import nimgl/[glfw, opengl]
+import ../../vendor/glad/gl
+import nimgl/[glfw]
+#import nimgl/[glfw, opengl]
 import ../../actors_utils
 
 
@@ -16,7 +18,8 @@ proc start*(screensize: tuple[width: int, height: int], name: string) {.inline.}
   window =  glfwCreateWindow((cint)screensize.width, (cint)screensize.height, name, nil, nil)
   
   window.makeContextCurrent()
-  assert glInit()
-  log(info, "Opengl v" & $glVersionMajor & "." & $glVersionMinor)
+  assert gladLoadGL(glfwGetProcAddress)
+  #assert glInit()
+  #log(info, "Opengl v" & $glVersionMajor & "." & $glVersionMinor)
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
