@@ -1,4 +1,5 @@
 {.used.}
+
 import ../vendor/stb_image/[actors_stb_image]
 from actors_core_app import app
 

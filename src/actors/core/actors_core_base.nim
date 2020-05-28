@@ -1,4 +1,5 @@
 {.used.}
+
 type Action*     = proc(){.nimcall.}
 type ActionT*[T] = proc(arg: T){.nimcall.}
 

@@ -11,7 +11,7 @@ binDir        = "bin"
 # Dependencies
 
 requires "nim >= 1.0.6"
-requires "nimgl"
+#requires "nimgl"
 
 task make_release, "BUILD":
    exec "nim compile -d:release -d:nimCoroutines --passC:-flto --passL:-s --gc:refc --out: examples/bin/game examples/game.nim"

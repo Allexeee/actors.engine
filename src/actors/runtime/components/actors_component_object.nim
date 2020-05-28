@@ -1,6 +1,6 @@
 {.used.}
-import ../actors_math
-import ../actors_core
+
+import ../../a_engine
 
 type ComponentObject* = object
   parent: ent
