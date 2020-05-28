@@ -1,5 +1,5 @@
 import ../../vendor/glad/gl
-import nimgl/[glfw]
+import ../../vendor/glfw/actors_glfw
 #import nimgl/[glfw, opengl]
 import ../../actors_utils
 

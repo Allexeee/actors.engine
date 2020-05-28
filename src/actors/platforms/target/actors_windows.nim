@@ -1,4 +1,4 @@
-import nimgl/[glfw]
+#import nimgl/[glfw]
  
 
 when defined(renderer_opengl):
