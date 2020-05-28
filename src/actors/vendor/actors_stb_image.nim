@@ -1,6 +1,7 @@
 {.pragma: stbcall, cdecl.}
 {.compile: "stb_image/stb_image.c".}
 
+
 type STBIException* = object of ValueError
 
 
