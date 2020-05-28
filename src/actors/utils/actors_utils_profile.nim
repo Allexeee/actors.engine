@@ -5,21 +5,17 @@ import strutils
 import actors_utils_log
 
 
-type
-    ProfileElement = tuple
-        name: string
-        t0, t1: float
-        total_calls: int
-        total_time: float
-
-    Profile = object
+type ProfileElement = tuple
+  name: string
+  t0, t1: float
+  total_calls: int
+  total_time: float
+type Profile = object
 
 
-
-var 
-  profile* : Profile
-  index    : int
-  pairs    = initTable[string,ProfileElement]()
+var profile* : Profile
+var  index   : int
+var  pairs   = initTable[string,ProfileElement]()
 
 
 template profileStart(arg: string) =

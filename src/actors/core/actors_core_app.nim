@@ -2,6 +2,7 @@
 
 from actors_core_input import Input, InputIndex, addInput
 
+
 type AppSettings* = object 
   name*         : string
   fps*          : float32

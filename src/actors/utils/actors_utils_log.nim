@@ -1,30 +1,27 @@
-{.experimental: "codeReordering".}
-
 import times
 import strutils
 import typeinfo
 import system
 
 
-type
-  Log = object
-    file: File
-  MessageKind = enum
-    write,update,stop
-  Message = object
-    case kind: MessageKind
-    of write:
-      traceText: string
-      text: string
-      mode: int
-      external: bool
-    of update:
-      logs: seq[Log]
-    of stop:
-      nil
+type Log = object
+  file: File
+type MessageKind = enum
+  write,update,stop
+type Message = object
+  case kind: MessageKind
+  of write:
+    traceText: string
+    text: string
+    mode: int
+    external: bool
+  of update:
+    logs: seq[Log]
+  of stop:
+    nil
 
 
-const
+const #@templates
   names_stdout: array[6, string] = ["\e[0;32mDebug:\e[39m","\e[0;34mInfo: \e[39m","\e[0;33mWarn: \e[39m","\e[0;31mError:\e[39m","\e[0;35mFatal\e[39m", "\e[0;34mBenchmark:\e[39m"]
   names: array[6, string] = ["Debug:","Info: ","Warn: ","Error:","Fatal:", "Benchmark:"]
   log_template_stdout = "[$#] $# $#$#" 
@@ -40,20 +37,14 @@ const
   benchmark* = 5'i8
 
 
-var
-  thread  : Thread[void]
-  channel : Channel[Message]
+var thread  : Thread[void]
+var channel : Channel[Message]
   
-  log_mask    = {debug..benchmark}
-  logs        = newSeq[Log]()
-  log_console = Log(file: stdout)
+var log_mask    = {debug..benchmark}
+var logs        = newSeq[Log]()
+var log_console = Log(file: stdout)
 
 
-open channel
-thread.createThread logThread
-addQuitProc logStop
-
-# methods
 proc logSetMask*(mask: set[int8]) =
   log_mask = mask
   discard
@@ -79,7 +70,7 @@ template log*(level: int8 = debug, args: varargs[string, `$`]) =
 template log*(args: varargs[string, `$`]) =
   log(debug,args)
 
-proc trace*(level: int8 = debug, args: varargs[string, `$`]) =
+proc trace*(level: int8 = debug, args: varargs[string, `$`]) {.inline.} =
   if level in log_mask:
     var traces = getStackTraceEntries()
     var traceNode = traces[traces.high-1]
@@ -100,7 +91,7 @@ proc trace*(level: int8 = debug, args: varargs[string, `$`]) =
 template trace*(args: varargs[string, `$`]) =
   trace(debug,args)
 
-proc log_external*(level: int8 = debug, args: varargs[string, `$`]) = 
+proc logExternal*(level: int8 = debug, args: varargs[string, `$`]) {.inline.} = 
     if level in log_mask:
       var traces = getStackTraceEntries()
       var traceNode = traces[traces.high-1]
@@ -115,7 +106,7 @@ proc log_external*(level: int8 = debug, args: varargs[string, `$`]) =
         msg.text.add "\n"
       channel.send msg
 
-proc log_thread {.thread.} =
+proc logThread {.thread.} =
   var 
     logs = newSeq[Log]()
     time_prev: Time
@@ -151,7 +142,7 @@ proc log_thread {.thread.} =
     of stop:
       break 
   
-proc log_stop {.noconv.} =
+proc logStop {.noconv.} =
   channel.send Message(kind: stop)
   joinThread thread
   close channel
@@ -159,3 +150,8 @@ proc log_stop {.noconv.} =
   for log in logs:
     if log.file notin [stdout, stderr]:
       close log.file
+
+
+open channel
+thread.createThread logThread
+addQuitProc logStop

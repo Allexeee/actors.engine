@@ -5,6 +5,7 @@ type ActionT*[T] = proc(arg: T){.nimcall.}
 
 type Layer* = distinct int
 
+
 proc `+` *(a, b: Layer): Layer {.borrow.}
 # type IndexScene*    = distinct int
 # type IndexApplayer* = distinct int
