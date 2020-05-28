@@ -6,7 +6,7 @@ import nimgl/opengl
 
 import ../../actors_utils
 import ../../actors_math
-
+from ../../actors_core import app
 
 type ShaderIndex* = distinct uint32
 
@@ -72,19 +72,19 @@ proc shader*(shader_path: string): ShaderIndex =
     var id : uint32 = 0
     ##read
     ##vertex
-    path = shader_path & ".vs"
+    path = app.settings.path_shaders & shader_path & ".vs"
     if not fileExists(path):
         log warn, &"The path {path} for vertex shader doesn't exist", "Adding a default shader"
     else:
         vertCode = readFile(path)
     ##fragment
-    path = shader_path & ".fg"
+    path = app.settings.path_shaders & shader_path & ".fg"
     if not fileExists(path):
         log warn, &"The path {path} for fragment shader doesn't exist", "Adding a default shader"
     else:
         fragCode = readFile(path)
     ##geometry
-    path = shader_path & ".ge"
+    path = app.settings.path_shaders & shader_path & ".ge"
     if fileExists(path):
         geomCode = readFile(path)
 
@@ -126,13 +126,16 @@ proc use*(this: ShaderIndex) {.inline.} =
 proc setBool*(this: ShaderIndex, name: cstring, arg: bool) {.inline.} =
   glUniform1i(glGetUniformLocation(this.GLuint,name),arg.Glint)
 
-proc setInt*(this: ShaderIndex, name: cstring, arg: bool) {.inline.} =
+proc setInt*(this: ShaderIndex, name: cstring, arg: int) {.inline.} =
   glUniform1i(glGetUniformLocation(this.GLuint,name),arg.Glint)
 
 proc setFloat*(this: ShaderIndex, name: cstring, arg: float32) {.inline.} =
   glUniform1f(glGetUniformLocation(this.GLuint,name),arg)
 
 proc setVec*(this: ShaderIndex, name: cstring, arg: Vec) {.inline.} =
+  glUniform4f(glGetUniformLocation(this.GLuint,name),arg.x,arg.y,arg.z,arg.w)
+
+proc setColor*(this: ShaderIndex, name: cstring, arg: Vec) {.inline.} =
   glUniform4f(glGetUniformLocation(this.GLuint,name),arg.x,arg.y,arg.z,arg.w)
 
 proc setMatrix*(this: ShaderIndex, name: cstring, arg: var Matrix) {.inline.} =
