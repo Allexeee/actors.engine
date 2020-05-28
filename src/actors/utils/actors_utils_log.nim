@@ -25,12 +25,12 @@ type
 
 
 const
-  names_stdout: array[6, string] = ["\e[0;32mDebug\e[39m","\e[0;34mInfo\e[39m","\e[0;33mWarn\e[39m","\e[0;31mError\e[39m","\e[0;35mFatal\e[39m", "\e[0;34mBenchmark\e[39m"]
-  names: array[6, string] = ["Debug","Info","Warn","Error","Fatal", "Benchmark"]
-  log_template_stdout = "[$#] [$#] $#\n$#\n" 
-  log_template_bench_stdout = "[$#] [$#]\n$#\n" 
-  log_template = "[$#] [$#] $#\n$#\n"
-  log_template_bench = "[$#] [$#]\n$#\n"  
+  names_stdout: array[6, string] = ["\e[0;32mDebug:\e[39m","\e[0;34mInfo: \e[39m","\e[0;33mWarn: \e[39m","\e[0;31mError:\e[39m","\e[0;35mFatal\e[39m", "\e[0;34mBenchmark:\e[39m"]
+  names: array[6, string] = ["Debug:","Info: ","Warn: ","Error:","Fatal:", "Benchmark:"]
+  log_template_stdout = "[$#] $# $#$#" 
+  log_template_bench_stdout = "[$#] $#\n$#\n" 
+  log_template = "[$#] $# $#$#"
+  log_template_bench = "[$#] $#\n$#\n"  
   
   debug* = 0'i8
   info* = 1'i8
@@ -79,27 +79,28 @@ template log*(level: int8 = debug, args: varargs[string, `$`]) =
 template log*(args: varargs[string, `$`]) =
   log(debug,args)
 
-template trace*(level: int8 = debug, args: varargs[string, `$`]) =
+proc trace*(level: int8 = debug, args: varargs[string, `$`]) =
   if level in log_mask:
-      var traces = getStackTraceEntries()
-      var traceNode = traces[traces.high-1]
-      var fname = newString(traceNode.filename.len)
-      var line = intToStr(traceNode.line)
+    var traces = getStackTraceEntries()
+    var traceNode = traces[traces.high-1]
+    var fname = newString(traceNode.filename.len)
+    var line = intToStr(traceNode.line)
 
-      copyMem(addr(fname[0]), traceNode.filename, traceNode.filename.len)
+    copyMem(addr(fname[0]), traceNode.filename, traceNode.filename.len)
 
-      var traceString = fname & "(" & line & ")"
+    var traceString = fname & "(" & line & ")"
 
-      var msg = Message(kind: write, traceText: traceString, mode: level, external : false)
-      for arg in args:
-        msg.text.add arg
-        msg.text.add "\n"
-      channel.send msg
+    var msg = Message(kind: write, traceText: traceString, mode: level, external : false)
+    for arg in args:
+      msg.text.add " "
+      msg.text.add arg
+      msg.text.add "\n"
+    channel.send msg
 
 template trace*(args: varargs[string, `$`]) =
   trace(debug,args)
 
-template log_external*(level: int8 = debug, args: varargs[string, `$`]) = 
+proc log_external*(level: int8 = debug, args: varargs[string, `$`]) = 
     if level in log_mask:
       var traces = getStackTraceEntries()
       var traceNode = traces[traces.high-1]
@@ -109,6 +110,7 @@ template log_external*(level: int8 = debug, args: varargs[string, `$`]) =
       var traceString = fname & "(" & line & ")"
       var msg = Message(kind: write, traceText: traceString, mode: level, external : true)
       for arg in args:
+        msg.text.add " "
         msg.text.add arg
         msg.text.add "\n"
       channel.send msg

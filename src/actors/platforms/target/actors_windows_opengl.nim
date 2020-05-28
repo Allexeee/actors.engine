@@ -1,11 +1,14 @@
-import ../../vendor/glad/gl
-import ../../vendor/glfw/actors_glfw
-#import nimgl/[glfw, opengl]
+import ../../vendor/actors_gl
+import ../../vendor/actors_glfw
 import ../../actors_utils
-
-
+ 
 var window : GLFWWindow
 
+proc getOpenglVersion() =
+  var glGetString = cast[proc (name: GLenum): ptr GLubyte {.cdecl, gcsafe.}](glfwGetProcAddress("glGetString"))
+  if glGetString == nil: return
+  var glVersion = cast[cstring](glGetString(GL_VERSION))
+  log info, &"OpenGL {glVersion}"
 
 proc start*(screensize: tuple[width: int, height: int], name: string) {.inline.} = 
   assert glfwInit()
@@ -19,7 +22,7 @@ proc start*(screensize: tuple[width: int, height: int], name: string) {.inline.}
   
   window.makeContextCurrent()
   assert gladLoadGL(glfwGetProcAddress)
-  #assert glInit()
-  #log(info, "Opengl v" & $glVersionMajor & "." & $glVersionMinor)
+  getOpenglVersion()
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+

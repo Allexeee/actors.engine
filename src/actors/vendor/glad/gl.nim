@@ -3108,7 +3108,6 @@ proc findCoreGL(glVersion: string) =
   GLAD_GL_VERSION_4_5 = (major == 4 and minor >= 5) or major > 4
   GLAD_GL_VERSION_4_6 = (major == 4 and minor >= 6) or major > 4
 
-
 proc gladLoadGL*(load: proc): bool =
   glGetString = cast[proc (name: GLenum): ptr GLubyte {.cdecl, gcsafe.}](load("glGetString"))
   if glGetString == nil: return false
@@ -3143,3 +3142,4 @@ proc gladLoadGL*(load: proc): bool =
   load_GL_ARB_multisample(load);
 
   return glVersionMajor != 0 or glVersionMinor != 0
+

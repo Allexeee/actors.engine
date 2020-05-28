@@ -11,8 +11,6 @@
 ##
 ## You can check the original documentation `here <http://www.glfw.org/docs/latest/>`_.
 
-#import ./private/logo
-
 when defined(glfwDLL):
   when defined(windows):
     const glfw_dll* = "glfw3.dll"
@@ -21,65 +19,65 @@ when defined(glfwDLL):
   else:
     const glfw_dll* = "libglfw.so.3"
 else:
-  {.compile: "src/vulkan.c".}
+  {.compile: "glfw/src/vulkan.c".}
 
   # Thanks to ephja for making this build system
   when defined(windows):
     {.passC: "-D_GLFW_WIN32",
       passL: "-lopengl32 -lgdi32",
-      compile: "src/win32_init.c",
-      compile: "src/win32_joystick.c",
-      compile: "src/win32_monitor.c",
-      compile: "src/win32_time.c",
-      compile: "src/win32_thread.c",
-      compile: "src/win32_window.c",
-      compile: "src/wgl_context.c",
-      compile: "src/egl_context.c",
-      compile: "src/osmesa_context.c".}
+      compile: "glfw/src/win32_init.c",
+      compile: "glfw/src/win32_joystick.c",
+      compile: "glfw/src/win32_monitor.c",
+      compile: "glfw/src/win32_time.c",
+      compile: "glfw/src/win32_thread.c",
+      compile: "glfw/src/win32_window.c",
+      compile: "glfw/src/wgl_context.c",
+      compile: "glfw/src/egl_context.c",
+      compile: "glfw/src/osmesa_context.c".}
   elif defined(macosx):
     {.passC: "-D_GLFW_COCOA -D_GLFW_USE_CHDIR -D_GLFW_USE_MENUBAR -D_GLFW_USE_RETINA",
       passL: "-framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo",
-      compile: "src/cocoa_init.m",
-      compile: "src/cocoa_joystick.m",
-      compile: "src/cocoa_monitor.m",
-      compile: "src/cocoa_window.m",
-      compile: "src/cocoa_time.c",
-      compile: "src/posix_thread.c",
-      compile: "src/nsgl_context.m",
-      compile: "src/egl_context.c",
-      compile: "src/osmesa_context.c".}
+      compile: "glfw/src/cocoa_init.m",
+      compile: "glfw/src/cocoa_joystick.m",
+      compile: "glfw/src/cocoa_monitor.m",
+      compile: "glfw/src/cocoa_window.m",
+      compile: "glfw/src/cocoa_time.c",
+      compile: "glfw/src/posix_thread.c",
+      compile: "glfw/src/nsgl_context.m",
+      compile: "glfw/src/egl_context.c",
+      compile: "glfw/src/osmesa_context.c".}
   else:
     {.passL: "-pthread -lGL -lX11 -lXrandr -lXxf86vm -lXi -lXcursor -lm -lXinerama".}
 
     when defined(mir):
       {.passC: "-D_GLFW_MIR",
-        compile: "src/mir_init.c",
-        compile: "src/mir_monitor.c",
-        compile: "src/mir_window.c".}
+        compile: "glfw/src/mir_init.c",
+        compile: "glfw/src/mir_monitor.c",
+        compile: "glfw/src/mir_window.c".}
     elif defined(wayland):
       {.passC: "-D_GLFW_WAYLAND",
-        compile: "src/wl_init.c",
-        compile: "src/wl_monitor.c",
-        compile: "src/wl_window.c".}
+        compile: "glfw/src/wl_init.c",
+        compile: "glfw/src/wl_monitor.c",
+        compile: "glfw/src/wl_window.c".}
     else:
       {.passC: "-D_GLFW_X11",
-        compile: "src/x11_init.c",
-        compile: "src/x11_monitor.c",
-        compile: "src/x11_window.c",
-        compile: "src/glx_context.c".}
+        compile: "glfw/src/x11_init.c",
+        compile: "glfw/src/x11_monitor.c",
+        compile: "glfw/src/x11_window.c",
+        compile: "glfw/src/glx_context.c".}
 
-    {.compile: "src/xkb_unicode.c",
-      compile: "src/linux_joystick.c",
-      compile: "src/posix_time.c",
-      compile: "src/egl_context.c",
-      compile: "src/osmesa_context.c",
-      compile: "src/posix_thread.c".}
+    {.compile: "glfw/src/xkb_unicode.c",
+      compile: "glfw/src/linux_joystick.c",
+      compile: "glfw/src/posix_time.c",
+      compile: "glfw/src/egl_context.c",
+      compile: "glfw/src/osmesa_context.c",
+      compile: "glfw/src/posix_thread.c".}
 
-  {.compile: "src/context.c",
-    compile: "src/init.c",
-    compile: "src/input.c",
-    compile: "src/monitor.c",
-    compile: "src/window.c".}
+  {.compile: "glfw/src/context.c",
+    compile: "glfw/src/init.c",
+    compile: "glfw/src/input.c",
+    compile: "glfw/src/monitor.c",
+    compile: "glfw/src/window.c".}
 
 when defined(vulkan):
   import ./vulkan
@@ -5224,10 +5222,9 @@ when defined(vulkan):
 
 {.pop.}
 
-proc glfwCreateWindow*(width: int32, height: int32, title: cstring = "NimGL", monitor: GLFWMonitor = nil, share: GLFWWindow = nil, icon: bool = true): GLFWWindow =
+proc glfwCreateWindow*(width: int32, height: int32, title: cstring = "Actors", monitor: GLFWMonitor = nil, share: GLFWWindow = nil, icon: bool = false): GLFWWindow =
   ## Creates a window and its associated OpenGL or OpenGL ES
   ## Utility to create the window with a proper icon.
-  result = glfwCreateWindowC(width, height, title, monitor, share)
   result = glfwCreateWindowC(width, height, title, monitor, share)
   # if not icon: return result
   # var image = GLFWImage(pixels: cast[ptr cuchar](nimglLogo[0].addr), width: nimglLogoWidth, height: nimglLogoHeight)

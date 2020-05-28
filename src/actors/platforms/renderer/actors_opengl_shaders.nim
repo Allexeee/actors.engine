@@ -2,11 +2,11 @@
 import os
 import strformat
 
-import ../../vendor/glad/gl
-
+import ../../vendor/actors_gl
 import ../../actors_utils
 import ../../actors_math
-from ../../actors_core import app
+
+from   ../../actors_core import app
 
 type ShaderIndex* = distinct uint32
 
