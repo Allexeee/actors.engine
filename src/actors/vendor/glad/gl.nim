@@ -1053,7 +1053,7 @@ const
   GL_DONT_CARE*: GLenum = GLenum(0x1100)
   GL_FASTEST*: GLenum = GLenum(0x1101)
   GL_NICEST*: GLenum = GLenum(0x1102)
-  cGL_BYTE*: GLenum = GLenum(0x1400)
+  cGL_BYTE*: GLenum = GLenum(0x1400) 
   GL_UNSIGNED_BYTE*: GLenum = GLenum(0x1401)
   cGL_SHORT*: GLenum = GLenum(0x1402)
   GL_UNSIGNED_SHORT*: GLenum = GLenum(0x1403)
