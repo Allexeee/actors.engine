@@ -13,7 +13,7 @@ binDir        = "bin"
 requires "nim >= 1.0.6"
 
 
-task make_release, "BUILD":
+task release, "BUILD":
    exec "nim cpp -d:release --passC:-flto --passL:-s --gc:refc --out: bin/game examples/game.nim"
 
 # task make_docs, "BUILD":

@@ -1,10 +1,97 @@
 {.used.}
 
 import actors/a_engine as engine
-import actors/a_runtime as runtime
-
 export engine
+ 
+import actors/a_runtime as runtime
 export runtime
+
+
+var layers* = newSeq[Layer]()
+layers.add(newLayer())
+
+var processorCamera = ProcessorCamera()
+var itickprocessorCamera = processorCamera.getITick()
+layers[0].updater.ticks.add(itickprocessorCamera)
+
+
+#var lmain = layers[0]
+
+
+#var ticks = newSeq[ITick](100)
+
+
+# type
+#   ITick* = concept var x
+#     x.tick(float)
+#type ActionTY*[T,Y] = proc(arg: T, arg2: Y){.nimcall.}
+# type ProcessorCamera = ref object
+#  # ticke: Acta[ITick,float]
+#   id: int
+# type ITick = object
+#   tick: proc (dt: float)
+
+
+# proc newProcCamera : ProcessorCamera =
+#   result = new ProcessorCamera
+#   result.id = 100
+
+# var processorCamera = newProcCamera()
+
+
+# proc tick*(this: ProcessorCamera, dt: float) =
+#   discard
+
+
+
+
+# var ticks = newSeq[ITick]()
+
+# # ticks.add(!!processorCamera)
+
+
+# # ticks[0].tick(21)
+
+# var itick = processorCamera.getITick()
+
+
+# profile.start "interface": 
+#   for i in 0..10000000:
+#     itick.tick(0)
+# profile.start "procs": 
+#   for i in 0..10000000:
+#     processorCamera.tick(0)
+
+# log profile
+#var pooo = doTick[ProcessorCamera]
+# processorCamera.id = 100
+# processorCamera.ticker = tick
+
+
+
+# var ticks = newSeq[]()
+# ticks.add(processorCamera.ticker)
+
+
+#ticks[0](0)
+
+# proc update(tickable: ITick, dt: float) =
+#   tickable.tick(dt)
+
+
+
+
+#type ActionTY*[T,Y] = proc(arg: T, arg2: Y){.nimcall.}
+#var poo = update[ProcessorCamera]
+
+#poo(processorCamera,9)
+# var aa : ActionTY[ITicker,float] = ticka
+
+# aa(processorCamera,10)
+
+#type ActorCamera* = ref object
+
+ 
 
 
 template start*(this: App, code: untyped): untyped =
@@ -20,7 +107,12 @@ template run*(this: App, code: untyped): untyped =
   var input {.inject, used.} = app.input
   while not engine.platform.shouldQuit():
     ecs.process_operations(lr_ecs_core.int)
-    ecs.process_operations()
+    ecs.process_operations(lr_ecs_main.int)
+    for i in 0..layers.high:
+      var layer = layers[i]
+      var updater = layer.updater
+      for ii in 0..updater.ticks.high:
+        updater.ticks[ii].tick(dt)          
     code
     engine.platform.updateImpl()
   engine.platform.dispose()

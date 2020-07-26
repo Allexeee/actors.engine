@@ -8,6 +8,7 @@ type ComponentCamera* = object
   projection* : Matrix
   fov*        : float32
   zoom*       : float32
+  shaders*    : seq[ShaderIndex]
 
 
 ecs.add ComponentCamera
@@ -17,6 +18,6 @@ var lr_ecs_cameras* = ecs.addLayer()
 
 
 proc newCamera*(): ent =
-  result = entity()
+  result = entity(lr_ecs_main)
   result.add ComponentCamera
   result.add ComponentTransform

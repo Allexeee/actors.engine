@@ -2,11 +2,21 @@
 
 type Action*     = proc(){.nimcall.}
 type ActionT*[T] = proc(arg: T){.nimcall.}
+type ActionTY*[T,Y] = proc(arg: T, arg2: Y){.nimcall.}
 
-type Layer* = distinct int
+type LayerId* = distinct int
+
+type Actor* = ref object
+  tick* : ActionT[float]
 
 
-proc `+` *(a, b: Layer): Layer {.borrow.}
+proc `+` *(a, b: LayerId): LayerId {.borrow.}
+
+
+
+
+
+
 # type IndexScene*    = distinct int
 # type IndexApplayer* = distinct int
 

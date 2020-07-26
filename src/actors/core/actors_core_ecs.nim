@@ -13,7 +13,7 @@ import typetraits
 import math
 import ../actors_utils
 
-from actors_core_base import Layer
+from actors_core_base import LayerId
 from actors_core_base import `+`
 from sugar import `=>`
 
@@ -60,7 +60,7 @@ type Group = ref object of RootObj
   id*              : uint16
   layer*           : int
   signature*       : set[uint16]
-  entities         : seq[ent]
+  entities*        : seq[ent]
   entities_added   : seq[ent]
   entities_removed : seq[ent]
   events           : seq[proc(added: var seq[ent], removed: var seq[ent])]
@@ -83,6 +83,7 @@ var id_component_next {.used.} : uint16 = 0
 var id_entity_last {.used.}    : uint32 = 0
 
 var ecs*         = EcsInstance(layers: newSeq[EcsLayer]())
+
 var lr_ecs_core* = ecs.addLayer()
 var lr_ecs_main* = ecs.addLayer()
 
@@ -91,7 +92,7 @@ var ents_stash = new_seqofcap[ent](256)
 
 
 #@entities
-proc entity*(layer: Layer = lr_ecs_main): ent {.inline.} =
+proc entity*(layer: LayerId): ent {.inline.} =
 
     if ents_stash.len > 0:
         result = ents_stash[0]
@@ -364,7 +365,7 @@ macro group*(this: EcsInstance, name : untyped, code : untyped): untyped =
   result = nGroup
 
 var id_next_group {.global.} : uint16 = 0
-proc add_group(components: set[uint16], layer : Layer) : Group {.inline, used.} =
+proc add_group(components: set[uint16], layer : LayerId) : Group {.inline, used.} =
   var signature = components
   var group_next : Group = nil
   let groups = addr ecs.layers[layer.int].groups
@@ -617,15 +618,15 @@ proc hash*(x: set[uint16]): Hash =
   result = x.hash
   result = !$result
 
-var layer_next {.global.} : Layer = 0.Layer
-proc addLayer*(this: EcsInstance): Layer =
-  result = layer_next; layer_next = layer_next + 1.Layer
+var layer_next {.global.} : LayerId = 0.LayerId
+proc addLayer*(this: EcsInstance): LayerId =
+  result = layer_next; layer_next = layer_next + 1.LayerId
   let ecs_layer = add_new(this[].layers)
   ecs_layer.groups = new_seqofcap[Group](16)
   ecs_layer.operations = new_seqofcap[Operation](256)
   ecs_layer.ents_alive = initHashSet[uint32]()
 
-proc release*(this: EcsInstance, layers: varargs[Layer]) =
+proc release*(this: EcsInstance, layers: varargs[LayerId]) =
   for l in layers:
       let ecs_layer = this.layers[l.int]
       ecs_layer.operations.setLen(0)
@@ -647,7 +648,7 @@ proc release*(this: EcsInstance, layers: varargs[Layer]) =
 
 
 #@processing
-proc process_operations*(this: EcsInstance, lr_index: int = lr_ecs_main.int) {.inline.} = 
+proc process_operations*(this: EcsInstance, lr_index: int) {.inline.} = 
   let layer = addr this.layers[lr_index]
   let operations = addr layer.operations
   let size = operations[].len
