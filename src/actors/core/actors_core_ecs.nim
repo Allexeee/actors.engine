@@ -56,7 +56,7 @@ type StorageCompact*[T] = ref object of StorageBase
 type ComponentKind* = enum
   Compact,
   Fast 
-type Group = ref object of RootObj
+type Group* = ref object of RootObj
   id*              : uint16
   layer*           : int
   signature*       : set[uint16]
@@ -365,7 +365,7 @@ macro group*(this: EcsInstance, name : untyped, code : untyped): untyped =
   result = nGroup
 
 var id_next_group {.global.} : uint16 = 0
-proc add_group(components: set[uint16], layer : LayerId) : Group {.inline, used.} =
+proc add_group*(components: set[uint16], layer : LayerId) : Group {.inline, used.} =
   var signature = components
   var group_next : Group = nil
   let groups = addr ecs.layers[layer.int].groups

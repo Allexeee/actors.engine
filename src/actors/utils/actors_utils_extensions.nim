@@ -17,6 +17,7 @@ proc add_new_ref*[T](this: var seq[T]): var T {.inline.} =
     this.add(T())
     this[this.high]
 
+
 proc toString*(str: var seq[cchar], len: int = 0): string =
   var lenCalculated = 0
   if len == 0:

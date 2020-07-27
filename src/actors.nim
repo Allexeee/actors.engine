@@ -2,17 +2,17 @@
 
 import actors/a_engine as engine
 export engine
- 
+
 import actors/a_runtime as runtime
 export runtime
 
 
-var layers* = newSeq[Layer]()
-layers.add(newLayer())
+var layerMain* = newLayer()
+
 
 var processorCamera = ProcessorCamera()
-var itickprocessorCamera = processorCamera.getITick()
-layers[0].updater.ticks.add(itickprocessorCamera)
+layerMain.updater.addTick(processorCamera)
+
 
 
 #var lmain = layers[0]

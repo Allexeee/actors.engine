@@ -3,6 +3,15 @@ import ../components/actors_component_camera
 import ../components/actors_component_transform
 
 type ProcessorCamera* = ref object
+  cameras* : Group
+  transforms* : Group
+
+
+# proc newProcessorCamera*(): ProcessorCamera =
+#   result = ProcessorCamera()
+#   result.cameras = 
+#   discard
+
 
 ecs.group cameras:
   comps: (ComponentCamera, ComponentTransform)
