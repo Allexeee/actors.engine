@@ -43,7 +43,7 @@ type Entity* {.packed.} = object
   layer*            : int
   system*           : SystemEcs
   parent*           : ent
-  isAlive           : bool
+  isAlive*          : bool
   signature*        : set[uint16] 
   #signature_comps*  : set[uint16] # double buffer, need for such methods as has/get and init operation
   signature_groups* : set[uint16] # what groups are already used
@@ -55,6 +55,7 @@ type Group* = ref object of RootObj
   system*           : SystemEcs
   layer*            : int
   signature*        : set[uint16]
+  signature_excl*   : set[uint16]
   entities*         : seq[ent]
   entities_added*   : seq[ent]
   entities_removed* : seq[ent]
@@ -88,7 +89,7 @@ type Operation {.packed.} = object
 var ecs* = EcsInstance()
 
 var id_next {.global.}         : uint32 = 0 # confusion with {.global.} in proc, redefining
-var id_component_next {.used.} : uint16 = 0 
+var id_component_next {.used.} : uint16 = 1 
 var id_entity_last {.used.}    : uint32 = 0
 var entities   = new_seqofcap[Entity](1024)
 var ents_stash = newSeqOfCap[ent](256)
@@ -123,12 +124,16 @@ proc entity*(this: SystemEcs): ent {.inline.} =
     op.entity = result
     op.kind = OpKind.Init
     this.ents_alive.incl(result.id)
+    entities[result.id].isAlive = true
     #op.entity = result
     #op.kind = OpKind.Init
     #layer.ents_alive.incl(result.id)
 
+proc exist*(this: ent): bool =
+  entities[this.id].isAlive
+
 proc release*(this: ent) = 
-    #check_error_release_empty(this)
+    check_error_release_empty(this)
     let entity = entities[this.id]
     let op = entity.system.operations.addNew()
     op.entity = this
@@ -137,50 +142,115 @@ proc release*(this: ent) =
     for e in entity.childs:
         release(e)
 
+
+
+template incl*(T: typedesc): set[uint16] =
+  {T.ID}
+template incl*(T,Y: typedesc): set[uint16] =
+  {T.ID,Y.ID}
+template incl*(T,Y,U: typedesc): set[uint16] =
+  {T.ID,Y.ID, U.ID}
+template incl*(T,Y,U,I: typedesc): set[uint16] =
+  {T.ID,Y.ID, U.ID, I.ID}
+template incl*(T,Y,U,I,O: typedesc): set[uint16] =
+  {T.ID,Y.ID, U.ID, I.ID,O.ID}
+template incl*(T,Y,U,I,O,P: typedesc): set[uint16] =
+  {T.ID,Y.ID, U.ID, I.ID,O.ID,P.ID}
+template incl*(T,Y,U,I,O,P,S: typedesc): set[uint16] =
+  {T.ID,Y.ID, U.ID, I.ID,O.ID,P.ID,S.ID}
+template incl*(T,Y,U,I,O,P,S,D: typedesc): set[uint16] =
+  {T.ID,Y.ID, U.ID, I.ID,O.ID,P.ID,S.ID,D.ID}
+
+template excl*(T: typedesc): set[uint16] =
+  {T.ID}
+template excl*(T,Y: typedesc): set[uint16] =
+  {T.ID,Y.ID}
+template excl*(T,Y,U: typedesc): set[uint16] =
+  {T.ID,Y.ID, U.ID}
+template excl*(T,Y,U,I: typedesc): set[uint16] =
+  {T.ID,Y.ID, U.ID, I.ID}
+template excl*(T,Y,U,I,O: typedesc): set[uint16] =
+  {T.ID,Y.ID, U.ID, I.ID,O.ID}
+template excl*(T,Y,U,I,O,P: typedesc): set[uint16] =
+  {T.ID,Y.ID, U.ID, I.ID,O.ID,P.ID}
+template excl*(T,Y,U,I,O,P,S: typedesc): set[uint16] =
+  {T.ID,Y.ID, U.ID, I.ID,O.ID,P.ID,S.ID}
+template excl*(T,Y,U,I,O,P,S,D: typedesc): set[uint16] =
+  {T.ID,Y.ID, U.ID, I.ID,O.ID,P.ID,S.ID,D.ID}
+#proc mask*[T](): set[uint16] =
+#  {T.ID}
+# proc excluded*[T](): set[uint16] =
+#   {T.ID}
+# template poo*(): untyped =
+#   Group()
+
+# template mask*(code: openarray[typedesc]) =
+#   for c in code:
+#     echo c
+#   discard
+
 #@groups
-proc group*(this: SystemEcs, Comp1: typedesc): Group =
-  result = group_impl(this, {Comp1.ID})
-proc group*(this: SystemEcs, Comp1, Comp2: typedesc): Group =
-  result = group_impl(this, {Comp1.ID, Comp2.ID})
-proc group*(this: SystemEcs, Comp1, Comp2, Comp3: typedesc): Group =
-  result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID})
-proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4: typedesc): Group =
-  result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID})
-proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5: typedesc): Group =
-  result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID})
-proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5, Comp6: typedesc): Group =
-  result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID, Comp6.ID})
-proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5, Comp6, Comp7: typedesc): Group =
-  result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID, Comp6.ID, Comp7.ID})
-proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5, Comp6, Comp7, Comp8: typedesc): Group =
-  result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID, Comp6.ID, Comp7.ID, Comp8.ID})
-proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5, Comp6, Comp7, Comp8, Comp9: typedesc): Group =
-  result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID, Comp6.ID, Comp7.ID, Comp8.ID, Comp9.ID})
-proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5, Comp6, Comp7, Comp8, Comp9, Comp10: typedesc): Group =
-  result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID, Comp6.ID, Comp7.ID, Comp8.ID, Comp9.ID, Comp10.ID})
+# proc group*(this: SystemEcs, included: ComponentMask, excluded: ComponentMask): Group =
+
+#   discard
+proc group*(this: SystemEcs, incl: set[uint16]): Group =
+  result = group_impl(this, incl, {0'u16})
+proc group*(this: SystemEcs, incl: set[uint16], excl: set[uint16]): Group =
+  result = group_impl(this, incl, excl)
+
+# template groupe*(this: SystemEcs, code: typed): Group =
+#   #echo code[0].typedesc
+#   Group()
+
+# proc group*(this: SystemEcs, included: set[uint16]): Group =
+#   Group()
+# proc group*(this: SystemEcs, included: set[uint16], excluded: set[uint16]): Group =
+#   Group()
+
+# proc group*(this: SystemEcs, Comp1: typedesc): Group =
+#   result = group_impl(this, {Comp1.ID})
+# proc group*(this: SystemEcs, Comp1, Comp2: typedesc): Group =
+#   result = group_impl(this, {Comp1.ID, Comp2.ID})
+# proc group*(this: SystemEcs, Comp1, Comp2, Comp3: typedesc): Group =
+#   result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID})
+# proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4: typedesc): Group =
+#   result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID})
+# proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5: typedesc): Group =
+#   result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID})
+# proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5, Comp6: typedesc): Group =
+#   result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID, Comp6.ID})
+# proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5, Comp6, Comp7: typedesc): Group =
+#   result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID, Comp6.ID, Comp7.ID})
+# proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5, Comp6, Comp7, Comp8: typedesc): Group =
+#   result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID, Comp6.ID, Comp7.ID, Comp8.ID})
+# proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5, Comp6, Comp7, Comp8, Comp9: typedesc): Group =
+#   result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID, Comp6.ID, Comp7.ID, Comp8.ID, Comp9.ID})
+# proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5, Comp6, Comp7, Comp8, Comp9, Comp10: typedesc): Group =
+#   result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID, Comp6.ID, Comp7.ID, Comp8.ID, Comp9.ID, Comp10.ID})
 
 
 var id_next_group {.global.} : uint16 = 0
-proc group_impl(this: SystemEcs, components: set[uint16]): Group = 
-  var signature = components
+proc group_impl(this: SystemEcs, incl: set[uint16], excl: set[uint16]): Group = 
+  #var signature = components
   var group_next : Group = nil
   let groups = addr this.groups
   
   for i in 0..groups[].high:
       let gr = groups[][i]
-      if gr.signature == signature:
+      if gr.signature == incl:
           group_next = gr
           break
   
   if group_next.isNil:
       group_next = groups[].add_new_ref()
       group_next.id = id_next_group
-      group_next.signature = signature
+      group_next.signature = incl
+      group_next.signature_excl = excl
       group_next.entities = newSeqOfCap[ent](1000)
       group_next.entities_added = newSeqOfCap[ent](500)
       group_next.entities_removed = newSeqOfCap[ent](500)
       group_next.system = this
-      for id in signature:
+      for id in incl:
         storages[id].groups.add(group_next)
       id_next_group += 1
   
@@ -219,7 +289,7 @@ template insert(gr: Group, self: ent, entityMeta: ptr Entity) =
 template remove(gr: Group, self: ent, entityMeta: ptr Entity) =
   let index = binarysearch(addr gr.entities, self.id)
   gr.entities.delete(index)
-  #entityMeta.signature_groups.excl(gr.id)
+  entityMeta.signature_groups.excl(gr.id)
   gr.entities_removed.add(self)
 
 # template group_add(self: ptr Operation, entityMeta: ptr Entity) =
@@ -269,25 +339,20 @@ proc execute*(ecs: SystemEcs) {.inline.} =
      while true:
        case op.kind:
           of Kill:
+            for gid in entityMeta.signature_groups:
+              let group = ecs.groups[gid]
+              group.remove(op.entity,entityMeta)
             op.kind = Empty
           of Remove:
             let cid = op.arg
             let groups = addr storages[cid].groups
             for group in groups[]:
               if group.id in entityMeta.signature_groups:
-                #if cid notin entityMeta.signature:
-                  group.remove(op.entity,entityMeta)
-              #else:
-              
-              #   if group.signature <= entityMeta.signature:
-              #     group.insert(op.entity, entityMeta)
-#entityMeta.signature_groups.excl(gr.id)
-          
+                  group.remove(op.entity,entityMeta)   
             if entityMeta.signature == {}:
                 op.kind = Empty
                 for e in entityMeta.childs:
                     e.release()
-
             break
           of Empty:
             if op.entity.age == high(uint32):
@@ -306,11 +371,14 @@ proc execute*(ecs: SystemEcs) {.inline.} =
             let cid = op.arg
             let groups = addr storages[cid].groups
             for group in groups[]:
-              if group.signature <= entityMeta.signature:
+              if group.signature <= entityMeta.signature and
+                not(group.signature_excl <= entityMeta.signature):
+                #echo group.signature_excl, "__", entityMeta.signature
+                #cid notin group.signature_excl: #group.signature_excl <= entityMeta.signature:
                 group.insert(op.entity, entityMeta)
-              else:
-                if group.id in entityMeta.signature_groups:
-                  group.remove(op.entity, entityMeta)
+              #else:
+              #  if group.id in entityMeta.signature_groups:
+              #    group.remove(op.entity, entityMeta)
             break
               
           of Init:
@@ -376,7 +444,7 @@ macro formatComponentPretty(t: typedesc): untyped =
   result = parseStmt(source)
   #result.add(parseStmt(source2))
 
-var storages* = newSeq[StorageBase]()
+var storages* = newSeq[StorageBase](1)
 
 #@storage
 template impl_storage(t: typedesc) {.used.} =
