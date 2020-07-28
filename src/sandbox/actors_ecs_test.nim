@@ -20,10 +20,12 @@ ecs.add ComponentFoo
 ecs.add ComponentToo
 ecs.add ComponentGoo
 
+proc healthEvents()
+
 var included = mask(CToo,CFoo)
 var excluded = mask(CGoo)
 var healths  = group(ecsMain,included)
-
+healths.events.add(healthEvents)
 
 var e1 = ecsMain.entity()
 var foo = e1.get ComponentFoo
@@ -34,11 +36,15 @@ ecsMain.execute
 echo healths.entities.len
 echo e1.exist
 e1.release
-e1.get (ComponentFoo):
-   echo cfoo.health, "  pook"
+
 echo e1.exist
 ecsMain.execute
 echo e1.exist
 echo healths.entities.len
+
+proc healthEvents() =
+  for e in healths.entities_added:
+    echo e.id, "___BA"
+  discard
 
 

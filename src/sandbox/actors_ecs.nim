@@ -55,7 +55,7 @@ type Group* = ref object of RootObj
   entities*         : seq[ent]
   entities_added*   : seq[ent]
   entities_removed* : seq[ent]
-  events*           : seq[proc(added: var seq[ent], removed: var seq[ent])]
+  events*           : seq[proc()]
 
 type ComponentMeta {.packed.} = object
   id*        : uint16
@@ -91,6 +91,7 @@ var entities   = new_seqofcap[Entity](1024)
 var ents_stash = newSeqOfCap[ent](256)
 
 var ecsMain* = SystemEcs()
+
 
 
 #@entities
@@ -136,7 +137,28 @@ proc release*(this: ent) =
   #   entityMeta.parent = (0'u32,0'u32)
   #   entityMeta.childs.setLen(0)
   #   ecs.ents_alive.excl(op.entity.id)
+proc parent*(this: ent): ent =
+    entities[this.id].parent
+proc setParent*(this: ent, par: ent) =
+    let entity_this = addr entities[this.id]
+    let entity_parent = addr entities[par.id]
+    entity_this.parent = par
+    entity_parent.childs.add(this)
+proc unparent*(this: ent) =
+    let entity_this = addr entities[this.id]
+    let entity_parent = addr entities[entity_this.parent.id]
+    
+    for i in 0..entity_parent.childs.high:
+        if entity_parent.childs[i].id == this.id:
+            entity_parent.childs.del(i)
+            break
+    
+    entity_this.parent = (0'u32,0'u32)
 
+var e = ecsMain.entity() # first entity
+
+proc `$`*(this: ent): string =
+    $this.id
 
 #@checkers
 template exist_impl(this, entity: untyped): untyped =
@@ -407,9 +429,16 @@ proc execute*(ecs: SystemEcs) {.inline.} =
   if size>0:
      for gr in ecs.groups:
          for ev in gr.events:
-             ev(gr.entities_added,gr.entities_removed)
+             ev()
          gr.entities_added.setLen(0)
          gr.entities_removed.setLen(0)
+
+iterator items*(range: Group): ent =
+  range.system.execute()
+  var i = range.entities.low
+  while i <= range.entities.high:
+      yield range.entities[i]
+      inc i
 
 #@formatters
 proc formatComponent(s: var string) =
