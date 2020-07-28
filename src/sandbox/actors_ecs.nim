@@ -35,7 +35,6 @@ type SystemEcs* = ref object
   operations*   : seq[Operation]
   ents_alive*   : HashSet[uint32]
   groups        : seq[Group]
-  #groupsTable   : Table[uint16,seq[Group]]
 
 type Entity* {.packed.} = object
   dirty*            : bool        #dirty allows to set all components for a new entity in one init command
@@ -43,12 +42,9 @@ type Entity* {.packed.} = object
   layer*            : int
   system*           : SystemEcs
   parent*           : ent
-  isAlive*          : bool
   signature*        : set[uint16] 
-  #signature_comps*  : set[uint16] # double buffer, need for such methods as has/get and init operation
   signature_groups* : set[uint16] # what groups are already used
   childs*           : seq[ent]
-  #groups*           : seq[Group]
 
 type Group* = ref object of RootObj
   id*               : uint16
@@ -78,8 +74,8 @@ type OpKind = enum
   Init
   Add,
   Remove,
-  Kill,
-  Empty
+  Kill
+
 type Operation {.packed.} = object
   kind*  : OpKind
   entity*: ent 
@@ -88,9 +84,9 @@ type Operation {.packed.} = object
 
 var ecs* = EcsInstance()
 
-var id_next {.global.}         : uint32 = 0 # confusion with {.global.} in proc, redefining
-var id_component_next {.used.} : uint16 = 1 
-var id_entity_last {.used.}    : uint32 = 0
+var id_next           {.global.} : uint32 = 0 # confusion with {.global.} in proc, redefining
+var id_component_next {.used.}   : uint16 = 1 
+var id_entity_last    {.used.}   : uint32 = 0
 var entities   = new_seqofcap[Entity](1024)
 var ents_stash = newSeqOfCap[ent](256)
 
@@ -99,139 +95,179 @@ var ecsMain* = SystemEcs()
 
 #@entities
 proc entity*(this: SystemEcs): ent {.inline.} =
-
     if ents_stash.len > 0:
         result = ents_stash[0]
         let e = addr entities[result.id]
         e.dirty = true
         e.system = this
-        #e.layer = layer.int
-        #lr = e.layer
         ents_stash.del(0)
     else:
         let e = entities.addNew()
         e.dirty = true
         e.system = this
-        #e.layer = layer.int
-        #lr = e.layer
         result.id = id_next
         result.age = 0
         id_next += 1
     
-
-    #let layer = ecs.layers[lr]
     let op = this.operations.addNew()
     op.entity = result
     op.kind = OpKind.Init
     this.ents_alive.incl(result.id)
-    entities[result.id].isAlive = true
-    #op.entity = result
-    #op.kind = OpKind.Init
-    #layer.ents_alive.incl(result.id)
-
-proc exist*(this: ent): bool =
-  entities[this.id].isAlive
-
 proc release*(this: ent) = 
     check_error_release_empty(this)
-    let entity = entities[this.id]
+    var entity = addr entities[this.id]
     let op = entity.system.operations.addNew()
     op.entity = this
     op.kind = OpKind.Kill
-    entities[this.id].isAlive = false
     for e in entity.childs:
         release(e)
+    entity.signature = {0'u16}
+    
+    if entity.age == high(uint32):
+      entity.age = 0
+    else: entity.age += 1
+  #   op.entity.age == high(uint32):
+  #   op.entity.age = 0
+  # else:
+  #   op.entity.age += 1
+  #   entityMeta.age = op.entity.age
+  #   ents_stash.add(op.entity)
+  #   entityMeta.signature_groups = {0'u16}
+  #   entityMeta.parent = (0'u32,0'u32)
+  #   entityMeta.childs.setLen(0)
+  #   ecs.ents_alive.excl(op.entity.id)
 
 
+#@checkers
+template exist_impl(this, entity: untyped): untyped =
+  entity.age == this.age and entity.signature.card>0
 
-template incl*(T: typedesc): set[uint16] =
+proc exist*(this: ent): bool =
+  exist_impl(this,addr entities[this.id])
+
+proc has*(this: ent, t: typedesc): bool {.inline.} =
+  let entity = entities[this.id]
+  exist_impl(this,entity) and entity.signature.contains(t.ID)
+
+proc has*(this: ent, t,y: typedesc): bool {.inline.} =
+  let entity = addr entities[this.id]
+  exist_impl(this,entity)         and
+  entity.signature.contains(t.ID) and
+  entity.signature.contains(y.ID)
+
+proc has*(this: ent, t,y,u: typedesc): bool {.inline.} =
+  let entity = addr entities[this.id]
+  exist_impl(this,entity)         and
+  entity.signature.contains(t.ID) and
+  entity.signature.contains(y.ID) and
+  entity.signature.contains(u.ID)
+
+proc has*(this: ent, t,y,u,i: typedesc): bool {.inline.} =
+  let entity = addr entities[this.id]
+  exist_impl(this,entity)         and
+  entity.signature.contains(t.ID) and
+  entity.signature.contains(y.ID) and
+  entity.signature.contains(u.ID) and
+  entity.signature.contains(i.ID)
+
+proc has*(this: ent, t,y,u,i,o: typedesc): bool {.inline.} =
+  let entity = addr entities[this.id]
+  exist_impl(this,entity)         and
+  entity.signature.contains(t.ID) and
+  entity.signature.contains(y.ID) and
+  entity.signature.contains(u.ID) and
+  entity.signature.contains(i.ID) and
+  entity.signature.contains(o.ID)
+
+proc has*(this: ent, t,y,u,i,o,p: typedesc): bool {.inline.} =
+  let entity = addr entities[this.id]
+  exist_impl(this,entity)         and
+  entity.signature.contains(t.ID) and
+  entity.signature.contains(y.ID) and
+  entity.signature.contains(u.ID) and
+  entity.signature.contains(i.ID) and
+  entity.signature.contains(o.ID) and
+  entity.signature.contains(p.ID)
+
+macro get*(this: ent, args: untyped, code: untyped): untyped =
+  var command = nnkCommand.newTree(
+                  nnkDotExpr.newTree(
+                      ident($this),
+                      ident("has")))
+    
+  if args.len > 1:
+      for elem in args:
+          command.add(ident($elem))
+          var elem_name = $elem
+          formatComponentAlias(elem_name) 
+          var elem_var = toLowerAscii(elem_name[0]) & substr(elem_name, 1)
+          formatComponent(elem_var)
+          var n = nnkLetSection.newTree(
+              nnkIdentDefs.newTree(
+                  newIdentNode(elem_var),
+                  newEmptyNode(),
+                  nnkDotExpr.newTree(
+                      newIdentNode($this),
+                      newIdentNode(elem_var)
+                  ),
+              )
+          )
+          code.insert(0,n)
+      
+  else:
+      command.add(ident($args))
+      var elem_name = $args
+      formatComponentAlias(elem_name) 
+      var elem_var = toLowerAscii(elem_name[0]) & substr(elem_name, 1)
+      formatComponent(elem_var)
+      var n = nnkLetSection.newTree(
+          nnkIdentDefs.newTree(
+              newIdentNode(elem_var),
+              newEmptyNode(),
+              nnkDotExpr.newTree(
+                  newIdentNode($this),
+                  newIdentNode(elem_var)
+              ),
+          )
+      )
+      code.insert(0,n)
+
+  var node_head = nnkStmtList.newTree(
+      nnkIfStmt.newTree(
+          nnkElifBranch.newTree(
+              command,
+               nnkStmtList.newTree(
+                   code
+               )
+          )
+      )
+  )
+  result = node_head
+
+template mask*(T: typedesc): set[uint16] =
   {T.ID}
-template incl*(T,Y: typedesc): set[uint16] =
+template mask*(T,Y: typedesc): set[uint16] =
   {T.ID,Y.ID}
-template incl*(T,Y,U: typedesc): set[uint16] =
+template mask*(T,Y,U: typedesc): set[uint16] =
   {T.ID,Y.ID, U.ID}
-template incl*(T,Y,U,I: typedesc): set[uint16] =
+template mask*(T,Y,U,I: typedesc): set[uint16] =
   {T.ID,Y.ID, U.ID, I.ID}
-template incl*(T,Y,U,I,O: typedesc): set[uint16] =
+template mask*(T,Y,U,I,O: typedesc): set[uint16] =
   {T.ID,Y.ID, U.ID, I.ID,O.ID}
-template incl*(T,Y,U,I,O,P: typedesc): set[uint16] =
+template mask*(T,Y,U,I,O,P: typedesc): set[uint16] =
   {T.ID,Y.ID, U.ID, I.ID,O.ID,P.ID}
-template incl*(T,Y,U,I,O,P,S: typedesc): set[uint16] =
+template mask*(T,Y,U,I,O,P,S: typedesc): set[uint16] =
   {T.ID,Y.ID, U.ID, I.ID,O.ID,P.ID,S.ID}
-template incl*(T,Y,U,I,O,P,S,D: typedesc): set[uint16] =
+template mask*(T,Y,U,I,O,P,S,D: typedesc): set[uint16] =
   {T.ID,Y.ID, U.ID, I.ID,O.ID,P.ID,S.ID,D.ID}
-
-template excl*(T: typedesc): set[uint16] =
-  {T.ID}
-template excl*(T,Y: typedesc): set[uint16] =
-  {T.ID,Y.ID}
-template excl*(T,Y,U: typedesc): set[uint16] =
-  {T.ID,Y.ID, U.ID}
-template excl*(T,Y,U,I: typedesc): set[uint16] =
-  {T.ID,Y.ID, U.ID, I.ID}
-template excl*(T,Y,U,I,O: typedesc): set[uint16] =
-  {T.ID,Y.ID, U.ID, I.ID,O.ID}
-template excl*(T,Y,U,I,O,P: typedesc): set[uint16] =
-  {T.ID,Y.ID, U.ID, I.ID,O.ID,P.ID}
-template excl*(T,Y,U,I,O,P,S: typedesc): set[uint16] =
-  {T.ID,Y.ID, U.ID, I.ID,O.ID,P.ID,S.ID}
-template excl*(T,Y,U,I,O,P,S,D: typedesc): set[uint16] =
-  {T.ID,Y.ID, U.ID, I.ID,O.ID,P.ID,S.ID,D.ID}
-#proc mask*[T](): set[uint16] =
-#  {T.ID}
-# proc excluded*[T](): set[uint16] =
-#   {T.ID}
-# template poo*(): untyped =
-#   Group()
-
-# template mask*(code: openarray[typedesc]) =
-#   for c in code:
-#     echo c
-#   discard
 
 #@groups
-# proc group*(this: SystemEcs, included: ComponentMask, excluded: ComponentMask): Group =
-
-#   discard
+var id_next_group {.global.} : uint16 = 0
 proc group*(this: SystemEcs, incl: set[uint16]): Group =
   result = group_impl(this, incl, {0'u16})
 proc group*(this: SystemEcs, incl: set[uint16], excl: set[uint16]): Group =
   result = group_impl(this, incl, excl)
-
-# template groupe*(this: SystemEcs, code: typed): Group =
-#   #echo code[0].typedesc
-#   Group()
-
-# proc group*(this: SystemEcs, included: set[uint16]): Group =
-#   Group()
-# proc group*(this: SystemEcs, included: set[uint16], excluded: set[uint16]): Group =
-#   Group()
-
-# proc group*(this: SystemEcs, Comp1: typedesc): Group =
-#   result = group_impl(this, {Comp1.ID})
-# proc group*(this: SystemEcs, Comp1, Comp2: typedesc): Group =
-#   result = group_impl(this, {Comp1.ID, Comp2.ID})
-# proc group*(this: SystemEcs, Comp1, Comp2, Comp3: typedesc): Group =
-#   result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID})
-# proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4: typedesc): Group =
-#   result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID})
-# proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5: typedesc): Group =
-#   result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID})
-# proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5, Comp6: typedesc): Group =
-#   result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID, Comp6.ID})
-# proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5, Comp6, Comp7: typedesc): Group =
-#   result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID, Comp6.ID, Comp7.ID})
-# proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5, Comp6, Comp7, Comp8: typedesc): Group =
-#   result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID, Comp6.ID, Comp7.ID, Comp8.ID})
-# proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5, Comp6, Comp7, Comp8, Comp9: typedesc): Group =
-#   result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID, Comp6.ID, Comp7.ID, Comp8.ID, Comp9.ID})
-# proc group*(this: SystemEcs, Comp1, Comp2, Comp3, Comp4, Comp5, Comp6, Comp7, Comp8, Comp9, Comp10: typedesc): Group =
-#   result = group_impl(this, {Comp1.ID, Comp2.ID, Comp3.ID, Comp4.ID, Comp5.ID, Comp6.ID, Comp7.ID, Comp8.ID, Comp9.ID, Comp10.ID})
-
-
-var id_next_group {.global.} : uint16 = 0
 proc group_impl(this: SystemEcs, incl: set[uint16], excl: set[uint16]): Group = 
-  #var signature = components
   var group_next : Group = nil
   let groups = addr this.groups
   
@@ -250,8 +286,12 @@ proc group_impl(this: SystemEcs, incl: set[uint16], excl: set[uint16]): Group =
       group_next.entities_added = newSeqOfCap[ent](500)
       group_next.entities_removed = newSeqOfCap[ent](500)
       group_next.system = this
-      for id in incl:
-        storages[id].groups.add(group_next)
+      if not incl.contains(0):
+        for id in incl:
+          storages[id].groups.add(group_next)
+      if not excl.contains(0):
+       for id in excl:
+         storages[id].groups.add(group_next)
       id_next_group += 1
   
   group_next
@@ -285,48 +325,43 @@ template insert(gr: Group, self: ent, entityMeta: ptr Entity) =
               gr.entities[right] = self
   entityMeta.signature_groups.incl(gr.id)
   gr.entities_added.add(self)
- 
 template remove(gr: Group, self: ent, entityMeta: ptr Entity) =
   let index = binarysearch(addr gr.entities, self.id)
   gr.entities.delete(index)
   entityMeta.signature_groups.excl(gr.id)
   gr.entities_removed.add(self)
+template checkMask(entity: ptr Entity, group: Group): bool =
+  if group.signature <= entityMeta.signature and 
+    not (group.signature_excl <= entityMeta.signature):
+      true
+  else: false
+template checkGroup(entity: ptr Entity, group: Group): bool =
+  if group.id in entity.signature_groups:
+    true
+  else: false
+template changeEntity(op: ptr Operation, entityMeta: ptr Entity) =
+  let cid = op.arg
+  let groups = addr storages[cid].groups
+  for group in groups[]:
+    let masked  = checkMask(entityMeta, group)
+    let grouped = checkGroup(entityMeta, group)
+    if grouped and not masked:
+      group.remove(op.entity, entityMeta)
+    elif masked and not grouped:
+      group.insert(op.entity, entityMeta)
+  discard
 
-# template group_add(self: ptr Operation, entityMeta: ptr Entity) =
-#   let groups = addr storages[self.arg].groups
-#   for i in 0..groups[].high:
-#     let gr = groups[][i]
-#     if gr.id notin entityMeta.signature_groups:
-#       if gr.signature <= entityMeta.signature:
-# template group_check(self: ptr Operation, entityMeta: ptr Entity) =
-#   let groups = addr storages[self.arg].groups
-#   for i in 0..groups[].high:
-#       let gr = groups[][i]
-#       if gr.id notin entityMeta.signature_groups:
-#           if gr.signature <= entityMeta.signature:
-#   # for gr in storages[self.arg].groups:
-#   #   if gr.signature <= entityMeta.signature:
-       
-#   #      #let id = binarysearch(addr gr.entities, op.entity.id)
-#    # discard
-#   discard
-
-# template group_remove(self: ent, entityMeta: ptr Entity,cid: int) =
-#   # for gid in entityMeta.signature_groups:
-#   #   discard
-
-#   #var i = 0
-#   for gr in storages[cid].groups:
-#     if gr.signature <= entityMeta.signature:
-#         let id = binarysearch(addr gr.entities, op.entity.id)
-#         gr.entities.delete(id)
-#         entityMeta.signature_groups.excl(gr.id)
-#         #groupsToRemove.add(i)
-#         gr.entities_removed.add(self)
-#    # i+=1
-#   #for index in groupsToRemove:
-#   #  entityMeta.groups.delete(index)
-#  # groupsToRemove.setLen(0)
+template empty(ecs: SystemEcs, op: ptr Operation, entityMeta: ptr Entity) =
+  # if op.entity.age == high(uint32):
+  #   op.entity.age = 0
+  # else:
+  #   op.entity.age += 1
+  #   entityMeta.age = op.entity.age
+    ents_stash.add(op.entity)
+    entityMeta.signature_groups = {0'u16}
+    entityMeta.parent = (0'u32,0'u32)
+    entityMeta.childs.setLen(0)
+    ecs.ents_alive.excl(op.entity.id)
 
 #@processing
 proc execute*(ecs: SystemEcs) {.inline.} =
@@ -335,50 +370,25 @@ proc execute*(ecs: SystemEcs) {.inline.} =
   for i in 0..operations[].high:
      let op = addr operations[][i]
      let entityMeta = addr entities[op.entity.id]
-     #let arg = op.arg
      while true:
        case op.kind:
           of Kill:
             for gid in entityMeta.signature_groups:
               let group = ecs.groups[gid]
               group.remove(op.entity,entityMeta)
-            op.kind = Empty
-          of Remove:
-            let cid = op.arg
-            let groups = addr storages[cid].groups
-            for group in groups[]:
-              if group.id in entityMeta.signature_groups:
-                  group.remove(op.entity,entityMeta)   
-            if entityMeta.signature == {}:
-                op.kind = Empty
-                for e in entityMeta.childs:
-                    e.release()
+            ecs.empty(op,entityMeta)
             break
-          of Empty:
-            if op.entity.age == high(uint32):
-              op.entity.age = 0
+          of Remove:
+            #echo "pool"
+            if entityMeta.signature == {}:
+              for e in entityMeta.childs:
+                  e.release()
+              ecs.empty(op,entityMeta)
             else:
-              op.entity.age += 1
-              entityMeta.age = op.entity.age
-              ents_stash.add(op.entity)
-              entityMeta.signature = {}
-              entityMeta.signature_groups = {}
-              entityMeta.parent = (0'u32,0'u32)
-              entityMeta.childs.setLen(0)
-              ecs.ents_alive.excl(op.entity.id)
+              changeEntity(op, entityMeta);
             break
           of Add:
-            let cid = op.arg
-            let groups = addr storages[cid].groups
-            for group in groups[]:
-              if group.signature <= entityMeta.signature and
-                not(group.signature_excl <= entityMeta.signature):
-                #echo group.signature_excl, "__", entityMeta.signature
-                #cid notin group.signature_excl: #group.signature_excl <= entityMeta.signature:
-                group.insert(op.entity, entityMeta)
-              #else:
-              #  if group.id in entityMeta.signature_groups:
-              #    group.remove(op.entity, entityMeta)
+            changeEntity(op, entityMeta);  
             break
               
           of Init:
@@ -386,8 +396,9 @@ proc execute*(ecs: SystemEcs) {.inline.} =
             for cid in entityMeta.signature:
               let groups = addr storages[cid].groups
               for group in groups[]:
-                if group.id notin entityMeta.signature_groups:
-                  if group.signature <= entityMeta.signature:
+                let grouped = checkGroup(entityMeta, group)
+                if not grouped:
+                  if checkMask(entityMeta, group):
                     group.insert(op.entity, entityMeta)
             break
           
@@ -480,7 +491,6 @@ template impl_storage(t: typedesc) {.used.} =
       addr storage.container[storage.entities[self.id]]
 
   proc get*(self: ent, _: typedesc[t]): ptr t {.inline, discardable.} =
-      #check_error_has_component(self, t)
       if t.Id in entities[self.id].signature:
         return impl_get(self,_)
 
@@ -547,7 +557,6 @@ proc binarysearch(this: ptr seq[ent], value: uint32): int {.discardable, inline.
       else:
           right = m - 1
   return m
-
 proc hash*(x: set[uint16]): Hash =
   result = x.hash
   result = !$result
@@ -571,14 +580,3 @@ template check_error_release_empty(this: ent): untyped =
     if entities[this.id].signature.card == 0:
       log_external fatal, &"You are trying to release an empty entity with id {arg1}. Entities without any components are released automatically."
       raise newException(EcsError,&"You are trying to release an empty entity with id {arg1}. Entities without any components are released automatically.")
-
-template check_error_has_component(this: ent, t: typedesc): untyped =
-  when defined(debug):
-    let arg1 {.inject.} = t.name
-    let arg2 {.inject.} = this.id
-    if t.Id in entities[this.id].signature:
-      log_external fatal, &"You are trying to add a {arg1} that is already attached to entity with id {arg2}"
-      raise newException(EcsError,&"You are trying to add a {arg1} that is already attached to entity with id {arg2}")
-
-
-
