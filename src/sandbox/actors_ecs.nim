@@ -53,8 +53,8 @@ type Group* = ref object of RootObj
   signature*        : set[uint16]
   signature_excl*   : set[uint16]
   entities*         : seq[ent]
-  entities_added*   : seq[ent]
-  entities_removed* : seq[ent]
+  added*            : seq[ent]
+  removed*          : seq[ent]
   events*           : seq[proc()]
 
 type ComponentMeta {.packed.} = object
@@ -85,8 +85,8 @@ type Operation {.packed.} = object
 var ecs* = EcsInstance()
 
 var id_next           {.global.} : uint32 = 0 # confusion with {.global.} in proc, redefining
-var id_component_next {.used.}   : uint16 = 1 
 var id_entity_last    {.used.}   : uint32 = 0
+var id_component_next {.used.}   : uint16 = 1 
 var entities   = new_seqofcap[Entity](1024)
 var ents_stash = newSeqOfCap[ent](256)
 
@@ -114,14 +114,17 @@ proc entity*(this: SystemEcs): ent {.inline.} =
     op.entity = result
     op.kind = OpKind.Init
     this.ents_alive.incl(result.id)
+
 proc release*(this: ent) = 
     check_error_release_empty(this)
     var entity = addr entities[this.id]
     let op = entity.system.operations.addNew()
     op.entity = this
     op.kind = OpKind.Kill
+   
     for e in entity.childs:
         release(e)
+    
     entity.signature = {0'u16}
     
     if entity.age == high(uint32):
@@ -137,13 +140,16 @@ proc release*(this: ent) =
   #   entityMeta.parent = (0'u32,0'u32)
   #   entityMeta.childs.setLen(0)
   #   ecs.ents_alive.excl(op.entity.id)
+
 proc parent*(this: ent): ent =
     entities[this.id].parent
+
 proc setParent*(this: ent, par: ent) =
     let entity_this = addr entities[this.id]
     let entity_parent = addr entities[par.id]
     entity_this.parent = par
     entity_parent.childs.add(this)
+
 proc unparent*(this: ent) =
     let entity_this = addr entities[this.id]
     let entity_parent = addr entities[entity_this.parent.id]
@@ -285,10 +291,12 @@ template mask*(T,Y,U,I,O,P,S,D: typedesc): set[uint16] =
 
 #@groups
 var id_next_group {.global.} : uint16 = 0
+
 proc group*(this: SystemEcs, incl: set[uint16]): Group =
   result = group_impl(this, incl, {0'u16})
 proc group*(this: SystemEcs, incl: set[uint16], excl: set[uint16]): Group =
   result = group_impl(this, incl, excl)
+
 proc group_impl(this: SystemEcs, incl: set[uint16], excl: set[uint16]): Group = 
   var group_next : Group = nil
   let groups = addr this.groups
@@ -305,8 +313,8 @@ proc group_impl(this: SystemEcs, incl: set[uint16], excl: set[uint16]): Group =
       group_next.signature = incl
       group_next.signature_excl = excl
       group_next.entities = newSeqOfCap[ent](1000)
-      group_next.entities_added = newSeqOfCap[ent](500)
-      group_next.entities_removed = newSeqOfCap[ent](500)
+      group_next.added = newSeqOfCap[ent](500)
+      group_next.removed = newSeqOfCap[ent](500)
       group_next.system = this
       if not incl.contains(0):
         for id in incl:
@@ -346,21 +354,25 @@ template insert(gr: Group, self: ent, entityMeta: ptr Entity) =
           else:
               gr.entities[right] = self
   entityMeta.signature_groups.incl(gr.id)
-  gr.entities_added.add(self)
+  gr.added.add(self)
+
 template remove(gr: Group, self: ent, entityMeta: ptr Entity) =
   let index = binarysearch(addr gr.entities, self.id)
   gr.entities.delete(index)
   entityMeta.signature_groups.excl(gr.id)
-  gr.entities_removed.add(self)
+  gr.removed.add(self)
+
 template checkMask(entity: ptr Entity, group: Group): bool =
   if group.signature <= entityMeta.signature and 
     not (group.signature_excl <= entityMeta.signature):
       true
   else: false
+
 template checkGroup(entity: ptr Entity, group: Group): bool =
   if group.id in entity.signature_groups:
     true
   else: false
+
 template changeEntity(op: ptr Operation, entityMeta: ptr Entity) =
   let cid = op.arg
   let groups = addr storages[cid].groups
@@ -374,11 +386,10 @@ template changeEntity(op: ptr Operation, entityMeta: ptr Entity) =
   discard
 
 template empty(ecs: SystemEcs, op: ptr Operation, entityMeta: ptr Entity) =
-  # if op.entity.age == high(uint32):
-  #   op.entity.age = 0
-  # else:
-  #   op.entity.age += 1
-  #   entityMeta.age = op.entity.age
+    for gid in entityMeta.signature_groups:
+      let group = ecs.groups[gid]
+      group.remove(op.entity,entityMeta)
+
     ents_stash.add(op.entity)
     entityMeta.signature_groups = {0'u16}
     entityMeta.parent = (0'u32,0'u32)
@@ -395,13 +406,9 @@ proc execute*(ecs: SystemEcs) {.inline.} =
      while true:
        case op.kind:
           of Kill:
-            for gid in entityMeta.signature_groups:
-              let group = ecs.groups[gid]
-              group.remove(op.entity,entityMeta)
             ecs.empty(op,entityMeta)
             break
           of Remove:
-            #echo "pool"
             if entityMeta.signature == {}:
               for e in entityMeta.childs:
                   e.release()
@@ -430,8 +437,8 @@ proc execute*(ecs: SystemEcs) {.inline.} =
      for gr in ecs.groups:
          for ev in gr.events:
              ev()
-         gr.entities_added.setLen(0)
-         gr.entities_removed.setLen(0)
+         gr.added.setLen(0)
+         gr.removed.setLen(0)
 
 iterator items*(range: Group): ent =
   range.system.execute()

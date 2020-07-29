@@ -23,9 +23,12 @@ ecs.add ComponentGoo
 proc healthEvents()
 
 var included = mask(CToo,CFoo)
-var excluded = mask(CGoo)
+var included2 = mask(CFoo,CToo)
+var included3 = mask(CFoo,CGoo)
 var healths  = group(ecsMain,included)
+var healths2  = group(ecsMain,included2)
 healths.events.add(healthEvents)
+
 
 var e1 = ecsMain.entity()
 var foo = e1.get ComponentFoo
@@ -43,7 +46,7 @@ echo e1.exist
 echo healths.entities.len
 
 proc healthEvents() =
-  for e in healths.entities_added:
+  for e in healths.added:
     echo e.id, "___BA"
   discard
 
