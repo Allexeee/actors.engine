@@ -10,28 +10,36 @@ engine.core.pressKey         = engine.target.pressKeyImpl
 engine.core.pressMouse       = engine.target.pressMouseImpl 
 engine.core.getMousePosition = engine.target.getMousePositionImpl
 
+
+
 let app* = App()
 app.settings = AppSettings()
 
 let layerApp* = app.addLayer()
 layerApp.entity()
 
+let input* = app.addInput()
 
 
-
-addInput()
-
-
+# proc start*(this: App) {.inline.} =
+#   engine.target.start(this.settings.display_size, this.settings.name)
 
 # template start*(this: App, code: untyped): untyped =
-#   this.start()
 #   code
+#   this.start()
 
-proc start*(this: App) {.inline.} =
-  engine.target.start(this.settings.display_size, this.settings.name)
+
 
 template run*(this: App, code: untyped): untyped =
-  discard
+  engine.target.start(this.settings.display_size, this.settings.name)
+  while not engine.target.shouldQuit():
+    code
+    engine.target.updateImpl()
+  engine.target.dispose()
+
+
+proc quit*(this: App) =
+  engine.target.release()
 # template run*(this: App, code: untyped): untyped =
 #   var dt {.inject, used.} = 1/this.settings.fps
 #   var input {.inject, used.} = app.input

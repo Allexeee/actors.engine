@@ -92,6 +92,8 @@ type #@app
   App* = ref object
     settings*  : AppSettings
     layers*    : seq[Layer]
+    input*     : InputIndex
+
 
 type #@input
   Key* {.pure, size: int32.sizeof.} = enum

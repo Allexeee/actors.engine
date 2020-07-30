@@ -5,12 +5,11 @@ import a_core_types
 
 var storage      = newSeq[Input](0) 
 
-
 var pressKey* : proc(keycode: cint): bool {.inline.}
 var pressMouse* : proc(keycode: cint): bool {.inline.}
 var getMousePosition *: proc(): tuple[x: cfloat,y: cfloat] {.inline.}
 
-proc addInput*(): InputIndex {.discardable.} =
+proc addInput*(this: App): InputIndex {.discardable.} =
   var id {.global.} = 0
   let index = id.InputIndex
   storage.add(Input(id: index))
