@@ -1,5 +1,6 @@
 import macros
 
+
 proc debug_macro*(arg: string): NimNode =
     nnkStmtList.newTree(
         nnkCommand.newTree(
