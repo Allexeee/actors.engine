@@ -1,7 +1,8 @@
 import a_core_types
 
-proc getITick*[T](this: T): ITick =
-   ITick(tick: proc (dt: float) = this.tick(dt))
+proc getTick*[T](this: T): ITick =
+   ITick(tick: proc (layer: Layer) = this.tick(layer))
 
-proc getIDispose*[T](this: T): IDispose =
+
+proc getDispose*[T](this: T): IDispose =
   IDispose(dispose: proc() = this.dispose())

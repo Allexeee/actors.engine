@@ -9,6 +9,8 @@ export runtime
 
 var layerMain* = newLayer()
 
+# proc addTick*[T](this: ProcessorUpdate, obj: T) =
+#   this.ticks.add(obj.getTick)
 
 var processorCamera = ProcessorCamera()
 layerMain.updater.addTick(processorCamera)

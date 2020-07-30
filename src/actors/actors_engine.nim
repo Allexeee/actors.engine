@@ -1,7 +1,9 @@
-import engine/types
-import engine/actors_core
+import engine/actors_core as core
+import engine/actors_math as maths
+import engine/actors_renderer as renderer
+import engine/actors_target as target
 
-#import engine/core
-
-export types
-export actors_core
+export core
+export maths
+export renderer
+export target

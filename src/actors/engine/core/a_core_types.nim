@@ -5,17 +5,18 @@
 import tables
 import sets
 
+type System* = ref object of RootObj
+    layer* : Layer
 
 type #@ecs
   ent* = tuple
     id  : uint32
     age : uint32
 
-  SystemEcs* = ref object
+  SystemEcs* = ref object of System
     operations*    : seq[Operation]
     ents_alive*    : HashSet[uint32]
     groups*        : seq[Group]
-    layer*         : Layer
   
   Entity* {.packed.} = object
     dirty*            : bool        #dirty allows to set all components for a new entity in one init command
@@ -61,16 +62,21 @@ type #@ecs
     arg*   : uint16
 
 type #@layer
-  SystemUpdate* = ref object
+  SystemUpdate* = ref object of System
     ticks* : seq[ITick]
-    layer* : Layer 
+  
+  SystemTime* = ref object of System
+    deltaCap*  : float
+    scale*      : float
+
   Layer* = ref object of RootObj
     update* : SystemUpdate
     ecs*    : SystemEcs
+    time*   : SystemTime
 
 type #@interfaces
   ITick* = object
-    tick*: proc (dt: float)
+    tick*: proc (layer: Layer)
   IDispose* = object
     dispose*: proc()
 
@@ -78,17 +84,15 @@ type #@app
   AppSettings* = object
     name*      : string
     fps*       : float32
+    display_size* : tuple[width: int, height: int]
+    screen_size*  : tuple[width: int, height: int]
+    path_shaders* : string
+    path_assets*  : string
+
   App* = ref object
     settings*  : AppSettings
     layers*    : seq[Layer]
 
-# type AppSettings* = object 
-#   name*         : string
-#   fps*          : float32
-#   display_size* : tuple[width: int, height: int]
-#   screen_size*  : tuple[width: int, height: int]
-#   path_shaders* : string
-#   path_assets*  : string
 
 # type App* = ref object
 #   settings*: AppSettings
