@@ -17,6 +17,7 @@ proc start*(screensize: tuple[width: int, height: int], name: string) {.inline.}
   glfwWindowHint(GLFWOpenglForwardCompat, GLFW_TRUE)
   glfwWindowHint(GLFWResizable, GLFW_FALSE)
   glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
+  glfwWindowHint(GLFWDoubleBuffer, GLFW_FALSE)
   
   window =  glfwCreateWindow((cint)screensize.width, (cint)screensize.height, name, nil, nil)
   

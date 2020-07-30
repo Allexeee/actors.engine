@@ -68,6 +68,22 @@ type #@layer
   SystemTime* = ref object of System
     deltaCap*  : float
     scale*      : float
+  
+  TimeApp* = ref object
+    ticks*     : int
+    fromStart* : float
+    delta*     : float
+    counter*   : FpsCounter
+    lag*       : float
+    last*      : float
+    current*   : float
+
+  FpsCounter* = object
+    frames*  : int
+    updates* : int
+    timer*   : float
+    ms*      : float
+    
 
   Layer* = ref object of RootObj
     update* : SystemUpdate
@@ -90,9 +106,11 @@ type #@app
     path_assets*  : string
 
   App* = ref object
-    settings*  : AppSettings
-    layers*    : seq[Layer]
-    input*     : InputIndex
+    settings*     : AppSettings
+    time*         : TimeApp
+    layers*       : seq[Layer]
+    input*        : InputIndex
+    layersActive* : seq[Layer]
 
 
 type #@input

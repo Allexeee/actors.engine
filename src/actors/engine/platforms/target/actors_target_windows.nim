@@ -6,7 +6,7 @@ proc shouldQuit*():bool {.inline.} = window.windowShouldClose
 
 proc release*()= window.setWindowShouldClose(true)
 
-proc updateImpl*() {.inline.}=
+proc update*() {.inline.}=
   glfwPollEvents()
   window.swapBuffers()
 
@@ -28,3 +28,6 @@ proc getMousePositionImpl*(): tuple[x: cfloat,y: cfloat] {.inline.} =
   var x,y : cdouble
   window.getCursorPos(addr x,addr y)
   return (x.cfloat,y.cfloat)
+
+proc getTimeImpl*(): float =
+  glfwGetTime()
