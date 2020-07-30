@@ -228,17 +228,15 @@ type #@input
 
   InputIndex* = distinct int
   
-  SystemInput = object
-    mouse_press: array[MouseButton.high.int32,bool]
-    mouse_up: array[MouseButton.high.int32,bool]  
-  
   Input* = object
-    id: InputIndex
-    keycode_press: array[Key.high.int32,bool]
-    keycode_up:    array[Key.high.int32,bool] 
-    keycode_down:  array[Key.high.int32,bool] 
-    keycode_hold:  array[Key.high.int32,bool] 
-    keyhold_time:  array[Key.high.int32,float]
+    id*           :  InputIndex
+    mouse_press*  :  array[MouseButton.high.int32,bool]
+    mouse_up*     :  array[MouseButton.high.int32,bool]
+    keycode_press*:  array[Key.high.int32,bool]
+    keycode_up*   :  array[Key.high.int32,bool] 
+    keycode_down* :  array[Key.high.int32,bool] 
+    keycode_hold* :  array[Key.high.int32,bool] 
+    keyhold_time* :  array[Key.high.int32,float]
 
 
 

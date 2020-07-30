@@ -6,12 +6,22 @@ export engine
 export runtime
 export utils
 
+engine.core.pressKey         = engine.target.pressKeyImpl
+engine.core.pressMouse       = engine.target.pressMouseImpl 
+engine.core.getMousePosition = engine.target.getMousePositionImpl
 
 let app* = App()
 app.settings = AppSettings()
 
 let layerApp* = app.addLayer()
 layerApp.entity()
+
+
+
+
+addInput()
+
+
 
 # template start*(this: App, code: untyped): untyped =
 #   this.start()
