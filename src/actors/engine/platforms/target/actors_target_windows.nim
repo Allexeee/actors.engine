@@ -1,14 +1,19 @@
 when defined(renderer_opengl):
   include actors_target_windows_opengl
 
- 
+
 proc shouldQuit*():bool {.inline.} = window.windowShouldClose
 
 proc release*()= window.setWindowShouldClose(true)
 
-proc update*() {.inline.}=
+proc pollEvents*() {.inline.} =
   glfwPollEvents()
-  window.swapBuffers()
+
+
+
+
+
+
 
 proc dispose*() =
   window.destroyWindow()
@@ -29,5 +34,5 @@ proc getMousePositionImpl*(): tuple[x: cfloat,y: cfloat] {.inline.} =
   window.getCursorPos(addr x,addr y)
   return (x.cfloat,y.cfloat)
 
-proc getTimeImpl*(): float =
+proc getTime*(): float =
   glfwGetTime()

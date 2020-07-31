@@ -8,6 +8,10 @@ proc debug_macro*(arg: string): NimNode =
             )
         )
 
+proc remove*[T](this: var openArray[T], elem: T) =
+  this.remove(elem)
+
+
 proc add_new*[T](this: var seq[T]): ptr T {.inline.} =
     this.add(T())
     addr this[this.high]

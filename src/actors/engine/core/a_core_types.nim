@@ -5,6 +5,8 @@
 import tables
 import sets
 
+var app* : App
+
 type System* = ref object of RootObj
     layer* : Layer
 
@@ -66,24 +68,21 @@ type #@layer
     ticks* : seq[ITick]
   
   SystemTime* = ref object of System
-    deltaCap*  : float
-    scale*      : float
+    scale*      : float32
   
-  TimeApp* = ref object
-    ticks*     : int
-    fromStart* : float
-    delta*     : float
-    counter*   : FpsCounter
-    lag*       : float
-    last*      : float
-    current*   : float
-
+  AppTime* = ref object
+    seconds*        : float
+    frames*         : float
+    updates*        : float
+    lag*            : float
+    last*           : float
+    counter*        : FpsCounter
+  
   FpsCounter* = object
-    frames*  : int
-    updates* : int
-    timer*   : float
-    ms*      : float
-    
+    updates* : float
+    updates_last* : float
+    frames*  : float
+    frames_last* : float
 
   Layer* = ref object of RootObj
     update* : SystemUpdate
@@ -98,8 +97,11 @@ type #@interfaces
 
 type #@app
   AppSettings* = object
+    vsync*     : int32
+    vsync_toggle*     : bool
     name*      : string
     fps*       : float32
+    ups*       : float32
     display_size* : tuple[width: int, height: int]
     screen_size*  : tuple[width: int, height: int]
     path_shaders* : string
@@ -107,7 +109,7 @@ type #@app
 
   App* = ref object
     settings*     : AppSettings
-    time*         : TimeApp
+    time*         : AppTime
     layers*       : seq[Layer]
     input*        : InputIndex
     layersActive* : seq[Layer]
@@ -115,7 +117,7 @@ type #@app
 
 type #@input
   Key* {.pure, size: int32.sizeof.} = enum
-    Space = 32
+    space = 32
     Apostrophe = 39
     Comma = 44
     Minus = 45
