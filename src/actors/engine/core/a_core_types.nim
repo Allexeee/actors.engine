@@ -98,7 +98,6 @@ type #@interfaces
 type #@app
   AppSettings* = object
     vsync*     : int32
-    vsync_toggle*     : bool
     name*      : string
     fps*       : float32
     ups*       : float32

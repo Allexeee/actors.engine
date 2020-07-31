@@ -44,20 +44,19 @@ let input* = app.addInput()
 proc getTime* (app: App) : float {.inline.} =
   engine.target.getTime()
 
+proc vsync*(app: App, arg: int32) =
+  if arg != app.settings.vsync:
+    app.settings.vsync = arg
+    engine.target.setVSync(app.settings.vsync)
+
 
 template run*(app: App, code: untyped): untyped =
   engine.target.start(app.settings.display_size, app.settings.name)
   app.time.lag  = 0
   app.time.last = app.getTime()
-  var vsync_toggle : bool 
   engine.target.setVSync(app.settings.vsync)
   while not engine.target.shouldQuit():
-    if vsync_toggle != app.settings.vsync_toggle:
-      vsync_toggle = app.settings.vsync_toggle
-      if vsync_toggle:
-        app.settings.vsync = 1
-      else: app.settings.vsync = 0
-      engine.target.setVSync(app.settings.vsync)
+    
     engine.target.pollEvents()
 
     clampUpdate():
