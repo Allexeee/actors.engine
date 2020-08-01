@@ -408,20 +408,21 @@ macro formatComponentPretty(t: typedesc): untyped =
   let tName = strVal(t)
   var proc_name = tName  
   formatComponent(proc_name)
+
+  # WORKING SOLUTION!
   var source = &("""
   template `{proc_name}`*(self: ent): ptr {tName} =
-      impl_get(self,{tName})""")
-  # var source2 = &("""
-  # template `{proc_name}`*(self: ptr ent): ptr {tName} =
-  #     impl_get(self,{tName})""")
+      impl_get(self,{tName})
+      """)
+
   result = parseStmt(source)
-  #result.add(parseStmt(source2))
+
 
 var storages* = newSeq[StorageBase](1)
 
 #@storage
 template impl_storage(t: typedesc) {.used.} =
-  var storage {.used.} = Storage[t]()
+  var storage* {.used.} = Storage[t]()
   storage.container = newSeq[t]()
   storage.entities  = Table[uint32,int]()
   storage.meta.id = id_component_next
@@ -431,6 +432,8 @@ template impl_storage(t: typedesc) {.used.} =
   storages.add(storage)
   id_component_next+=1
 
+  proc GetStorage*(_:typedesc[t]): StorageBase =
+    storage
 
   proc StorageSizeCalculate*(_:typedesc[t]): int {.discardable.} =
     (storage.sizeof + _.sizeof * storage.container.len + storage.entities.len * uint32.sizeof+storage.entities.len * int.sizeof) div 1000
@@ -443,6 +446,8 @@ template impl_storage(t: typedesc) {.used.} =
       format.add(" KB")
       format
   
+
+
   proc ID*(_:typedesc[t]): uint16 {.inline, discardable.} =
       storage.meta.id
   
@@ -471,6 +476,8 @@ template impl_storage(t: typedesc) {.used.} =
 
       comp
   
+  
+
   proc remove*(self: ent, _: typedesc[t]) {.inline, discardable.} = 
       checkErrorRemoveComponent(self, t)
       let entity = addr entities[self.id]

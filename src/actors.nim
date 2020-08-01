@@ -11,6 +11,9 @@ import actors/actors_utils   as utils
 import actors/vendor/actors_gl
 import actors/vendor/actors_glfw
 
+import actors/vendor/actors_imgui
+import actors/vendor/actors_gl
+
 export engine except
   app,
   setProcs
@@ -49,36 +52,61 @@ proc vsync*(app: App, arg: int32) =
     app.settings.vsync = arg
     engine.target.setVSync(app.settings.vsync)
 
+var context : ptr ImGuiContext
 
-template run*(app: App, code: untyped): untyped =
+proc run*(app: App, update: proc(), draw: proc()) =
   engine.target.start(app.settings.display_size, app.settings.name)
   app.time.lag  = 0
   app.time.last = app.getTime()
   engine.target.setVSync(app.settings.vsync)
+
+
+  context = igCreateContext()
+  igStyleColorsCherry()
+  assert igGlfwInitForOpenGL(window, true)
+  assert igOpenGL3Init()
+  #var ms_update = 0f
+  #var ms_render = 0f
   while not engine.target.shouldQuit():
-    
+   # ms_update = app.getTime()
     engine.target.pollEvents()
-
+    
     clampUpdate():
-      for layer in app.layersActive:
-        layer.ecs.execute()
-        for tickable in layer.update.ticks:
-          tickable.tick(layer)
-      code
-
+      update()
+    
+    #ms_update = app.getTime() - ms_update
+    #ms_render = app.getTime()
+    igOpenGL3NewFrame()
+    igGlfwNewFrame()
+    igNewFrame()
+    
     glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
     if app.settings.vsync == 1:
       glClearColor(0.2f, 0.3f, 0.3f, 1.0f)
     else:
       glClearColor(0.2f, 0.4f, 0.3f, 1.0f)
-    render()
+    
 
+    
+    draw()
+  
+    igRender()
+    igOpenGL3RenderDrawData(igGetDrawData())
+    
     app.time.frames += 1
     app.time.counter.frames += 1
+    #ms_render = app.getTime() - ms_render
     renderer_end()
     
+    # echo "msu: ", ms_update
+    # echo "msr: ", ms_render
   
+  igOpenGL3Shutdown()
+  igGlfwShutdown()
+  context.igDestroyContext()
   engine.target.dispose()
+  
+
 
 
 proc quit*(this: App) =
@@ -95,8 +123,3 @@ template renderer_end(): untyped =
   engine.target.render_end(app.settings.vsync)
   if app.settings.vsync == 0:
     app.sleep(1/app.settings.fps)
-  
-  
-# template render_end(): untyped =
-  
-#   discard

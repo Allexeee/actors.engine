@@ -14,7 +14,7 @@ requires "nim >= 1.0.6"
 
 
 task release, "BUILD":
-   exec "nim cpp -d:release --passC:-flto --passL:-s --gc:refc --out: bin/game examples/game.nim"
+   exec "nim cpp -d:release --passC:-flto --passL:-s --gc:refc --out: bin/game examples/test.nim"
 
 # task make_docs, "BUILD":
 #   exec "nim doc --project --index:on src/actors.nim"
