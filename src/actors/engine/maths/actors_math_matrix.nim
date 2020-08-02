@@ -451,30 +451,57 @@ proc invert(mx: var Matrix) {.inline.} =
     mx.e43 = (-e41*b04 + e42*b02 - e43*b01)*det_inv
     mx.e44 = ( e31*b04 - e32*b02 + e33*b01)*det_inv
  
-proc ortho*(mx: var Matrix, left, right, bottom, top, near, far : float) {.inline.} =
-    let rl = right - left
-    let tb = top - bottom
-    let fn = far - near
-    
-    mx.e11 = 2.0/rl
-    mx.e12 = 0
-    mx.e13 = 0
-    mx.e14 = 0
 
-    mx.e21 = 0
-    mx.e22 = 2.0/tb
-    mx.e23 = 0
-    mx.e24 = 0
+when defined(renderer_opengl):
+    proc ortho*(mx: var Matrix, left, right, bottom, top, near, far : float) {.inline.} =
+        let rl = right - left
+        let tb = top - bottom
+        let fn = far - near
 
-    mx.e31 = 0
-    mx.e32 = 0
-    mx.e33 = -2.0/fn
-    mx.e34 = 0
+        mx.e11 = 2.0/rl
+        mx.e12 = 0
+        mx.e13 = 0
+        mx.e14 = -(right + left) / rl
 
-    mx.e41 = -(right + left) / rl
-    mx.e42 = -(top + bottom) / tb
-    mx.e43 = -(far + near) / fn
-    mx.e44 = 1
+        mx.e21 = 0
+        mx.e22 = 2.0/tb
+        mx.e23 = 0
+        mx.e24 = -(top + bottom) / tb
+
+        mx.e31 = 0
+        mx.e32 = 0
+        mx.e33 = -2.0/fn
+        mx.e34 = -(far + near) / fn
+
+        mx.e41 = 0
+        mx.e42 = 0
+        mx.e43 = 0
+        mx.e44 = 1
+else:
+    proc ortho*(mx: var Matrix, left, right, bottom, top, near, far : float) {.inline.} =
+        let rl = right - left
+        let tb = top - bottom
+        let fn = far - near
+        
+        mx.e11 = 2.0/rl
+        mx.e12 = 0
+        mx.e13 = 0
+        mx.e14 = 0
+
+        mx.e21 = 0
+        mx.e22 = 2.0/tb
+        mx.e23 = 0
+        mx.e24 = 0
+
+        mx.e31 = 0
+        mx.e32 = 0
+        mx.e33 = -2.0/fn
+        mx.e34 = 0
+
+        mx.e41 = -(right + left) / rl
+        mx.e42 = -(top + bottom) / tb
+        mx.e43 = -(far + near) / fn
+        mx.e44 = 1
 
 proc frustrum(mx: var Matrix, left, right, bottom, top, near, far: float) {.inline.} =
     let n2 = near * 2

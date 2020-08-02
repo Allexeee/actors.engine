@@ -54,12 +54,13 @@ proc vsync*(app: App, arg: int32) =
 
 var context : ptr ImGuiContext
 
-proc run*(app: App, update: proc(), draw: proc()) =
+
+
+proc run*(app: App,init: proc(), update: proc(), draw: proc()) =
   engine.target.start(app.settings.display_size, app.settings.name)
   app.time.lag  = 0
   app.time.last = app.getTime()
   engine.target.setVSync(app.settings.vsync)
-
 
   context = igCreateContext()
   igStyleColorsCherry()
@@ -67,6 +68,9 @@ proc run*(app: App, update: proc(), draw: proc()) =
   assert igOpenGL3Init()
   #var ms_update = 0f
   #var ms_render = 0f
+
+  init()
+
   while not engine.target.shouldQuit():
    # ms_update = app.getTime()
     engine.target.pollEvents()
@@ -74,8 +78,6 @@ proc run*(app: App, update: proc(), draw: proc()) =
     clampUpdate():
       update()
     
-    #ms_update = app.getTime() - ms_update
-    #ms_render = app.getTime()
     igOpenGL3NewFrame()
     igGlfwNewFrame()
     igNewFrame()
@@ -85,9 +87,8 @@ proc run*(app: App, update: proc(), draw: proc()) =
       glClearColor(0.2f, 0.3f, 0.3f, 1.0f)
     else:
       glClearColor(0.2f, 0.4f, 0.3f, 1.0f)
-    
 
-    
+
     draw()
   
     igRender()
@@ -105,7 +106,6 @@ proc run*(app: App, update: proc(), draw: proc()) =
   igGlfwShutdown()
   context.igDestroyContext()
   engine.target.dispose()
-  
 
 
 

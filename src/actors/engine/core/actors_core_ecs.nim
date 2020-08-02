@@ -404,27 +404,34 @@ proc formatComponentAlias(s: var string) =
     delete(s,1,indexes[1]-1)
   s = toUpperAscii(s[0]) & substr(s, 1)
 
-macro formatComponentPretty(t: typedesc): untyped =
+macro formatComponentPretty(t: typedesc, compType: static CompType): untyped =
   let tName = strVal(t)
   var proc_name = tName  
   formatComponent(proc_name)
-
+  var source = ""
   # WORKING SOLUTION!
-  var source = &("""
-  template `{proc_name}`*(self: ent): ptr {tName} =
-      impl_get(self,{tName})
-      """)
+  if compType == CompType.Action:
+    source = &("""
+    template `{proc_name}`*(self: ent) =
+        impl_get_action(self,{tName})
+        """)
+  else:
+    source = &("""
+    template `{proc_name}`*(self: ent): ptr {tName} =
+        impl_get(self,{tName})
+        """)
 
   result = parseStmt(source)
+
 
 
 var storages* = newSeq[StorageBase](1)
 
 #@storage
-template impl_storage(t: typedesc) {.used.} =
+template impl_storage(t: typedesc, compType: CompType) {.used.} =
   var storage* {.used.} = Storage[t]()
   storage.container = newSeq[t]()
-  storage.entities  = Table[uint32,int]()
+  storage.entities  = newSeq[int](10000) #Table[uint32,int]()
   storage.meta.id = id_component_next
   storage.meta.bitmask = 1 shl (storage.meta.id mod 32)
   storage.meta.generation = storage.meta.id div 32
@@ -447,24 +454,40 @@ template impl_storage(t: typedesc) {.used.} =
       format
   
 
-
   proc ID*(_:typedesc[t]): uint16 {.inline, discardable.} =
       storage.meta.id
-  
-  proc impl_get(self: ent, _: typedesc[t]): ptr t {.inline, discardable.} =
+  template impl_get_action(self: ent, _: typedesc[t]) =
+      storage.container[storage.entities[self.id]](self)
+  proc impl_get(self: ent, _: typedesc[t]): ptr t {.inline, discardable, used.} =
       addr storage.container[storage.entities[self.id]]
-  
-  proc impl_get(self: ptr ent, _: typedesc[t]): ptr t {.inline, discardable.} =
+  proc impl_get(self: ptr ent, _: typedesc[t]): ptr t {.inline, discardable, used.} =
       addr storage.container[storage.entities[self.id]]
+
+  proc get*(self: ent, _: typedesc[t], arg: t) =
+      let id = storage.meta.id
+      let entity = addr entities[self.id]
+      if t.ID in entities[self.id].signature:
+        storage.container[storage.entities[self.id]] = arg
+      else:
+        storage.container.add(arg)
+      
+      storage.entities[self.id] = storage.container.high
+      entity.signature.incl(id)
+    
+      if not entity.dirty:
+          let op = entity.layer.ecs.operations.addNew()
+          op.entity = self
+          op.kind = OpKind.Add
+          op.arg  = id
 
   proc get*(self: ent, _: typedesc[t]): ptr t {.inline, discardable.} =
       if t.Id in entities[self.id].signature:
-        return impl_get(self,_)
+        return addr storage.container[storage.entities[self.id]]
 
       let id = storage.meta.id
       let entity = addr entities[self.id]
       let comp = storage.container.addNew()
-
+     
       storage.entities[self.id] = storage.container.high
       entity.signature.incl(id)
     
@@ -475,8 +498,6 @@ template impl_storage(t: typedesc) {.used.} =
           op.arg  = id
 
       comp
-  
-  
 
   proc remove*(self: ent, _: typedesc[t]) {.inline, discardable.} = 
       checkErrorRemoveComponent(self, t)
@@ -488,13 +509,14 @@ template impl_storage(t: typedesc) {.used.} =
       entity.signature.excl(op.arg)
 
 
-  formatComponentPretty(t)
+  formatComponentPretty(t, compType)
 
-macro add*(this: App, component: untyped): untyped =
+macro add*(this: App, component: untyped, compType: CompType = Object): untyped =
   result = nnkStmtList.newTree(
            nnkCommand.newTree(
               bindSym("impl_storage", brForceOpen),
-              newIdentNode($component)
+              newIdentNode($component),
+              newIdentNode($compType)
              )
           )
 

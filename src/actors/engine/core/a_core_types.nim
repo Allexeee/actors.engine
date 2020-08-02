@@ -2,13 +2,30 @@
 {.experimental: "codeReordering".}
 
 
-import tables
 import sets
 
 var app* : App
 
 type System* = ref object of RootObj
     layer* : Layer
+
+#@assets
+type TImage* = object
+  width*: cint
+  height*: cint
+  channels*: cint
+  data*: seq[byte]
+  #data_tex*: ptr cuchar
+type Texture2D* = object
+  id*   : cuint
+  width*: cuint
+  height*: cuint
+  format*: cuint
+  image_format*: cuint
+  filter_min* : cuint
+  filter_max* : cuint
+  channels*: cuint
+  data*: seq[byte]
 
 type #@ecs
   ent* = tuple
@@ -47,10 +64,13 @@ type #@ecs
   StorageBase* = ref object of RootObj
     meta*      : ComponentMeta
     groups*    : seq[Group]
-  
   Storage*[T] = ref object of StorageBase
-    entities*  : Table[uint32, int]
+    entities*  : seq[int]
     container* : seq[T]
+  
+  CompType* = enum
+    Object,
+    Action
     
   OpKind* = enum
     Init
@@ -116,7 +136,7 @@ type #@app
 
 type #@input
   Key* {.pure, size: int32.sizeof.} = enum
-    space = 32
+    Space = 32
     Apostrophe = 39
     Comma = 44
     Minus = 45
@@ -134,39 +154,40 @@ type #@input
     K9 = 57
     Semicolon = 59
     Equal = 61
-    a = 65
-    b = 66
-    c = 67
-    d = 68
-    e = 69
-    f = 70
-    g = 71
-    h = 72
-    i = 73
-    j = 74
-    k = 75
-    l = 76
-    m = 77
-    n = 78
-    o = 79
-    p = 80
-    q = 81
-    r = 82
-    s = 83
-    t = 84
-    u = 85
-    v = 86
-    w = 87
-    x = 88
-    y = 89
-    z = 90
+    A = 65
+    B = 66
+    C = 67
+    D = 68
+    E = 69
+    F = 70
+    G = 71
+    H = 72
+    I = 73
+    J = 74
+    K = 75
+    L = 76
+    M = 77
+    N = 78
+    O = 79
+    P = 80
+    Q = 81
+    R = 82
+    S = 83
+    T = 84
+    U = 85
+    V = 86
+    W = 87
+    X = 88
+    Y = 89
+    Z = 90
     LeftBracket = 91
     Backslash = 92
     RightBracket = 93
-    GraveAccent = 96
+    Tilde = 96
+    #Tilde  = 126
     World1 = 161
     World2 = 162
-    escape = 256
+    Escape = 256
     Enter = 257
     Tab = 258
     Backspace = 259
