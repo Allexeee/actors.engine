@@ -358,8 +358,8 @@ proc rotate*(mx: var Matrix, angle: rad, x: float32 = 1, y,z: float32 = 0) {.inl
         y *= len
         z *= len
     
-    var s = sin(angle.float32)
-    var c = cos(angle.float32)
+    var s = sin(-angle.float32)
+    var c = cos(-angle.float32)
     var t = 1.0 - c
 
     tmp.e11 = x*x*t + c
@@ -394,8 +394,8 @@ proc rotate*(mx: var Matrix, angle: float, axis: Vec) {.inline.} =
         y *= len
         z *= len
     
-    var s = sin(angle)
-    var c = cos(angle)
+    var s = sin(-angle)
+    var c = cos(-angle)
     var t = 1.0 - c
 
     tmp.e11 = x*x*t + c
