@@ -273,18 +273,47 @@ proc `*`*(mx1: Matrix, mx2: Matrix): Matrix {.inline.} =
     result.e44 = mx1.e41 * mx2.e14 + mx1.e42 * mx2.e24 + mx1.e43 * mx2.e34 + mx1.e44 * mx2.e44
 
 
-proc translate*(mx: var Matrix, x,y,z : float32 = 0) {.inline.} =
+
+proc setPosition*(mx: var Matrix, x,y,z: float32 = 0) {.inline.} =
     mx.e41 = x
     mx.e42 = y
     mx.e43 = z
     mx.e44 = 1
 
-proc translate*(mx: var Matrix, vec: Vec) {.inline.} =
+proc setPosition*(mx: var Matrix, vec: Vec) {.inline.} =
     mx.e41 = vec.x
     mx.e42 = vec.y
     mx.e43 = vec.z
     mx.e44 = 1
-   
+
+proc translate*(mx: var Matrix, x,y,z : float32 = 0) {.inline.} =
+    mx.e11 += x * mx.e14
+    mx.e12 += y * mx.e14
+    mx.e13 += z * mx.e14
+    mx.e21 += x * mx.e24
+    mx.e22 += y * mx.e24
+    mx.e23 += z * mx.e24
+    mx.e31 += x * mx.e34
+    mx.e32 += y * mx.e34
+    mx.e33 += z * mx.e34
+    mx.e41 += x * mx.e44
+    mx.e42 += y * mx.e44
+    mx.e43 += z * mx.e44
+    
+proc translate*(mx: var Matrix, vec: Vec) {.inline.} =
+    mx.e11 += vec.x * mx.e14
+    mx.e12 += vec.y * mx.e14
+    mx.e13 += vec.z * mx.e14
+    mx.e21 += vec.x * mx.e24
+    mx.e22 += vec.y * mx.e24
+    mx.e23 += vec.z * mx.e24
+    mx.e31 += vec.x * mx.e34
+    mx.e32 += vec.y * mx.e34
+    mx.e33 += vec.z * mx.e34
+    mx.e41 += vec.x * mx.e44
+    mx.e42 += vec.y * mx.e44
+    mx.e43 += vec.z * mx.e44
+
 proc scale*(mx: var Matrix, x,y,z: float32 = 1) {.inline.} =
     mx.e11 *= x
     mx.e21 *= x
@@ -482,7 +511,7 @@ else:
         let rl = right - left
         let tb = top - bottom
         let fn = far - near
-        
+
         mx.e11 = 2.0/rl
         mx.e12 = 0
         mx.e13 = 0
