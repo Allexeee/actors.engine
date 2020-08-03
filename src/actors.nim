@@ -54,7 +54,7 @@ proc vsync*(app: App, arg: int32) =
 
 var context : ptr ImGuiContext
 
-
+var frame* : int
 
 proc run*(app: App,init: proc(), update: proc(), draw: proc()) =
   engine.target.start(app.settings.display_size, app.settings.name)
@@ -72,7 +72,10 @@ proc run*(app: App,init: proc(), update: proc(), draw: proc()) =
   init()
 
   while not engine.target.shouldQuit():
-   # ms_update = app.getTime()
+    
+    app.time.frames += 1
+    app.time.counter.frames += 1
+    frame += 1
     engine.target.pollEvents()
     
     clampUpdate():
@@ -94,8 +97,7 @@ proc run*(app: App,init: proc(), update: proc(), draw: proc()) =
     igRender()
     igOpenGL3RenderDrawData(igGetDrawData())
     
-    app.time.frames += 1
-    app.time.counter.frames += 1
+    
     #ms_render = app.getTime() - ms_render
     renderer_end()
     

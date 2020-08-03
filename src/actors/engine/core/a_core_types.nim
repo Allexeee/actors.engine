@@ -15,6 +15,10 @@ type TImage* = object
   height*: cint
   channels*: cint
   data*: seq[byte]
+  id* : uint32
+  
+
+
   #data_tex*: ptr cuchar
 type Texture2D* = object
   id*   : cuint
