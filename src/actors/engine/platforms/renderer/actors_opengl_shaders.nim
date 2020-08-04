@@ -73,19 +73,19 @@ proc shader*(app: App, shader_path: string): ShaderIndex =
     var id : uint32 = 0
     ##read
     ##vertex
-    path = app.settings.path_shaders & shader_path & ".vs"
+    path = app.settings.path_shaders & shader_path & ".vert"
     if not fileExists(path):
         log warn, &"The path {path} for vertex shader doesn't exist", "Adding a default shader"
     else:
         vertCode = readFile(path)
     ##fragment
-    path = app.settings.path_shaders & shader_path & ".fg"
+    path = app.settings.path_shaders & shader_path & ".frag"
     if not fileExists(path):
         log warn, &"The path {path} for fragment shader doesn't exist", "Adding a default shader"
     else:
         fragCode = readFile(path)
     ##geometry
-    path = app.settings.path_shaders & shader_path & ".ge"
+    path = app.settings.path_shaders & shader_path & ".geom"
     if fileExists(path):
         geomCode = readFile(path)
 
