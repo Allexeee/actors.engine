@@ -1,7 +1,6 @@
 {.used.}
 
 import
-  core/a_core_types,
   core/actors_core_ecs,
   core/actors_core_interfaces,
   core/actors_core_app,
@@ -9,7 +8,6 @@ import
   core/actors_core_input
 
 export
-  a_core_types,
   actors_core_ecs,
   actors_core_interfaces,
   actors_core_app,

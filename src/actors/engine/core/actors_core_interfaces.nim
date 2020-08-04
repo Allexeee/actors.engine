@@ -1,4 +1,4 @@
-import a_core_types
+import ../actors_types
 
 proc getTick*[T](this: T): ITick =
    ITick(tick: proc (layer: Layer) = this.tick(layer))

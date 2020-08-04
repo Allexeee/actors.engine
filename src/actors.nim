@@ -5,6 +5,8 @@
 import times
 import os
 import strformat
+
+
 import actors/actors_engine  as engine
 import actors/actors_runtime as runtime
 import actors/actors_utils   as utils
@@ -36,7 +38,7 @@ let app* = App()
 app.time = AppTime()
 app.settings = AppSettings()
 
-engine.core.app = app
+engine.app = app
 
 let layerApp* = app.addLayer(); layerApp.setActive()
 layerApp.entity()
@@ -93,7 +95,7 @@ proc run*(app: App,init: proc(), update: proc(), draw: proc()) =
 
 
     draw()
-  
+    #drawDebug()
     igRender()
     igOpenGL3RenderDrawData(igGetDrawData())
     

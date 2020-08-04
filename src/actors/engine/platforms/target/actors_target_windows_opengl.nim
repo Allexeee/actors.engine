@@ -13,8 +13,8 @@ proc getOpenglVersion() =
 proc start*(screensize: tuple[width: int, height: int], name: string) {.inline.} = 
   assert glfwInit()
   
-  glfwWindowHint(GLFWContextVersionMajor, 3)
-  glfwWindowHint(GLFWContextVersionMinor, 3)
+  glfwWindowHint(GLFWContextVersionMajor, 4)
+  glfwWindowHint(GLFWContextVersionMinor, 5)
   glfwWindowHint(GLFWOpenglForwardCompat, GLFW_TRUE)
   glfwWindowHint(GLFWResizable, GLFW_FALSE)
   glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)

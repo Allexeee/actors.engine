@@ -4,16 +4,17 @@
 
 import sets
 
-var app* : App
+import ../actors_math
 
-var origins* = @[
-  (-0.5f,-0.5f), # center
-  (0f,0f),       # bottom-left
-  (1f,1f),
-  # (0.5f,-0f),       # bottom-right
-  # (0f,-0.5f),
-  # (0.5f,-0.5f)
-]
+#@rendering
+type Vertex* = object
+  position* : Vec3
+  color*    : Vec
+  texCoords*: Vec2
+  texID*    : float
+
+
+
 
 type System* = ref object of RootObj
     layer* : Layer
@@ -209,7 +210,6 @@ type #@input
     Backslash = 92
     RightBracket = 93
     Tilde = 96
-    #Tilde  = 126
     World1 = 161
     World2 = 162
     Escape = 256
@@ -304,17 +304,3 @@ type #@input
     keycode_down* :  array[Key.high.int32,bool] 
     keycode_hold* :  array[Key.high.int32,bool] 
     keyhold_time* :  array[Key.high.int32,float]
-
-
-
-
-# type App* = ref object
-#   settings*: AppSettings
-#   input*   : InputIndex
-#   #private
-#   inputs   : seq[Input]
-
-# let app* = App()
-# app.input = addInput()
-
-# proc getApp*(): App {.inline.} = app

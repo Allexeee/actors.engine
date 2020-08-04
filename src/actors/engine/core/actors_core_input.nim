@@ -1,7 +1,7 @@
 {.used.}
 {.experimental: "codeReordering".}
 
-import a_core_types
+import ../actors_types
 
 var storage      = newSeq[Input](0) 
 

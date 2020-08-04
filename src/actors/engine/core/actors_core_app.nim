@@ -1,4 +1,4 @@
-import a_core_types
+import ../actors_types
 import ../../actors_utils
 import ../../vendor/actors_stb_image
 #import ../actors_renderer

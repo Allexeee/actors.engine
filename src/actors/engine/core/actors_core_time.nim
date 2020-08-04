@@ -1,4 +1,4 @@
-import a_core_types
+import ../actors_types
 
 
 var getTime: proc(): float

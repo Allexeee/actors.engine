@@ -2,7 +2,7 @@
 import os
 import strformat
 
-import ../../actors_core
+import ../../actors_types
 import ../../../vendor/actors_gl
 import ../../../actors_utils
 import ../../actors_math
@@ -123,7 +123,9 @@ proc shader*(app: App, shader_path: string): ShaderIndex =
 
 proc use*(this: ShaderIndex) {.inline.} =
   glUseProgram(this.GLuint) 
-
+#cast[ptr Glvoid](cfloat.sizeof*9)
+proc setSampler*(this: ShaderIndex, name: cstring, count: GLsizei, arg: ptr uint32) {.inline.} =
+   glUniform1iv(glGetUniformLocation(this.GLuint,name),count, cast[ptr Glint](arg))
 
 proc setBool*(this: ShaderIndex, name: cstring, arg: bool) {.inline.} =
   ## dont forget to set use before changing shader

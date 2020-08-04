@@ -1,4 +1,24 @@
 import macros
+{.used.}
+
+template usePtr*[T]() =
+  template `+`(p: ptr T, off: SomeInteger ): ptr T =
+    cast[ptr type(p[])](cast[ByteAddress](p) +% int(off) * sizeof(p[]))
+  
+  template `+=`(p: ptr T, off: SomeInteger ) =
+    p = p + off
+  
+  template `-`(p: ptr T, off: SomeInteger): ptr T =
+    cast[ptr type(p[])](cast[ByteAddress](p) -% int(off) * sizeof(p[]))
+  
+  template `-=`(p: ptr T, off: SomeInteger ) =
+    p = p - int(off)
+  
+  template `[]`(p: ptr T, off: SomeInteger ): T =
+    (p + int(off))[]
+  
+  template `[]=`(p: ptr T, off: SomeInteger , val: T) =
+    (p + off)[] = val
 
 proc debug_macro*(arg: string): NimNode =
     nnkStmtList.newTree(

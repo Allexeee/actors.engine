@@ -1,17 +1,19 @@
 import actors_math_base
 
 
-type Vec* = tuple[x,y,z,w: float32]
+type Vec* = tuple[x,y,z,w: float]
+type Vec2* = tuple[x,y: float]
+type Vec3* = tuple[x,y,z: float]
 
 
 #@constructors
-proc vec*(x,y,z,w: float32 = 0): Vec {.inline.} =
+proc vec*(x,y,z,w: float = 0): Vec {.inline.} =
   (x,y,z,w)
 
-proc col*(r,g,b,a: float32 = 1): Vec {.inline.} =
+proc col*(r,g,b,a: float = 1): Vec {.inline.} =
   (r,g,b,a)
 
-proc rgb*(r,g,b,a: float32 = 255): Vec {.inline.} =
+proc rgb*(r,g,b,a: float = 255): Vec {.inline.} =
   (r/255f,g/255f,b/255f,a/255f)
 
 proc hex*(s: string = "FFFFFFFF"): Vec {.inline.} =
@@ -40,18 +42,18 @@ proc hex*(s: string = "FFFFFFFF"): Vec {.inline.} =
         of 'A'..'F':
            temp = (s[i].ord-'A'.ord+10)
         else: discard
-     rgba[index] = temp.float32
+     rgba[index] = temp.float
      index+=1
      i+=2 
-  (rgba[0]/255f, rgba[1]/255f, rgba[2]/255f, rgba[3]/255f)
+  (rgba[0]/255.0, rgba[1]/255.0, rgba[2]/255.0, rgba[3]/255.0)
 
-proc r*(this: Vec): float32 =
+proc r*(this: Vec): float =
    this.x
-proc g*(this: Vec): float32 =
+proc g*(this: Vec): float =
    this.y
-proc b*(this: Vec): float32 =
+proc b*(this: Vec): float =
    this.z
-proc a*(this: Vec): float32 =
+proc a*(this: Vec): float =
    this.w
 
 const #identity
@@ -79,9 +81,9 @@ proc `-`*(a: Vec, b: Vec): Vec {.inline.} =
   (a.x-b.x, a.y-b.y, a.z-b.z, a.w-b.w)
 
 proc `*`*(a: Vec, b: SomeNumber): Vec {.inline.} =
-  (a.x*b.float32, a.y*b.float32, a.z*b.float32, a.w)
+  (a.x*b.float, a.y*b.float, a.z*b.float, a.w)
 proc `*`*(b: SomeNumber, a: Vec): Vec {.inline.} =
-  (a.x*b.float32, a.y*b.float32, a.z*b.float32, a.w)
+  (a.x*b.float, a.y*b.float, a.z*b.float, a.w)
 
 proc `-`*(this: var Vec) {.inline.} =
   this.x = -this.x
@@ -107,7 +109,7 @@ proc `*=`*(this: var Vec, other: Vec) {.inline.} =
   this.z = this.z*other.z
   this.w = this.w*other.w
 
-proc `*=`*(this: var Vec, other: float32 = 1) {.inline.} =
+proc `*=`*(this: var Vec, other: float = 1) {.inline.} =
   this.x = this.x*other
   this.y = this.y*other
   this.z = this.z*other
@@ -119,16 +121,16 @@ proc `/=` *(this: var Vec, other: Vec) {.inline.} =
   this.z = this.z/other.z
   this.w = this.w/other.w
 
-proc `/=` *(this: var Vec, other: float32 = 1) {.inline.} =
+proc `/=` *(this: var Vec, other: float = 1) {.inline.} =
   this.x = this.x/other
   this.y = this.y/other
   this.z = this.z/other
   this.w = this.w/other
 
-proc magnitudeSquare*(vec: Vec): float32 {.inline.} =
+proc magnitudeSquare*(vec: Vec): float {.inline.} =
   vec.x * vec.x + vec.y * vec.y + vec.z * vec.z
 
-proc magnitude*(vec: Vec): float32 {.inline.} =
+proc magnitude*(vec: Vec): float {.inline.} =
   sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z)
 
 proc normalize*(vec: var Vec) {.inline.} =
@@ -160,8 +162,8 @@ proc cross*(vec1, vec2: Vec): Vec {.inline.} =
 # proc cross*(vec1,vec2: var Vec): Vec {.inline.} =
 #    cross(vec1,vec2)
 
-proc dot*(vec1, vec2: Vec): float32 {.inline.} =
+proc dot*(vec1, vec2: Vec): float {.inline.} =
   vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z
 
-proc dot4*(vec1, vec2: Vec): float32 {.inline.} =
+proc dot4*(vec1, vec2: Vec): float {.inline.} =
   vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z + vec1.w * vec2.w

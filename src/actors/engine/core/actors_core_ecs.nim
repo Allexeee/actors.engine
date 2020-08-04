@@ -13,7 +13,7 @@ import typetraits
 import math
 
 import ../../actors_utils
-import a_core_types
+import ../actors_types
 
 var id_next           {.global.} : uint32 = 0 # confusion with {.global.} in proc, redefining
 var id_entity_last    {.used.}   : uint32 = 0
