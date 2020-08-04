@@ -6,6 +6,5 @@ htmldocs/
 .vscode
 *.log
 bin/
-examples/
 docs/
 *.exe
