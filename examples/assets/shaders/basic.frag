@@ -1,7 +1,10 @@
 #version 330 core
 out vec4 color;
 uniform vec3 sprite_color;
+
+in vec4 vv;
+
 void main()
 {
-  color = vec4(sprite_color, 1.0);
+  color = vv;//vec4(vv, sprite_color.gb, 1.0);
 }

@@ -113,10 +113,10 @@ proc initQuad*(shader: ShaderIndex) : Quad =
       1f, 0f
     ]
   verts = @[
-      -1f,0f,
-      -1f,-1f,
-      0f,-1f,
-      0f,0f
+      -1f,0f, 0,1,0,1,
+      -1f,-1f, 0,1,0,1,
+      0f,-1f, 0,1,0,1,
+      0f,0f, 0,0,1,1
     ]
   # must be u32
   var indices = @[
@@ -134,8 +134,10 @@ proc initQuad*(shader: ShaderIndex) : Quad =
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size, indices[0].addr, GL_STATIC_DRAW);
 
-  glVertexAttribPointer(0.GLuint, 2.GLint, 0x1406.GLenum, false, (cfloat.sizeof*2).GLsizei, nil)
+  glVertexAttribPointer(0.GLuint, 2.GLint, 0x1406.GLenum, false, (cfloat.sizeof*6).GLsizei, nil)
   glEnableVertexAttribArray(0)
+  glVertexAttribPointer(1.GLuint, 4.GLint, 0x1406.GLenum, false, (cfloat.sizeof*6).GLsizei, cast[ptr Glvoid](8))
+  glEnableVertexAttribArray(1)
 
 
 proc draw*(self: Quad, pos: Vec, size: Vec, rotate: float, col: Vec) =
