@@ -6,10 +6,31 @@ import sets
 
 var app* : App
 
+var origins* = @[
+  (-0.5f,-0.5f), # center
+  (0f,0f),       # bottom-left
+  (1f,1f),
+  # (0.5f,-0f),       # bottom-right
+  # (0f,-0.5f),
+  # (0.5f,-0.5f)
+]
+
 type System* = ref object of RootObj
     layer* : Layer
 
+
+
 #@assets
+type Origin* = enum
+  Center,
+  TopLeft,
+  TopRight,
+  BottomLeft,
+  BottomRight,
+  Custom
+
+
+
 type TImage* = object
   width*: cint
   height*: cint

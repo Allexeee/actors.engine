@@ -37,7 +37,7 @@ proc gameInit() =
     anim[i-1] = loadImage(&"tex_hero3_idle_0{i}.png")
     anim[i-1].generate(GL_RGBA)
   var aspect_ratio = app.calculate_aspect_ratio()
-  mx_ortho.ortho(-view_size * aspect_ratio, view_size * aspect_ratio, -view_size, view_size ,0.01, 1000)
+  mx_ortho.ortho(-view_size * aspect_ratio, view_size * aspect_ratio, -view_size, view_size ,-100, 1000)
   shader1 = app.shader("basic")
   shader1.use()
   shader1.setMatrix("mx_projection", mx_ortho)
@@ -83,7 +83,7 @@ proc gameUpdate() =
   if input.down Key.Escape:
     app.quit()
 
-var col1 = vec(1.0f, 1f, 1f)
+var col1 = vec(1.0f, 0.5f, 0.2f,1f)
 var col2 = vec(1f, 1f, 1f)
 
 var anim_frame = 0f
@@ -98,7 +98,12 @@ proc gameDraw() =
  # quad.shader.use()
   
   var img = anim[(int)anim_frame mod 5]
-  quad.draw(pos, size*scale, rotate,col1)
+  for i in 0..10000:
+    quad.draw(pos, size*scale, rotate,col1)
+  # for i in 0..10000:
+  #   var rx = (float)(rand(-0.15..0.15) * (float)i)
+  #   var ry = (float)(rand(-0.15..0.15) * (float)i)
+  #   quad.draw(pos+vec(rx,ry), size*scale, rotate,col1)
   # for i in 0..10000:
   #   var rx = (float)(rand(-0.15..0.15) * (float)i)
   #   var ry = (float)(rand(-0.15..0.15) * (float)i)
