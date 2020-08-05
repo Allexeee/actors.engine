@@ -98,6 +98,9 @@ var anim_frame = 0f
 
 
 usePtr[Vertex]()
+import actors/vendor/actors_imgui
+
+var psss : array[2,float32]
 
 proc gameDraw() =
   # частота смены кадра анимации, 1 кадр = 10 шагов
@@ -152,7 +155,13 @@ proc gameDraw() =
   #   var rx = (float)(rand(-0.15..0.15) * (float)i)
   #   var ry = (float)(rand(-0.15..0.15) * (float)i)
   #   quad.draw(img, pos+vec(rx,ry), size*scale, rotate,col1)
- 
+  
+  igBegin("Controls")
+  igDragFloat2("Quad Pos", psss, 0.1 )
+  igEnd()
+
+  postest.x = psss[0]
+  postest.y = psss[1]
   # интерфейсы
   for ui in uis:
     ui.draw()

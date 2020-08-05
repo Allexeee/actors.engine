@@ -11,8 +11,7 @@ type Vertex* = object
   position* : Vec3
   color*    : Vec
   texCoords*: Vec2
-  texID*    : float
-
+  texID*    : cfloat
 
 
 

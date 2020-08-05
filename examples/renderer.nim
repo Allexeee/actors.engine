@@ -156,6 +156,10 @@ var initialized = false
 var shader : ShaderIndex
 
 
+var maxQuadCount = 1000
+var maxVertexCount = maxQuadCount * 4;
+var maxIndexCount = maxQuadCount * 6;
+
 
 proc initialize*(arg: ShaderIndex) =
   if initialized: return
@@ -171,55 +175,191 @@ proc initialize*(arg: ShaderIndex) =
   image2.generate(GL_RGBA)
   
   shader.use()
-  echo image.id, "--", image2.id
   var samplers = [0'u32,1'u32]
   shader.setSampler("u_textures",2,samplers[0].addr)
 
-
-  var verts = @[
-    0.0f,0.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 0.0f, 0.0f, 0f,
-    1.0f,0.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 1.0f, 0.0f, 0f,
-    1.0f,1.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 1.0f, 1.0f, 0f,
-    0.0f,1.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 0.0f, 1.0f, 0f,
-
-    2.0f,0.0f,0.0f, 0.65f, 0.25f, 0.95f, 1.0f, 0.0f, 0.0f, 1f,
-    3.0f,0.0f,0.0f, 0.65f, 0.25f, 0.95f, 1.0f, 1.0f, 0.0f, 1f,
-    3.0f,1.0f,0.0f, 0.65f, 0.25f, 0.95f, 1.0f, 1.0f, 1.0f, 1f,
-    2.0f,1.0f,0.0f, 0.65f, 0.25f, 0.95f, 1.0f, 0.0f, 1.0f, 1f
-  ]
-  
   glGenVertexArrays(1, vao.addr)
   glBindVertexArray(vao)
 
   glGenBuffers(1, vbo.addr)
   glBindBuffer(GL_ARRAY_BUFFER, vbo)
-  glBufferData(GL_ARRAY_BUFFER, verts.size, verts[0].addr, GL_STATIC_DRAW)
-
-  glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,(cfloat.sizeof*10).GLsizei,cast[ptr Glvoid](0))
+  glBufferData(GL_ARRAY_BUFFER, Vertex.sizeof*maxVertexCount, nil, GL_DYNAMIC_DRAW)
+ 
+  glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, position)))
   glEnableVertexAttribArray(0)
 
-  glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,(cfloat.sizeof*10).GLsizei,cast[ptr Glvoid](cfloat.sizeof*3))
+  glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, color)))
   glEnableVertexAttribArray(1)
   
-  glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,(cfloat.sizeof*10).GLsizei,cast[ptr Glvoid](cfloat.sizeof*7))
+  glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texCoords)))
   glEnableVertexAttribArray(2)
   
-  glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,(cfloat.sizeof*10).GLsizei,cast[ptr Glvoid](cfloat.sizeof*9))
+  glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texID)))
   glEnableVertexAttribArray(3)
 
-  var indices = @[
-    0'u32, 1'u32, 2'u32, 2'u32, 3'u32, 0'u32,
-    4'u32, 5'u32, 6'u32, 6'u32, 7'u32, 4'u32
-  ]
+  # glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,(cfloat.sizeof*10).GLsizei,cast[ptr Glvoid](0))
+  # glEnableVertexAttribArray(0)
+
+  # glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,(cfloat.sizeof*10).GLsizei,cast[ptr Glvoid](cfloat.sizeof*3))
+  # glEnableVertexAttribArray(1)
+  
+  # glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,(cfloat.sizeof*10).GLsizei,cast[ptr Glvoid](cfloat.sizeof*7))
+  # glEnableVertexAttribArray(2)
+  
+  # glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,(cfloat.sizeof*10).GLsizei,cast[ptr Glvoid](cfloat.sizeof*9))
+  # glEnableVertexAttribArray(3)
+   
+  # var indicess = newSeq[uint32](1000*6)
+  
+  # var idd = 0'u32
+  # for i in 0..5999:
+  #   if i mod 6 == 0:
+  #     indicess[i+0] = 0 + idd 
+  #     indicess[i+1] = 1 + idd
+  #     indicess[i+2] = 2 + idd
+  #     indicess[i+3] = 2 + idd
+  #     indicess[i+4] = 3 + idd
+  #     indicess[i+5] = 0 + idd
+  #     idd += 4
+    #indicess[i] = i mod 6
+    #indices[i] = q
+    #q = i mod 6
+    #echo q
+
+  # var indices = @[
+  #   0'u32, 1'u32, 2'u32, 2'u32, 3'u32, 0'u32,
+  #   4'u32, 5'u32, 6'u32, 6'u32, 7'u32, 4'u32
+  # ]
+  
+  var indices = newSeq[uint32](maxIndexCount)
+  var offset = 0'u32
+  for i in countup(0,maxIndexCount-1,6):
+    indices[i+0] = 0 + offset
+    indices[i+1] = 1 + offset
+    indices[i+2] = 2 + offset
+
+    indices[i+3] = 2 + offset
+    indices[i+4] = 3 + offset
+    indices[i+5] = 0 + offset
+
+    offset += 4
 
   glGenBuffers(1, ebo.addr)
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size, indices[0].addr, GL_STATIC_DRAW);
   #glBindBuffer(1,vao.addr)
 
+
+var postest* = vec2(2*0.4f,0f)
+
 proc drawTest*() =
 
   shader.use()
+  
+  var verts = @[
+    0.0f,0.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 0.0f, 0.0f, 0f,
+    1.0f,0.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 1.0f, 0.0f, 0f,
+    1.0f,1.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 1.0f, 1.0f, 0f,
+    0.0f,1.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 0.0f, 1.0f, 0f
+
+    # 2.0f,0.0f,0.0f, 0.65f, 0.25f, 0.95f, 1.0f, 0.0f, 0.0f, 1f,
+    # 3.0f,0.0f,0.0f, 0.65f, 0.25f, 0.95f, 1.0f, 1.0f, 0.0f, 1f,
+    # 3.0f,1.0f,0.0f, 0.65f, 0.25f, 0.95f, 1.0f, 1.0f, 1.0f, 1f,
+    # 2.0f,1.0f,0.0f, 0.65f, 0.25f, 0.95f, 1.0f, 0.0f, 1.0f, 1f
+  ]
+
+
+
+  # # var v1 = createVertex1()
+  # # var v2 = createVertex2()
+  # # var v3 = createVertex3()
+  # # var v4 = createVertex4()
+  # var vertexes : seq[cfloat] = newSeq[cfloat](40)
+  # var v1 = createVertex1()
+  # var v2 = createVertex2()
+  # var v3 = createVertex3()
+  # var v4 = createVertex4()
+  
+  
+  
+  # copyMem(vertexes[0].addr,  v1.addr, Vertexa.sizeof)
+  # copyMem(vertexes[10].addr, v2.addr, Vertexa.sizeof)
+  # copyMem(vertexes[20].addr, v3.addr, Vertexa.sizeof)
+  # copyMem(vertexes[30].addr, v4.addr, Vertexa.sizeof)
+  
+  # var vertexes2 = newSeq[Vertexa](4)
+  # var v11 = createVertex1()
+  # var v22 = createVertex2()
+  # var v33 = createVertex3()
+  # var v44 = createVertex4()
+  
+  # vertexes2[0] = v11
+  # vertexes2[1] = v22
+  # vertexes2[2] = v33
+  # vertexes2[3] = v44
+  
+  
+  
+  # copyMem(vertexes2[0].addr, v1.addr, Vertexa.sizeof)
+  # copyMem(vertexes2[1].addr, v2.addr, Vertexa.sizeof)
+  # copyMem(vertexes2[2].addr, v3.addr, Vertexa.sizeof)
+  # copyMem(vertexes2[3].addr, v4.addr, Vertexa.sizeof)
+  
+  # copyMem(vertexes[0].addr,  v1.addr, Vertexa.sizeof)
+  # copyMem(vertexes[10].addr, v2.addr, Vertexa.sizeof)
+  # copyMem(vertexes[20].addr, v3.addr, Vertexa.sizeof)
+  # copyMem(vertexes[30].addr, v4.addr, Vertexa.sizeof)
+  
+  #echo vertexes
+  # echo vertexes
+  # echo "POOOOOOOOOOK"
+  # echo verts
+  var amount = 3
+  var vertexes : seq[Vertex] = newSeq[Vertex](amount*4)
+  
+  # for i in 0..999:
+  #   var vx = (cfloat)i
+  #   copyMem(vertexes[i*4].addr, createQuadd(vx*0.4,0,0), 4*Vertex.sizeof)
+  copyMem(vertexes[0].addr, createQuadd(1*0.4,0,0), 4*Vertex.sizeof)
+  copyMem(vertexes[4].addr, createQuadd(postest.x,postest.y,0), 4*Vertex.sizeof)
+  copyMem(vertexes[8].addr, createQuadd(-1*0.4,0,0), 4*Vertex.sizeof)
+
+  glBindBuffer(GL_ARRAY_BUFFER, vbo)
+  glBufferSubData(GL_ARRAY_BUFFER,0, 12*Vertex.sizeof, vertexes[0].addr)
+  # var vvv = @[
+  #   0.0f,0.0f,0.0f,
+  #   1.0f,0.0f,0.0f,
+  #   1.0f,1.0f,0.0f,
+  #   0.0f,1.0f,0.0f
+  # ]
+
+  # var vvvc = @[
+  #   0.15f, 0.5f, 0.95f,
+  #   0.15f, 0.5f, 0.95f,
+  #   0.15f, 0.5f, 0.95f,
+  #   0.15f, 0.5f, 0.95f
+  # ]
+  
+  # var vvvt = @[
+  #   1.0f, 0.0f,
+  #   1.0f, 0.0f,
+  #   1.0f, 0.0f,
+  #   1.0f, 0.0f
+  # ]
+
+  # var vvvx = @[
+  #   1,
+  #   1,
+  #   1,
+  #   1
+  # ]
+  #glBufferSubData(GL_ARRAY_BUFFER,0,)
+  # var sizer = 10 * sizeof(cfloat)
+  # for i in 0..3:
+  #   glBufferSubData(GL_ARRAY_BUFFER,i*sizer, 3*sizeof(cfloat), q0[i].position[0].addr)
+  #   glBufferSubData(GL_ARRAY_BUFFER,i*sizer+3*sizeof(cfloat), 4*sizeof(cfloat), q0[i].color[0].addr)
+  #   glBufferSubData(GL_ARRAY_BUFFER,i*sizer+7*sizeof(cfloat), 2*sizeof(cfloat), q0[i].texCoords[0].addr)
+  #   glBufferSubData(GL_ARRAY_BUFFER,i*sizer+9*sizeof(cfloat), 1*sizeof(cfloat), q0[i].texID.addr)
 
   glBIndTextureUnit(0, image.id)
   glBIndTextureUnit(1, image2.id)
@@ -235,7 +375,7 @@ proc drawTest*() =
 
 
   shader.setMatrix("mx_model",model)
-  glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, nil)
+  glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, nil)
 
   # model = matrix()
   # model.scale(1,1,1)
