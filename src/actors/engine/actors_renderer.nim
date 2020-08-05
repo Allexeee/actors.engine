@@ -40,9 +40,23 @@ proc drawQuad*(x,y: cfloat, color: Vec, texID: cfloat): pointer {.discardable.} 
   tempQuad[0].addr
 
 
-proc sprite*(filename: string) : Sprite =
-  stbi_set_flip_vertically_on_load(true.ord)
-  discard
+proc addSprite*(texture: TextureIndex, shader: ShaderIndex) : Sprite =
+  result = Sprite()
+  result.texID = texture.cfloat
+  result.shader = shader
+  var v = drawQuad(0.0f,0.0f,vec(1,1,1,1),result.texID) 
+  #result.quad = drawQuad(0.0f,0.0f,vec(1,1,1,1),result.texID)
+
+proc addSprite*(filename: string, shader: ShaderIndex) : Sprite =
+  addSprite(addTexture(filename,MODE_RGBA, MODE_NEAREST, MODE_REPEAT),shader)
+
+
+#GLuint
+
+
+
+#proc addSprite*(Texture)
+#addTexture
 
 # proc loadImage*(filename: string, desired_channels: int = 0): TImage =
 #   var width: cint

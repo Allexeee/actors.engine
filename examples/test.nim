@@ -6,8 +6,6 @@ import ui
 import renderer
 import actors/vendor/actors_gl
 import random
-import actors/vendor/actors_imgui
-
 
 app.settings.fps = 60
 app.settings.ups = 60
@@ -33,8 +31,10 @@ var anim = newSeq[TImage](6)
 #tex_hero3_idle_01
 
 proc gameInit() =
-
-
+  
+  
+  #let tx = addTexture("tex_hero3_idle_01", MODE_RGBA, MODE_NEAREST, MODE_REPEAT)
+  
   #createQuad(0f,0f)
   # for i in 1..anim.high:
   #   anim[i-1] = loadImage(&"tex_hero3_idle_0{i}.png")
@@ -50,8 +50,12 @@ proc gameInit() =
   shader2.setMatrix("mx_projection", mx_ortho)
  # shader2.setInt("image",0)
   app.vsync(1)
-  triangle = initTriangle(shader1)
-  #quad     = initQuad(shader1)
+
+
+  let sprite = addSprite("tex_hero3_idle_01", shader1)
+
+  #triangle = initTriangle(shader1)
+ # quad     = initQuad(shader1)
   
   
   #echo image.id, "___", image2.id
@@ -96,13 +100,73 @@ var col2 = vec(1f, 1f, 1f)
 var anim_frame = 0f
 
 
+
+
+
+usePtr[Vertex]()
+import actors/vendor/actors_imgui
+
+var elements : array[2,float32]
+
 proc gameDraw() =
   # частота смены кадра анимации, 1 кадр = 10 шагов
   anim_frame += 1 / 10
+  # initialize(quad.shader)
+  # drawTest()
+
+  #var vertices : array[1000,Vertex]
+  #drawTest(quad.shader)
+  #quad.draw(pos, size*scale, rotate,col1)
   
-  #initialize(quad.shader)
-  #drawTest()
+#   vertices[0].position = [0.0,0.0,0.0]
+#   vertices[1].position = [1.0,0.0,0.0]
  
+#   var buffer : ptr Vertex = vertices[0].addr
+#   buffer = createQuad(buffer,0.0,0.0,0.0)
+#   buffer = createQuad(buffer,1.0,0.0,0.0)
+#   buffer = createQuad(buffer,10.0,0.0,0.0)
+#   buffer = createQuad(buffer,100.0,0.0,0.0)
+#   #buffer -= 1
+#  # buffer -= 4
+#   echo (buffer - Vertex.sizeof)[]
+#   echo (buffer - Vertex.sizeof)[]
+#   echo (buffer - Vertex.sizeof)[]
+  #buffer -= 4
+ # echo buffer[1]
+  #buffer += 1
+  #echo buffer[]
+  # var a = t[0].addr
+  # echo a[]
+  # a = a+1
+  # echo a[]
+
+  # var vertices : array[1000,Vertex]
+  # var buffer : ptr Vertex = vertices[0].addr
+  # var buffer_pointer = buffer.addr
+  # buffer_pointer = buffer_pointer+1
+  #ptrr[] += 1
+  #buffer = createQuad(cast[ptr](buffer),0f,0f,0f)
+  #drawDebug()
+  # рисуем квад с картинкой. В нашей анимации 5 кадров
+ # quad.shader.use()
+  
+  # var img = anim[(int)anim_frame mod 5]
+  # for i in 0..10000:
+  #   quad.draw(pos, size*scale, rotate,col1)
+  # for i in 0..10000:
+  #   var rx = (float)(rand(-0.15..0.15) * (float)i)
+  #   var ry = (float)(rand(-0.15..0.15) * (float)i)
+  #   quad.draw(pos+vec(rx,ry), size*scale, rotate,col1)
+  # for i in 0..10000:
+  #   var rx = (float)(rand(-0.15..0.15) * (float)i)
+  #   var ry = (float)(rand(-0.15..0.15) * (float)i)
+  #   quad.draw(img, pos+vec(rx,ry), size*scale, rotate,col1)
+  
+  # igBegin("Controls")
+  # igDragFloat2("Elements", elements, 0.1 )
+  # igEnd()
+
+  # echo elements[0]
   # интерфейсы
   for ui in uis:
     ui.draw()

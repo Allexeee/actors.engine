@@ -6,7 +6,7 @@ import times
 import os
 import strformat
 
-
+import actors/actors_internal as internal
 import actors/actors_engine  as engine
 import actors/actors_runtime as runtime
 import actors/actors_utils   as utils
@@ -15,6 +15,8 @@ import actors/vendor/actors_glfw
 
 import actors/vendor/actors_imgui
 import actors/vendor/actors_gl
+
+
 
 export engine except
   app,
@@ -38,7 +40,7 @@ let app* = App()
 app.time = AppTime()
 app.settings = AppSettings()
 
-engine.app = app
+internal.app = app
 
 let layerApp* = app.addLayer(); layerApp.setActive()
 layerApp.entity()
