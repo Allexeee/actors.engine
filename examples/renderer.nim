@@ -177,10 +177,10 @@ proc initialize*(arg: ShaderIndex) =
 
 
   var verts = @[
-    0.0f,0.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 0.0f, 0.0f, 1f,
-    1.0f,0.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 1.0f, 0.0f, 1f,
-    1.0f,1.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 1.0f, 1.0f, 1f,
-    0.0f,1.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 0.0f, 1.0f, 1f,
+    0.0f,0.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 0.0f, 0.0f, 0f,
+    1.0f,0.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 1.0f, 0.0f, 0f,
+    1.0f,1.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 1.0f, 1.0f, 0f,
+    0.0f,1.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 0.0f, 1.0f, 0f,
 
     2.0f,0.0f,0.0f, 0.65f, 0.25f, 0.95f, 1.0f, 0.0f, 0.0f, 1f,
     3.0f,0.0f,0.0f, 0.65f, 0.25f, 0.95f, 1.0f, 1.0f, 0.0f, 1f,
@@ -220,12 +220,7 @@ proc initialize*(arg: ShaderIndex) =
 proc drawTest*() =
 
   shader.use()
-  #activeTexture(GL_TEXTURE0)
-  #bindTexture(GL_TEXTURE_2D,image.id)
-  #  activeTexture(GL_TEXTURE0)
-  # bindTexture(GL_TEXTURE_2D,texture1)
-  # activeTexture(GL_TEXTURE1)
-  # bindTexture(GL_TEXTURE_2D, texture2)
+
   glBIndTextureUnit(0, image.id)
   glBIndTextureUnit(1, image2.id)
 
