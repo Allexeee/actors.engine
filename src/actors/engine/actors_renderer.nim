@@ -8,58 +8,6 @@ when defined(renderer_opengl):
   export actors_opengl
 
 
-type Vertexa* = object
-  position*: Vec3
-  color*: Vec
-  texCoords*: Vec2
-  texID* : cfloat
-proc createVertex1*() : Vertexa =
-  result = Vertexa(
-    position : (0.0f,0.0f,0.0f),
-    color : (0.15f, 0.5f, 0.95f, 1.0f),
-    texCoords: (0f,0f),
-    texID: (0f)
-  )
-proc createVertex2*() : Vertexa =
-  result = Vertexa(
-    position : (1.0f,0.0f,0.0f),
-    color : (0.15f, 0.5f, 0.95f, 1.0f),
-    texCoords: (1f,0f),
-    texID: (0f)
-  )
-proc createVertex3*() : Vertexa =
-  result = Vertexa(
-    position : (1.0f,1.0f,0.0f),
-    color : (0.15f, 0.5f, 0.95f, 1.0f),
-    texCoords: (1f,1f),
-    texID: (0f)
-  )
-proc createVertex4*() : Vertexa =
-  result = Vertexa(
-    position : (0.0f,1.0f,0.0f),
-    color : (0.15f, 0.5f, 0.95f, 1.0f),
-    texCoords: (0f,1f),
-    texID: (0f)
-  )
-
-# proc createVertex1*() : Vertexa =
-#   Vertexa(data : [0.0f,0.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 0.0f, 0.0f, 0f])
-# proc createVertex2*() : Vertexa =
-#   Vertexa(data : [1.0f,0.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 1.0f, 0.0f, 0f])
-# proc createVertex3*() : Vertexa =
-#   Vertexa(data : [1.0f,1.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 1.0f, 1.0f, 0f])
-# proc createVertex4*() : Vertexa =
-#   Vertexa(data : [0.0f,1.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 0.0f, 1.0f, 0f])  
-
-# proc createVertex1*() : Vertexa =
-#   [0.0f,0.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 0.0f, 0.0f, 0f]
-# proc createVertex2*() : Vertexa =
-#   [1.0f,0.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 1.0f, 0.0f, 0f]
-# proc createVertex3*() : Vertexa =
-#   [1.0f,1.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 1.0f, 1.0f, 0f]
-# proc createVertex4*() : Vertexa =
-#   Vertexa(data : [0.0f,1.0f,0.0f, 0.15f, 0.5f, 0.95f, 1.0f, 0.0f, 1.0f, 0f])  
-
 
 proc createQuad*(x,y: cfloat, texID: cfloat): seq[Vertex] {.discardable.} =
   const size = 1.0f
@@ -117,5 +65,3 @@ proc createQuadd*(x,y: cfloat, texID: cfloat): pointer {.discardable.} =
 
 proc drawDebug*() = 
   discard
-
-#export actors_renderer
