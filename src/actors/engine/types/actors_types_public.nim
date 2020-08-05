@@ -6,14 +6,6 @@ import sets
 
 import ../actors_math
 
-#@rendering
-type Vertex* = object
-  position* : Vec3
-  color*    : Vec
-  texCoords*: Vec2
-  texID*    : cfloat
-
-
 
 type System* = ref object of RootObj
     layer* : Layer

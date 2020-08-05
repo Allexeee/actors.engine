@@ -1,7 +1,8 @@
 import ../actors_types
 import ../../actors_utils
 import ../../vendor/actors_stb_image
-#import ../actors_renderer
+
+var app* : App
 
 proc addLayer* (this: App): Layer =
   result        = Layer()
@@ -52,3 +53,5 @@ proc loadImage*(filename: string, desired_channels: int = 0): TImage =
       data: pixelData
   )
 
+template path_assets*() : string =
+  app.settings.path_assets

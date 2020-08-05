@@ -7,18 +7,6 @@ import ../../../vendor/actors_gl
 import ../../../actors_utils
 import ../../actors_math
 
-#from   ../../ import app
-
-type ShaderIndex* = distinct uint32
-
-type ShaderCompileType   = enum
-  VERTEX = 0,
-  FRAGMENT,
-  GEOMETRY,
-  PROGRAM
-type ShaderLoadError*    = object of ValueError
-type ShaderCompileError* = object of ValueError
-
 
 const vert_default: cstring = """
     #version 330 core
@@ -46,7 +34,7 @@ template checkErrorShaderCompile(obj: uint32, errType: ShaderCompileType): untyp
             var success {.inject.}: Glint
             var messageBuffer {.inject.} = newSeq[cchar](1024)
             var len {.inject.} : int32 = 0
-            if errType == PROGRAM:
+            if errType == PROGRAM_INFO:
                 glGetProgramiv(obj, GL_LINK_STATUS, success.addr)
                 if success != GL_TRUE.ord:
                     glGetProgramInfoLog(obj, 1024, len.addr, messageBuffer[0].addr)
@@ -97,18 +85,18 @@ proc shader*(app: App, shader_path: string): ShaderIndex =
     vertex = glCreateShader(GL_VERTEX_SHADER)
     glShaderSource(vertex,1, cast[cstringArray](vert_code.addr), nil)
     glCompileShader(vertex)
-    checkErrorShaderCompile(vertex, VERTEX)
+    checkErrorShaderCompile(vertex, VERTEX_INFO)
     ##fragment
     fragment = glCreateShader(GL_FRAGMENT_SHADER)
     glShaderSource(fragment,1'i32,cast[cstringArray](frag_code.addr), nil)
     glCompileShader(fragment)
-    checkErrorShaderCompile(fragment, FRAGMENT)
+    checkErrorShaderCompile(fragment, FRAGMENT_INFO)
     ##geom
     if geom_code!=default(cstring):
        geom = glCreateShader(GL_GEOMETRY_SHADER)
        glShaderSource(geom, 1'i32, cast[cstringArray](geom_code.addr), nil)
        glCompileShader(geom)
-       checkErrorShaderCompile(geom, GEOMETRY)
+       checkErrorShaderCompile(geom, GEOMETRY_INFO)
     ##program
     id = glCreateProgram()
     glAttachShader(id,vertex)
@@ -116,7 +104,7 @@ proc shader*(app: App, shader_path: string): ShaderIndex =
     if geom_code!=default(cstring):
         glAttachShader(id,geom)
     glLinkProgram(id)
-    checkErrorShaderCompile(id, PROGRAM)
+    checkErrorShaderCompile(id, PROGRAM_INFO)
     glDeleteShader(vertex)
     glDeleteShader(fragment)
     result = id.ShaderIndex

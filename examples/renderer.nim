@@ -317,12 +317,14 @@ proc drawTest*() =
   var amount = 3
   var vertexes : seq[Vertex] = newSeq[Vertex](amount*4)
   
+  var cwhite = vec(1,1,1,1)
+  var cblue = vec(0,0,1,1)
   # for i in 0..999:
   #   var vx = (cfloat)i
   #   copyMem(vertexes[i*4].addr, createQuadd(vx*0.4,0,0), 4*Vertex.sizeof)
-  copyMem(vertexes[0].addr, createQuadd(1*0.4,0,0), 4*Vertex.sizeof)
-  copyMem(vertexes[4].addr, createQuadd(postest.x,postest.y,0), 4*Vertex.sizeof)
-  copyMem(vertexes[8].addr, createQuadd(-1*0.4,0,0), 4*Vertex.sizeof)
+  copyMem(vertexes[0].addr, drawQuad(1*0.4,0,cwhite,0),  4*Vertex.sizeof)
+  copyMem(vertexes[4].addr, drawQuad(postest.x,postest.y,cblue,0), 4*Vertex.sizeof)
+  copyMem(vertexes[8].addr, drawQuad(-1*0.4,0,cwhite,0), 4*Vertex.sizeof)
 
   glBindBuffer(GL_ARRAY_BUFFER, vbo)
   glBufferSubData(GL_ARRAY_BUFFER,0, 12*Vertex.sizeof, vertexes[0].addr)
@@ -418,7 +420,7 @@ proc drawTest*(shader: ShaderIndex) =
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size, indices[0].addr, GL_STATIC_DRAW);
   
   
-  var q0 = createQuad(-1.5f,-0.5f,0.0f)
+  #var q0 = createQuad(-1.5f,-0.5f,0.0f)
    
   var verts = @[
       -1f,0f,0, 0,1,0,1, 0,0, 0,
