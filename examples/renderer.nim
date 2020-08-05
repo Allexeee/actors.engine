@@ -197,40 +197,7 @@ proc initialize*(arg: ShaderIndex) =
   glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texID)))
   glEnableVertexAttribArray(3)
 
-  # glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,(cfloat.sizeof*10).GLsizei,cast[ptr Glvoid](0))
-  # glEnableVertexAttribArray(0)
 
-  # glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,(cfloat.sizeof*10).GLsizei,cast[ptr Glvoid](cfloat.sizeof*3))
-  # glEnableVertexAttribArray(1)
-  
-  # glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,(cfloat.sizeof*10).GLsizei,cast[ptr Glvoid](cfloat.sizeof*7))
-  # glEnableVertexAttribArray(2)
-  
-  # glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,(cfloat.sizeof*10).GLsizei,cast[ptr Glvoid](cfloat.sizeof*9))
-  # glEnableVertexAttribArray(3)
-   
-  # var indicess = newSeq[uint32](1000*6)
-  
-  # var idd = 0'u32
-  # for i in 0..5999:
-  #   if i mod 6 == 0:
-  #     indicess[i+0] = 0 + idd 
-  #     indicess[i+1] = 1 + idd
-  #     indicess[i+2] = 2 + idd
-  #     indicess[i+3] = 2 + idd
-  #     indicess[i+4] = 3 + idd
-  #     indicess[i+5] = 0 + idd
-  #     idd += 4
-    #indicess[i] = i mod 6
-    #indices[i] = q
-    #q = i mod 6
-    #echo q
-
-  # var indices = @[
-  #   0'u32, 1'u32, 2'u32, 2'u32, 3'u32, 0'u32,
-  #   4'u32, 5'u32, 6'u32, 6'u32, 7'u32, 4'u32
-  # ]
-  
   var indices = newSeq[uint32](maxIndexCount)
   var offset = 0'u32
   for i in countup(0,maxIndexCount-1,6):
@@ -268,52 +235,7 @@ proc drawTest*() =
     # 2.0f,1.0f,0.0f, 0.65f, 0.25f, 0.95f, 1.0f, 0.0f, 1.0f, 1f
   ]
 
-
-
-  # # var v1 = createVertex1()
-  # # var v2 = createVertex2()
-  # # var v3 = createVertex3()
-  # # var v4 = createVertex4()
-  # var vertexes : seq[cfloat] = newSeq[cfloat](40)
-  # var v1 = createVertex1()
-  # var v2 = createVertex2()
-  # var v3 = createVertex3()
-  # var v4 = createVertex4()
-  
-  
-  
-  # copyMem(vertexes[0].addr,  v1.addr, Vertexa.sizeof)
-  # copyMem(vertexes[10].addr, v2.addr, Vertexa.sizeof)
-  # copyMem(vertexes[20].addr, v3.addr, Vertexa.sizeof)
-  # copyMem(vertexes[30].addr, v4.addr, Vertexa.sizeof)
-  
-  # var vertexes2 = newSeq[Vertexa](4)
-  # var v11 = createVertex1()
-  # var v22 = createVertex2()
-  # var v33 = createVertex3()
-  # var v44 = createVertex4()
-  
-  # vertexes2[0] = v11
-  # vertexes2[1] = v22
-  # vertexes2[2] = v33
-  # vertexes2[3] = v44
-  
-  
-  
-  # copyMem(vertexes2[0].addr, v1.addr, Vertexa.sizeof)
-  # copyMem(vertexes2[1].addr, v2.addr, Vertexa.sizeof)
-  # copyMem(vertexes2[2].addr, v3.addr, Vertexa.sizeof)
-  # copyMem(vertexes2[3].addr, v4.addr, Vertexa.sizeof)
-  
-  # copyMem(vertexes[0].addr,  v1.addr, Vertexa.sizeof)
-  # copyMem(vertexes[10].addr, v2.addr, Vertexa.sizeof)
-  # copyMem(vertexes[20].addr, v3.addr, Vertexa.sizeof)
-  # copyMem(vertexes[30].addr, v4.addr, Vertexa.sizeof)
-  
-  #echo vertexes
-  # echo vertexes
-  # echo "POOOOOOOOOOK"
-  # echo verts
+ 
   var amount = 3
   var vertexes : seq[Vertex] = newSeq[Vertex](amount*4)
   
@@ -324,7 +246,7 @@ proc drawTest*() =
   #   copyMem(vertexes[i*4].addr, createQuadd(vx*0.4,0,0), 4*Vertex.sizeof)
   copyMem(vertexes[0].addr, drawQuad(1*0.4,0,cwhite,0),  4*Vertex.sizeof)
   copyMem(vertexes[4].addr, drawQuad(postest.x,postest.y,cblue,0), 4*Vertex.sizeof)
-  copyMem(vertexes[8].addr, drawQuad(-1*0.4,0,cwhite,0), 4*Vertex.sizeof)
+  #copyMem(vertexes[8].addr, createQuad1*0.4,0,cwhite,0), 4*Vertex.sizeof)
 
   glBindBuffer(GL_ARRAY_BUFFER, vbo)
   glBufferSubData(GL_ARRAY_BUFFER,0, 12*Vertex.sizeof, vertexes[0].addr)

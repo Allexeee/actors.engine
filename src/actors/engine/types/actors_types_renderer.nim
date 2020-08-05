@@ -17,12 +17,13 @@ type Vertex* = object
   texID*    : cfloat
 
 type Quad* = object
-  verts*: ptr Vertex
-  vbo  *: uint32
+  verts*: array[4,Vertex]
+  vao  *: uint32
 
-type Sprite* = ref object
+type Sprite* = object
   quad* : Quad
   x,y* : float32
   shader*  : ShaderIndex
-  texID*    : cfloat
+  texID*    : uint32
+
 
