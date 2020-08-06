@@ -16,7 +16,8 @@ let GL_FLOAT = 0x1406.GLenum
 let GL_FALSE = false
 
 var tempQuad : array[4,Vertex]
-
+var drawcalls* = 0
+var drawcallsLast* = 0
 
 proc drawQuad*(x,y: cfloat, color: Vec, texID: cfloat): pointer {.discardable.} =
   const size = 1.0f
@@ -204,6 +205,9 @@ var batch* = newSeq[Sprite](maxQuadCount)
 var nextBatchID* : int = 0
 var nextQuadID* : int = 0
 var indCount* : int = 0
+
+
+
 proc drawBatched*(self: Sprite, pos: Vec2, size: Vec2) =
   #var q = self.quad
   self.quad.updatePos(pos.x,pos.y,size.x,size.y)
@@ -218,7 +222,7 @@ proc drawBatched*(self: Sprite, pos: Vec2, size: Vec2) =
 var verts : array[maxQuadCount*4,Vertex]
 
 proc flush*() =
-
+  drawcalls += 1
   glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
   glBufferSubData(GL_ARRAY_BUFFER, 0, verts.size, verts[0].addr) 
   
@@ -231,6 +235,9 @@ proc flush*() =
   glDrawElements(GL_TRIANGLES, indCount.GlSizei, GL_UNSIGNED_INT, nil)
   indCount = 0
   nextQuadID = 0
+  drawcallsLast = drawcalls
+  drawcalls -= 1
+
 
 proc flusher*() =
   glBindBuffer(GL_ARRAY_BUFFER, vboBatch)

@@ -1,7 +1,7 @@
 import ../actors_types
 import ../../actors_utils
 import ../../vendor/actors_stb_image
-import ../../actors_internal
+#import ../../actors_internal
 
 proc addLayer* (this: App): Layer =
   result        = Layer()

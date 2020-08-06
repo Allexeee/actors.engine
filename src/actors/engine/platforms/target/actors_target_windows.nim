@@ -10,11 +10,6 @@ proc pollEvents*() {.inline.} =
   glfwPollEvents()
 
 
-
-
-
-
-
 proc dispose*() =
   window.destroyWindow()
   window = nil

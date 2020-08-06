@@ -1,13 +1,13 @@
-import actors_math_base
-
-
-type Vec*  = tuple[x,y,z,w: float32]
-type Vec2* = tuple[x,y: float32]
-type Vec3* = tuple[x,y,z: float32]
+import actors_math_header
 
 proc xy*(self: var Vec, x,y: float32) =
   self.x = x
   self.y = y
+
+proc toarray*(self: var Vec2): array[2,float32] =
+  [self.x,self.y]
+proc tovec*(self: array[2,float32]): Vec2 =
+  (self[0],self[1])
 
 template xy*(self: var Vec): Vec =
   (self.x,self.y, 0f, 0f)

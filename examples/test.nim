@@ -117,7 +117,7 @@ import actors/vendor/actors_imgui
 
 var elements : array[2,float32]
 
-const amountof = 105000
+const amountof = 10
 
 var poses : array[amountof, Vec2]
 
@@ -135,16 +135,20 @@ proc gameDraw() =
   glBIndTextureUnit(0, sprite1.texID)
   glBIndTextureUnit(1, sprite1.texID)
   
+  # cобираем данные
   for i in 0..amountof-1:
-    sprite1.drawBatched(poses[i],vec2(1,1))
+    sprite1.drawBatched(poses[i],(1f,1f))
 
- 
+  # вот этот метод рисует
   flush()
- 
-  igBegin("Amount")
+  
+  var nextPos = poses[5].toarray()
+  igBegin("Test")
+  igDragFloat2("Position", nextPos, 0.1)
   igText("Elements: %i",amountof)
   igEnd()
-
+  poses[5] = nextPos.tovec()
+  
   # интерфейсы
   for ui in uis:
     ui.draw()

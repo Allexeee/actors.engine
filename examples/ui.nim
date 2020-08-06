@@ -63,6 +63,9 @@ method draw*(self: UIDebugGame) =
     igText("off")
   igSameLine(130)
   igText("fps/ups = %.1f/%.1f | %.3f ms ", app.framerate_last, app.ups_last, 1000.0f / app.framerate_last)
+  igText("")
+  igSameLine(130)
+  igText("draw calls: %.i ", drawcallsLast)
   
   if self.vsync_toggle:
     app.vsync(1)

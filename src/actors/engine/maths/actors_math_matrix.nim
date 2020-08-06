@@ -1,8 +1,5 @@
-import actors_math_base
+import actors_math_header
 import actors_math_vec
-
-type
-    Matrix* = tuple[e11,e12,e13,e14,e21,e22,e23,e24,e31,e32,e33,e34,e41,e42,e43,e44: float32]
 
 #@ahead
 proc identity*(mx: var Matrix) {.inline.}

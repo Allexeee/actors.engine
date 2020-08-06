@@ -4,13 +4,16 @@
 import math
 export math
 
+type rad* = distinct float32
+
+type Vec*  = tuple[x,y,z,w: float32]
+type Vec2* = tuple[x,y: float32]
+type Vec3* = tuple[x,y,z: float32]
+type Matrix* = tuple[e11,e12,e13,e14,e21,e22,e23,e24,e31,e32,e33,e34,e41,e42,e43,e44: float32]
 
 const rad_per_deg*  = PI / 180.0 
 const epsilon_sqrt* = 1e-15F
 const epsilon*      = 0.00001 #for floating-point inaccuracies.
-
-
-type rad* = distinct float32
 
 proc invSqrt*(number: cfloat): cfloat {.importc.}
 
@@ -25,18 +28,3 @@ proc max*(val1: float32, val2: float32): float32 =
     val2
   else:
     val1
-
-
-  # public static int clamp(int value, int min, int max)
-  #   {
-  #     if (value < min)
-  #       value = min;
-  #     else if (value > max)
-  #       value = max;
-  #     return value;
-  #   }
-
-    # public static float max(float val1, float val2)
-    # {
-    #   return val1 < val2 ? val2 : val1;
-    # }

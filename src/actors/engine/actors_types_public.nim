@@ -11,7 +11,6 @@ type System* = ref object of RootObj
     layer* : Layer
 
 
-
 #@assets
 type Origin* = enum
   Center,

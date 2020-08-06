@@ -1,88 +1,4 @@
-## Распредели группы в хранилища
-##
-##
-##
-##
-##
-##
-##
-##
-##
-
-{.experimental: "codeReordering".}
-{.experimental: "dynamicBindSym".}
-{.used.} 
-
-import macros
-import strformat
-import strutils
-import times
-import tables
-import sets
-import hashes
-import typetraits 
-import math
-
-import ../actors/actors_utils
-
-type ent* = tuple
-  id  : uint32
-  age : uint32
-
-type EcsInstance = ref object
-
-type SystemEcs* = ref object
-  operations*   : seq[Operation]
-  ents_alive*   : HashSet[uint32]
-  groups        : seq[Group]
-
-type Entity* {.packed.} = object
-  dirty*            : bool        #dirty allows to set all components for a new entity in one init command
-  age*              : uint32
-  layer*            : int
-  system*           : SystemEcs
-  parent*           : ent
-  signature*        : set[uint16] 
-  signature_groups* : set[uint16] # what groups are already used
-  childs*           : seq[ent]
-
-type Group* = ref object of RootObj
-  id*               : uint16
-  system*           : SystemEcs
-  layer*            : int
-  signature*        : set[uint16]
-  signature_excl*   : set[uint16]
-  entities*         : seq[ent]
-  added*            : seq[ent]
-  removed*          : seq[ent]
-  events*           : seq[proc()]
-
-type ComponentMeta {.packed.} = object
-  id*        : uint16
-  generation : uint16
-  bitmask    : int
-
-type StorageBase = ref object of RootObj
-  meta*      : ComponentMeta
-  groups*    : seq[Group]
-
-type Storage*[T] = ref object of StorageBase
-  entities*  : Table[uint32, int]
-  container* : seq[T]
-  
-type OpKind = enum
-  Init
-  Add,
-  Remove,
-  Kill
-
-type Operation {.packed.} = object
-  kind*  : OpKind
-  entity*: ent 
-  arg*   : uint16
-
-
-var ecs* = EcsInstance()
+include actors_ecs_header
 
 var id_next           {.global.} : uint32 = 0 # confusion with {.global.} in proc, redefining
 var id_entity_last    {.used.}   : uint32 = 0
@@ -90,35 +6,57 @@ var id_component_next {.used.}   : uint16 = 1
 var entities   = new_seqofcap[Entity](1024)
 var ents_stash = newSeqOfCap[ent](256)
 
-var ecsMain* = SystemEcs()
-
+var ecs* : array[16,SystemEcs]
 
 
 #@entities
-proc entity*(this: SystemEcs): ent {.inline.} =
+
+# proc entityImpl*(self: SystemEcs): ent =
+#   if ents_stash.len > 0:
+#         result = ents_stash[0]
+#         let e = addr entities[result.id]
+#         e.dirty = true
+#         ents_stash.del(0)
+#   else:
+#       let e = entities.addNew()
+#       e.dirty = true
+#       result.id = id_next
+#       result.age = 0
+#       id_next += 1
+    
+#   let op = self.operations.addNew()
+#   op.entity = result
+#   op.kind = OpKind.Init
+#   self.ents_alive.incl(result.id)
+
+
+proc entity*(this: Layer): ent {.inline, discardable.} =
     if ents_stash.len > 0:
         result = ents_stash[0]
         let e = addr entities[result.id]
         e.dirty = true
-        e.system = this
+        e.layer = this
         ents_stash.del(0)
     else:
         let e = entities.addNew()
         e.dirty = true
-        e.system = this
+        e.layer = this
         result.id = id_next
         result.age = 0
         id_next += 1
     
-    let op = this.operations.addNew()
+    let op = this.ecs.operations.addNew()
     op.entity = result
     op.kind = OpKind.Init
-    this.ents_alive.incl(result.id)
+    this.ecs.ents_alive.incl(result.id)
+
+proc layer*(this: ent): Layer =
+  entities[this.id].layer
 
 proc release*(this: ent) = 
     check_error_release_empty(this)
     var entity = addr entities[this.id]
-    let op = entity.system.operations.addNew()
+    let op = entity.layer.ecs.operations.addNew()
     op.entity = this
     op.kind = OpKind.Kill
    
@@ -161,7 +99,6 @@ proc unparent*(this: ent) =
     
     entity_this.parent = (0'u32,0'u32)
 
-var e = ecsMain.entity() # first entity
 
 proc `$`*(this: ent): string =
     $this.id
@@ -222,7 +159,6 @@ macro get*(this: ent, args: untyped, code: untyped): untyped =
                   nnkDotExpr.newTree(
                       ident($this),
                       ident("has")))
-    
   if args.len > 1:
       for elem in args:
           command.add(ident($elem))
@@ -241,7 +177,6 @@ macro get*(this: ent, args: untyped, code: untyped): untyped =
               )
           )
           code.insert(0,n)
-      
   else:
       command.add(ident($args))
       var elem_name = $args
@@ -292,14 +227,14 @@ template mask*(T,Y,U,I,O,P,S,D: typedesc): set[uint16] =
 #@groups
 var id_next_group {.global.} : uint16 = 0
 
-proc group*(this: SystemEcs, incl: set[uint16]): Group =
+proc group*(this: Layer, incl: set[uint16]): Group =
   result = group_impl(this, incl, {0'u16})
-proc group*(this: SystemEcs, incl: set[uint16], excl: set[uint16]): Group =
+proc group*(this: Layer, incl: set[uint16], excl: set[uint16]): Group =
   result = group_impl(this, incl, excl)
 
-proc group_impl(this: SystemEcs, incl: set[uint16], excl: set[uint16]): Group = 
+proc group_impl(this: Layer, incl: set[uint16], excl: set[uint16]): Group = 
   var group_next : Group = nil
-  let groups = addr this.groups
+  let groups = addr this.ecs.groups
   
   for i in 0..groups[].high:
       let gr = groups[][i]
@@ -315,7 +250,7 @@ proc group_impl(this: SystemEcs, incl: set[uint16], excl: set[uint16]): Group =
       group_next.entities = newSeqOfCap[ent](1000)
       group_next.added = newSeqOfCap[ent](500)
       group_next.removed = newSeqOfCap[ent](500)
-      group_next.system = this
+      group_next.layer = this
       if not incl.contains(0):
         for id in incl:
           storages[id].groups.add(group_next)
@@ -325,7 +260,6 @@ proc group_impl(this: SystemEcs, incl: set[uint16], excl: set[uint16]): Group =
       id_next_group += 1
   
   group_next
-    
 
 template insert(gr: Group, self: ent, entityMeta: ptr Entity) = 
   var len = gr.entities.len
@@ -441,7 +375,7 @@ proc execute*(ecs: SystemEcs) {.inline.} =
          gr.removed.setLen(0)
 
 iterator items*(range: Group): ent =
-  range.system.execute()
+  range.layer.ecs.execute()
   var i = range.entities.low
   while i <= range.entities.high:
       yield range.entities[i]
@@ -478,26 +412,33 @@ proc formatComponentAlias(s: var string) =
     delete(s,1,indexes[1]-1)
   s = toUpperAscii(s[0]) & substr(s, 1)
 
-macro formatComponentPretty(t: typedesc): untyped =
+macro formatComponentPretty(t: typedesc, compType: static CompType): untyped =
   let tName = strVal(t)
   var proc_name = tName  
   formatComponent(proc_name)
-  var source = &("""
-  template `{proc_name}`*(self: ent): ptr {tName} =
-      impl_get(self,{tName})""")
-  # var source2 = &("""
-  # template `{proc_name}`*(self: ptr ent): ptr {tName} =
-  #     impl_get(self,{tName})""")
+  var source = ""
+  # WORKING SOLUTION!
+  if compType == CompType.Action:
+    source = &("""
+    template `{proc_name}`*(self: ent) =
+        impl_get_action(self,{tName})
+        """)
+  else:
+    source = &("""
+    template `{proc_name}`*(self: ent): ptr {tName} =
+        impl_get(self,{tName})
+        """)
+
   result = parseStmt(source)
-  #result.add(parseStmt(source2))
+
 
 var storages* = newSeq[StorageBase](1)
 
 #@storage
-template impl_storage(t: typedesc) {.used.} =
-  var storage {.used.} = Storage[t]()
+template impl_storage(t: typedesc, compType: CompType) {.used.} =
+  var storage* {.used.} = Storage[t]()
   storage.container = newSeq[t]()
-  storage.entities  = Table[uint32,int]()
+  storage.entities  = newSeq[int](10000) #Table[uint32,int]()
   storage.meta.id = id_component_next
   storage.meta.bitmask = 1 shl (storage.meta.id mod 32)
   storage.meta.generation = storage.meta.id div 32
@@ -505,6 +446,8 @@ template impl_storage(t: typedesc) {.used.} =
   storages.add(storage)
   id_component_next+=1
 
+  proc GetStorage*(_:typedesc[t]): StorageBase =
+    storage
 
   proc StorageSizeCalculate*(_:typedesc[t]): int {.discardable.} =
     (storage.sizeof + _.sizeof * storage.container.len + storage.entities.len * uint32.sizeof+storage.entities.len * int.sizeof) div 1000
@@ -517,51 +460,70 @@ template impl_storage(t: typedesc) {.used.} =
       format.add(" KB")
       format
   
+
   proc ID*(_:typedesc[t]): uint16 {.inline, discardable.} =
       storage.meta.id
-  
-  proc impl_get(self: ent, _: typedesc[t]): ptr t {.inline, discardable.} =
+  template impl_get_action(self: ent, _: typedesc[t]) =
+      storage.container[storage.entities[self.id]](self)
+  proc impl_get(self: ent, _: typedesc[t]): ptr t {.inline, discardable, used.} =
       addr storage.container[storage.entities[self.id]]
-  
-  proc impl_get(self: ptr ent, _: typedesc[t]): ptr t {.inline, discardable.} =
+  proc impl_get(self: ptr ent, _: typedesc[t]): ptr t {.inline, discardable, used.} =
       addr storage.container[storage.entities[self.id]]
 
-  proc get*(self: ent, _: typedesc[t]): ptr t {.inline, discardable.} =
-      if t.Id in entities[self.id].signature:
-        return impl_get(self,_)
-
+  proc get*(self: ent, _: typedesc[t], arg: t) =
       let id = storage.meta.id
       let entity = addr entities[self.id]
-      let comp = storage.container.addNew()
-
+      if t.ID in entities[self.id].signature:
+        storage.container[storage.entities[self.id]] = arg
+      else:
+        storage.container.add(arg)
+      
       storage.entities[self.id] = storage.container.high
       entity.signature.incl(id)
     
       if not entity.dirty:
-          let op = entity.system.operations.addNew()
+          let op = entity.layer.ecs.operations.addNew()
+          op.entity = self
+          op.kind = OpKind.Add
+          op.arg  = id
+
+  proc get*(self: ent, _: typedesc[t]): ptr t {.inline, discardable.} =
+      if t.Id in entities[self.id].signature:
+        return addr storage.container[storage.entities[self.id]]
+
+      let id = storage.meta.id
+      let entity = addr entities[self.id]
+      let comp = storage.container.addNew()
+     
+      storage.entities[self.id] = storage.container.high
+      entity.signature.incl(id)
+    
+      if not entity.dirty:
+          let op = entity.layer.ecs.operations.addNew()
           op.entity = self
           op.kind = OpKind.Add
           op.arg  = id
 
       comp
-  
+
   proc remove*(self: ent, _: typedesc[t]) {.inline, discardable.} = 
       checkErrorRemoveComponent(self, t)
       let entity = addr entities[self.id]
-      let op = entity.system.operations.addNew()
+      let op = entity.system.ecs.operations.addNew()
       op.entity = self
       op.arg = storage.meta.id
       op.kind = OpKind.Remove
       entity.signature.excl(op.arg)
 
 
-  formatComponentPretty(t)
+  formatComponentPretty(t, compType)
 
-macro add*(this: EcsInstance, component: untyped): untyped =
+macro add*(this: App, component: untyped, compType: CompType = Object): untyped =
   result = nnkStmtList.newTree(
            nnkCommand.newTree(
               bindSym("impl_storage", brForceOpen),
-              newIdentNode($component)
+              newIdentNode($component),
+              newIdentNode($compType)
              )
           )
 
@@ -593,26 +555,10 @@ proc binarysearch(this: ptr seq[ent], value: uint32): int {.discardable, inline.
       else:
           right = m - 1
   return m
+
 proc hash*(x: set[uint16]): Hash =
   result = x.hash
   result = !$result
 
-#@errors
-when defined(debug):
-  type
-    EcsError* = object of ValueError
+include actors_ecs_debug
 
-template check_error_remove_component(this: ent, t: typedesc): untyped =
-  when defined(debug):
-    let arg1 {.inject.} = t.name
-    let arg2 {.inject.} = this.id
-    if t.Id notin entities[this.id].signature:
-      log_external fatal, &"You are trying to remove a {arg1} that is not attached to entity with id {arg2}"
-      raise newException(EcsError,&"You are trying to remove a {arg1} that is not attached to entity with id {arg2}")
-
-template check_error_release_empty(this: ent): untyped =
-  when defined(debug):   
-    let arg1 {.inject.} = this.id
-    if entities[this.id].signature.card == 0:
-      log_external fatal, &"You are trying to release an empty entity with id {arg1}. Entities without any components are released automatically."
-      raise newException(EcsError,&"You are trying to release an empty entity with id {arg1}. Entities without any components are released automatically.")

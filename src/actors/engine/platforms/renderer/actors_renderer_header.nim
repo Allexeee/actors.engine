@@ -1,4 +1,7 @@
-import ../actors_math
+
+
+when defined(renderer_opengl):
+  include actors_opengl_header
 
 type ShaderIndex* = distinct uint32
 type ShaderCompileType*   = enum
@@ -25,5 +28,3 @@ type Sprite* = ref object
   x,y* : float32
   shader*  : ShaderIndex
   texID*    : uint32
-
-

@@ -2,30 +2,21 @@
 {.used.}
 {.experimental: "codeReordering".}
 
-import times
-import os
-import strformat
-
-import actors/actors_internal as internal
-import actors/actors_engine  as engine
-import actors/actors_runtime as runtime
 import actors/actors_utils   as utils
-import actors/vendor/actors_gl
-import actors/vendor/actors_glfw
+import actors/actors_vendor  as vendor
+import actors/actors_engine  as engine
+import actors/actors_engine_internal as internal
+import actors/engine/ecs/actors_ecs
 
-import actors/vendor/actors_imgui
-import actors/vendor/actors_gl
+type lid* = distinct uint32
 
+# proc getECS*(self: lid): SystemEcs =
+#   ecs[self.uint32]
 
+#echo ecs[0]
 
-export engine except
-  app,
-  setProcs
-
-
-export runtime
 export utils
-
+export engine
 
 var render* : proc()
 
@@ -36,11 +27,12 @@ engine.core.pressMouse       = engine.target.pressMouseImpl
 engine.core.getMousePosition = engine.target.getMousePositionImpl
 
 
-let app* = App()
-app.time = AppTime()
-app.settings = AppSettings()
+let app* = internal.app
+# app.time = AppTime()
+# app.settings = AppSettings()
 
-internal.app = app
+# internal.app = app
+#internal.app = app
 
 let layerApp* = app.addLayer(); layerApp.setActive()
 layerApp.entity()
@@ -48,8 +40,8 @@ layerApp.entity()
 let input* = app.addInput()
 
 
-proc getTime* (app: App) : float {.inline.} =
-  engine.target.getTime()
+# proc getTime* (app: App) : float {.inline.} =
+#   engine.target.getTime()
 
 proc vsync*(app: App, arg: int32) =
   if arg != app.settings.vsync:
@@ -97,7 +89,7 @@ proc run*(app: App,init: proc(), update: proc(), draw: proc()) =
 
 
     draw()
-    #drawDebug()
+    
     igRender()
     igOpenGL3RenderDrawData(igGetDrawData())
     

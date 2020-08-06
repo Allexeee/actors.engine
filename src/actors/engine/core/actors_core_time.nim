@@ -7,10 +7,6 @@ proc setProcs*(getTimeImpl: proc) =
   getTime = getTimeImpl
 
 
-# template delta*(this: SystemTime): float =
-#   app.time.delta * this.scale
-
-
 template clampUpdate*(code: untyped): untyped =
   let time_now = getTime()
   app.time.lag += time_now - app.time.last
@@ -39,6 +35,5 @@ template framerate_last*(app: App): float =
   app.time.counter.frames_last
 template ups_last*(app: App): float =
   app.time.counter.updates_last
-
 
 
