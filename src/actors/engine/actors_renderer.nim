@@ -74,11 +74,12 @@ proc quad(x,y: cfloat, color: Vec, texID: cfloat): Quad {.discardable.} =
   
   result.verts = tempQuad
 
-proc quadUpdatePos(self: var Quad, x,y: cfloat, size: Vec) =
-  self.verts[0].position = vec3(x,y,0f)
-  self.verts[1].position = vec3(x+size.x,y,0f)
-  self.verts[2].position = vec3(x+size.x,y+size.y,0f)
-  self.verts[3].position = vec3(x,y+size.y,0f)
+proc updatePos(self: var Quad, x,y: cfloat, sx,sy: cfloat) {.inline.} =
+  self.verts[0].position = (x,y,0f)  
+  self.verts[1].position = (x+sx,y,0f)
+  self.verts[2].position = (x+sx,y+sy,0f)
+  self.verts[3].position = (x,y+sy,0f)
+  copyMem(verts[nextQuadID].addr,self.verts[0].addr,4*Vertex.sizeof)
 
 
 proc addSprite*(texture: TextureIndex, shader: ShaderIndex) : Sprite =
@@ -131,7 +132,7 @@ var vboBatch : uint32
 var vaoBatch : uint32
 var eboBatch : uint32
 
-const maxQuadCount = 60001
+const maxQuadCount = 110001
 const maxVertexCount = maxQuadCount * 4;
 const maxIndexCount = maxQuadCount * 6;
 
@@ -199,52 +200,48 @@ proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
 
 
 var batch* = newSeq[Sprite](maxQuadCount)
+#var batchExtended* = newSeq[ptr Vertex](maxQuadCount)
 var nextBatchID* : int = 0
-proc drawBatched*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
+var nextQuadID* : int = 0
+var indCount* : int = 0
+proc drawBatched*(self: Sprite, pos: Vec2, size: Vec2) =
+  #var q = self.quad
+  self.quad.updatePos(pos.x,pos.y,size.x,size.y)
+  #copyMem(verts[nextQuadID].addr,self.quad.verts[0].addr,4*Vertex.sizeof)
+  nextQuadID += 4
+  indCount+=6
 
-  batch[nextBatchID] = self
-  
-  batch[nextBatchID].quad.quadUpdatePos(pos.x,pos.y,size)
-  nextBatchID += 1
- # self.shader.use()
- # var model = matrix()
-  
-#  model.scale(size.x,size.y,1)
- # model.translate(vec(-size.x*0.5, -size.y*0.5 , 0, 1))
- # model.rotate(rotate.radians, vec_forward)
-#  model.translate(vec(pos.x,pos.y,0,1)) 
-
- # self.shader.setMatrix("mx_model",model)
-  
-  
-
-  #glBindVertexArray(self.quad.vao)
-  #glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
-
+  #batchExtended[nextBatchID] = self.quad[0].addr
+  #batch[nextBatchID].quad.quadUpdatePos(pos.x,pos.y,size)
+  #nextBatchID += 1
+ 
 var verts : array[maxQuadCount*4,Vertex]
 
 proc flush*() =
-  
-  nextBatchID = 0
-  var next = 0
-  var indexCount = 0
-  var s = maxQuadCount*4-1
-  for i in countup(0,s,4):
-    copyMem(verts[i].addr,batch[next].quad.verts[0].addr,4*Vertex.sizeof)
-    next += 1
-    indexCount += 6
 
   glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
   glBufferSubData(GL_ARRAY_BUFFER, 0, verts.size, verts[0].addr) 
   
   glBindVertexArray(vaoBatch)
   
+  #var model = matrix()
+  #model.translate(vec(0,0,0,1)) 
+
+  #  shaderBatch.setMatrix("mx_model",model)
+  glDrawElements(GL_TRIANGLES, indCount.GlSizei, GL_UNSIGNED_INT, nil)
+  indCount = 0
+  nextQuadID = 0
+
+proc flusher*() =
+  glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
+  glBufferSubData(GL_ARRAY_BUFFER, 0, verts.size, verts[0].addr) 
+  
+  glBindVertexArray(vaoBatch)
+  
   var model = matrix()
-  # model.scale(1,1,1)
-  # model.rotate(0.radians, vec_forward)
   model.translate(vec(0,0,0,1)) 
 
   shaderBatch.setMatrix("mx_model",model)
-  glDrawElements(GL_TRIANGLES, indexCount.GlSizei, GL_UNSIGNED_INT, nil)
+  glDrawElements(GL_TRIANGLES, indCount.GlSizei, GL_UNSIGNED_INT, nil)
 
 #

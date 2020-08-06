@@ -20,7 +20,7 @@ type Quad* = object
   verts*: array[4,Vertex]
   vao  *: uint32
 
-type Sprite* = object
+type Sprite* = ref object
   quad* : Quad
   x,y* : float32
   shader*  : ShaderIndex

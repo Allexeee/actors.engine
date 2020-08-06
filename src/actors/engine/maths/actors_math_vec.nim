@@ -5,28 +5,18 @@ type Vec*  = tuple[x,y,z,w: float32]
 type Vec2* = tuple[x,y: float32]
 type Vec3* = tuple[x,y,z: float32]
 
-type Vecc*  = object
-  x,y,z,w: cfloat
-type Vecc2*  = object
-  x,y: cfloat
-type Vecc3*  = object
-  x,y,z: cfloat
+proc xy*(self: var Vec, x,y: float32) =
+  self.x = x
+  self.y = y
+
+template xy*(self: var Vec): Vec =
+  (self.x,self.y, 0f, 0f)
+
+template xyz*(self: var Vec): Vec =
+  (self.x,self.y,self.z, 0)
+
 
 #@constructors
-
-proc vecc2*(x,y: float32 = 0): Vecc2 {.inline.} =
-  result.x = x
-  result.y = y
-proc vecc3*(x,y,z: float32 = 0): Vecc3 {.inline.} =
-  result.x = x
-  result.y = y
-  result.z = z
-proc vecc*(x,y,z,w: float32 = 0): Vecc {.inline.} =
-  result.x = x
-  result.y = y
-  result.z = z
-  result.w = w
-
 proc vec2*(x,y: float32 = 0): Vec2 {.inline.} =
   (x,y)
 proc vec3*(x,y,z: float32 = 0): Vec3 {.inline.} =
