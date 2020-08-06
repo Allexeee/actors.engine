@@ -1,4 +1,4 @@
-type lid* = distinct uint32
+type LayerId* = distinct uint32
 
 type AppSettings* = object
   display_size* : tuple[width: int, height: int]
@@ -13,7 +13,9 @@ type AppSettings* = object
 type App* = ref object
   settings* : AppSettings
 
-
+let app* = App()
+# app.time = AppTime()
+# app.settings = AppSettings()
 #   App* = ref object
 #     settings*     : AppSettings
 #     time*         : AppTime

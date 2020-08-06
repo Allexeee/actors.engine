@@ -1,8 +1,8 @@
 {.used.}
 
 import
-  vendor/actors_stb_image,
-  vendor/actors_imgui
+  plugins/actors_stb_image,
+  plugins/actors_imgui
 
 export
   actors_stb_image,
@@ -10,8 +10,8 @@ export
 
 when defined(renderer_opengl):
   import 
-    vendor/actors_gl,
-    vendor/actors_glfw
+    plugins/actors_gl,
+    plugins/actors_glfw
   export
     actors_gl,
     actors_glfw

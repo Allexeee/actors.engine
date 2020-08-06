@@ -13,18 +13,12 @@ import hashes
 import typetraits 
 import math
 
-import ../../actors_utils
-#import ../../actors_header
 
-type #@ecs
+type
   ent* = tuple
     id  : uint32
     age : uint32
- # System* = ref object of RootObj
- # Layer* = ref object of RootObj
   
-  lid* = uint32
-
   SystemEcs* = ref object
     operations*    : seq[Operation]
     ents_alive*    : HashSet[uint32]
@@ -33,7 +27,7 @@ type #@ecs
   Entity* {.packed.} = object
     dirty*            : bool        #dirty allows to set all components for a new entity in one init command
     age*              : uint32
-    layer*            : lid
+    layer*            : uint32
     parent*           : ent
     signature*        : set[uint16] 
     signature_groups* : set[uint16] # what groups are already used
@@ -41,7 +35,7 @@ type #@ecs
   
   Group* = ref object of RootObj
     id*               : uint16
-    layer*            : lid
+    layer*            : uint32
     signature*        : set[uint16]
     signature_excl*   : set[uint16]
     entities*         : seq[ent]
@@ -57,6 +51,7 @@ type #@ecs
   StorageBase* = ref object of RootObj
     meta*      : ComponentMeta
     groups*    : seq[Group]
+  
   Storage*[T] = ref object of StorageBase
     entities*  : seq[int]
     container* : seq[T]
@@ -76,4 +71,18 @@ type #@ecs
     entity*: ent 
     arg*   : uint16
 
+when defined(debug):
+  type
+    EcsError* = object of ValueError
+    EcsErrorTypedAction* = proc(self: ent, t: typedesc)
+    EcsErrorAction* = proc(self: ent)
 
+
+#@extensions
+
+proc addNew [T](this: var seq[T]): ptr T {.inline.} =
+    this.add(T())
+    addr this[this.high]
+proc addNewRef [T](this: var seq[T]): var T {.inline.} =
+    this.add(T())
+    this[this.high]
