@@ -1,5 +1,11 @@
+import ../../../actors_header
+import ../../../actors_tools
+import ../../actors_math
+
 when defined(renderer_opengl):
   include actors_opengl_header
+
+
 
 type ShaderIndex* = distinct uint32
 type ShaderCompileType*   = enum

@@ -137,14 +137,8 @@ proc setMatrix*(this: ShaderIndex, name: cstring, arg: var Matrix) {.inline.} =
   glUniformMatrix4fv(glGetUniformLocation(this.GLuint,name), 1, false, arg.e11.addr)
 
 
-
-
 {.used.}
 {.experimental: "codeReordering".}
-
-
-
-
 
 
 let GL_FLOAT = 0x1406.GLenum

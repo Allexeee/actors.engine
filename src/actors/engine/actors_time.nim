@@ -1,8 +1,8 @@
 import ../actors_header
 import actors_platforms as platform
 
-proc getTime*(self: App): float =
-  platform.target.getTimeImpl()
+# proc getTime*(self: App): float =
+#   platform.target.getTimeImpl()
 
 
 

@@ -1,9 +1,8 @@
 {.used.}
 
-import ../../../actors_header
-import ../../../actors_tools
+
 import ../../../actors_plugins
-import ../../actors_math
+
 
 type ARenum* = GLenum
 

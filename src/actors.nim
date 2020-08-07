@@ -7,27 +7,21 @@ import actors/actors_tools   as tools
 import actors/actors_plugins as plugins
 import actors/actors_engine  as engine
 
-
 export tools
 export engine
-
 
 let app* = internal.app
 let input* = app.addInput()
 
-proc vsync*(app: App, arg: int32) =
-  if arg != app.settings.vsync:
-    app.settings.vsync = arg
-    engine.target.setVSyncImpl(arg)
 
 var frame* : int
 
 proc run*(app: App,init: proc(), update: proc(), draw: proc()) =
   engine.target.start(app.settings.display_size, app.settings.name)
   app.time.lag  = 0
-  app.time.last = app.getTime()
-  engine.target.setVSyncImpl(app.settings.vsync)
-
+  app.time.last = app.time.current
+  app.vsync(app.settings.vsync)
+ 
   #var ms_update = 0f
   #var ms_render = 0f
 
@@ -67,7 +61,6 @@ proc run*(app: App,init: proc(), update: proc(), draw: proc()) =
 
 proc quit*(this: App) =
   engine.target.release()
-
 
 proc sleep*(app: App, t: float) =
   var time_current = app.getTime()
