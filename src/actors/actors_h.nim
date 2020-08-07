@@ -1,3 +1,5 @@
+{.used.}
+
 type
   LayerId* = distinct uint32
 
@@ -34,7 +36,20 @@ let app* = App()
 app.settings = AppSettings()
 app.time = AppTime()
 
+# import macros
 
+# macro importString(path: static[string], alias: static[string]): untyped =
+#   result = newNimNode(nnkImportStmt).add(
+#     newNimNode(nnkInfix).add(
+#       newIdentNode("as")
+#     ).add(
+#       newIdentNode(path)
+#     ).add(
+#       newIdentNode(alias)
+#     )
+#   )
+
+# importString("strutils", alias="su")
 
 
 # proc addLayer* (this: App): Layer =

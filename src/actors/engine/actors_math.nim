@@ -1,8 +1,8 @@
 {.used.}
 
-import maths/actors_math_header
-import maths/actors_math_matrix
-import maths/actors_math_vec
+import math/actors_math_header
+import math/actors_math_matrix
+import math/actors_math_vec
 
 export actors_math_header
 export actors_math_matrix

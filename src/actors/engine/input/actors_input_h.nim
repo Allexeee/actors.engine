@@ -1,9 +1,8 @@
 {.used.}
 
-import ../../actors_header
+import ../../actors_h
 
-type #@input
-  
+type
   Key* {.pure, size: int32.sizeof.} = enum
     Space = 32
     Apostrophe = 39

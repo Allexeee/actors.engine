@@ -1,12 +1,12 @@
 {.used.}
 {.experimental: "codeReordering".}
 
-include actors_input_header
-import ../actors_platforms as platform
+include actors_input_h
+import ../private/actors_platform as platform
 
 var inputs = newSeq[Input](0)
 
-proc addInput*(this: App): InputIndex {.discardable.} =
+proc addInput*(self: App): InputIndex {.discardable.} =
   var id {.global.} = 0
   let index = id.InputIndex
   inputs.add(Input(id: index))
@@ -75,7 +75,7 @@ proc down* (this: InputIndex, key: MouseButton):bool =
   let keycode = key.int32
   return platform.target.pressMouseImpl(keycode)
 
-proc up*    (this: InputIndex, key: MouseButton):bool =
+proc up*   (this: InputIndex, key: MouseButton):bool =
   let input = addr inputs[this.int]
   let keycode = key.int32
   let pressed = platform.target.pressMouseImpl(keycode)

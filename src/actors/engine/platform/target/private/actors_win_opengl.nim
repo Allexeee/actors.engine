@@ -1,10 +1,10 @@
-import actors_target_windows_opengl
+{.used.}
+import ../../../../actors_h
+import ../../../../plugins/actors_gl
+import ../../../../plugins/actors_glfw
+import ../../../../actors_tools
 
-import ../../../actors_header
-import ../../../plugins/actors_gl
-import ../../../plugins/actors_glfw
-import ../../../actors_tools
-
+type Window* = GLFWWindow
 var window* : Window
 
 proc getOpenglVersion() =

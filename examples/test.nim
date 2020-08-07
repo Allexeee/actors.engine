@@ -1,19 +1,23 @@
-# {.used.}
-# {.experimental: "codeReordering".}
+import actors
 
-# import actors
-# import ui
-# import renderer
-# import actors/vendor/actors_gl
-# import random
+app.settings.fps = 60
+app.settings.ups = 60
+app.settings.name = "Game"
 
-# app.settings.fps = 60
-# app.settings.ups = 60
-# app.settings.name = "Game"
+app.settings.display_size = (1280, 720)
+app.settings.path_assets  = "examples/assets/"
+app.settings.path_shaders = "examples/assets/shaders/"
 
-# app.settings.display_size = (1280, 720) 
-# app.settings.path_assets  = "examples/assets/"
-# app.settings.path_shaders = "examples/assets/shaders/"
+
+
+proc init*() =
+  discard
+
+proc update*() =
+  if input.down Key.Space:
+    app.quit()
+
+app.run(init,update,nil)
 
 # newUIDebugGame()
 
