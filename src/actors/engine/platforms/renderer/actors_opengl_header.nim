@@ -1,10 +1,8 @@
 {.used.}
 
-import ../../../actors_engine_internal
-import ../../../actors_utils
-import ../../../actors_vendor
-
-import ../../actors_types
+import ../../../actors_header
+import ../../../actors_tools
+import ../../../actors_plugins
 import ../../actors_math
 
 type ARenum* = GLenum

@@ -1,25 +1,22 @@
 {.used.}
 {.experimental: "codeReordering".}
 
-import ../actors_types
+include actors_input_header
+import ../actors_platforms as platform
 
-var storage      = newSeq[Input](0) 
-
-var pressKey* : proc(keycode: cint): bool {.inline.}
-var pressMouse* : proc(keycode: cint): bool {.inline.}
-var getMousePosition *: proc(): tuple[x: cfloat,y: cfloat] {.inline.}
+var inputs = newSeq[Input](0)
 
 proc addInput*(this: App): InputIndex {.discardable.} =
   var id {.global.} = 0
   let index = id.InputIndex
-  storage.add(Input(id: index))
+  inputs.add(Input(id: index))
   result = index; id+=1
 
 #@pkeyboard
 proc repeat*(this: InputIndex, key: Key, delay: float = 0.15f):bool =
-  let input = addr storage[this.int]
+  let input = addr inputs[this.int]
   let keycode = key.int32
-  let pressed = pressKey(keycode)
+  let pressed = platform.target.pressKeyImpl(keycode)
   if pressed == true:
     input.keyhold_time[keycode]-=1/60f
     if input.keyhold_time[keycode] <= 0:
@@ -31,9 +28,9 @@ proc repeat*(this: InputIndex, key: Key, delay: float = 0.15f):bool =
     return false
 
 proc press* (this: InputIndex, key: Key):bool =
-  let input = addr storage[this.int]
+  let input = addr inputs[this.int]
   let keycode = key.int32
-  let pressed = pressKey(keycode)
+  let pressed = platform.target.pressKeyImpl(keycode)
   if pressed and input.keycode_press[keycode] == false:
     input.keycode_press[keycode] = true
     return true
@@ -42,9 +39,9 @@ proc press* (this: InputIndex, key: Key):bool =
     return false 
 
 proc down*  (this: InputIndex, key: Key):bool =
-  let input = addr storage[this.int]
+  let input = addr inputs[this.int]
   let keycode = key.int32
-  let pressed = pressKey(keycode)
+  let pressed = platform.target.pressKeyImpl(keycode)
   input.keycode_down[keycode] = pressed
   if pressed and input.keycode_down[keycode]==true:
     return true
@@ -52,9 +49,9 @@ proc down*  (this: InputIndex, key: Key):bool =
     return false
 
 proc up*    (this: InputIndex, key: Key):bool =
-  let input = addr storage[this.int]
+  let input = addr inputs[this.int]
   let keycode = key.int32
-  let pressed = pressKey(keycode)
+  let pressed = platform.target.pressKeyImpl(keycode)
   if pressed and input.keycode_up[keycode] == false:
     input.keycode_up[keycode] = true
     return false
@@ -64,9 +61,9 @@ proc up*    (this: InputIndex, key: Key):bool =
 
 #@pmouse
 proc press* (this: InputIndex, key: MouseButton):bool =
-  let input = addr storage[this.int]
+  let input = addr inputs[this.int]
   let keycode = key.int32
-  let pressed = pressMouse(keycode)
+  let pressed = platform.target.pressMouseImpl(keycode)
   if pressed and input.mouse_press[keycode] == false:
     input.mouse_press[keycode] = true
     return true
@@ -76,12 +73,12 @@ proc press* (this: InputIndex, key: MouseButton):bool =
 
 proc down* (this: InputIndex, key: MouseButton):bool =
   let keycode = key.int32
-  return pressMouse(keycode)
+  return platform.target.pressMouseImpl(keycode)
 
 proc up*    (this: InputIndex, key: MouseButton):bool =
-  let input = addr storage[this.int]
+  let input = addr inputs[this.int]
   let keycode = key.int32
-  let pressed = pressMouse(keycode)
+  let pressed = platform.target.pressMouseImpl(keycode)
   if pressed and input.mouse_up[keycode] == false:
     input.mouse_up[keycode] = true
     return false

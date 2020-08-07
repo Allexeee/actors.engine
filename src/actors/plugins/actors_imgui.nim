@@ -1,7 +1,7 @@
-import dear_imgui/impl_glfw
-import dear_imgui/impl_opengl
-import dear_imgui/imgui
+when defined(renderer_opengl):
+  when defined(target_windows):
+    import dear_imgui/impl_glfw_actors as imgui
 
-export imgui
-export impl_glfw
-export impl_opengl
+when defined(renderer_opengl):
+  when defined(target_windows):
+    export imgui

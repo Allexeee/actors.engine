@@ -1,11 +1,23 @@
-import test
+
+#import test eee(idd)
+  #command.add(ident($elem))
+  #result = quote do:
+  #  except `arg`
+#template `!!`(arg: untyped): untyped =
+#  except arg
+
+#import test !!(idd)
 
 
-type ALID* = LID
 
-var layer : LID = 0
 
-layer.entity()
+#var vv : idd = 0
+
+# type ALID* = LID
+
+# var layer : LID = 0
+
+# layer.entity()
 
 #entity(layer)
 

@@ -5,9 +5,9 @@ when defined(standalone):
   import times
   import strformat
 
-  import utils/actors_log
-  import utils/actors_profile
-  import utils/actors_utils_extensions
+  import tools/actors_log
+  import tools/actors_profile
+  import tools/actors_extensions
   
   export os
   export times
@@ -15,4 +15,4 @@ when defined(standalone):
 
   export actors_log
   export actors_profile
-  export actors_utils_extensions
+  export actors_extensions

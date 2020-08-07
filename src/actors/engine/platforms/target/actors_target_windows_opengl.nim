@@ -1,8 +1,10 @@
-import ../../../vendor/actors_gl
-import ../../../vendor/actors_glfw
-import ../../../actors_utils
- 
-var window* : GLFWWindow
+#import ../../../actors_header
+import ../../../plugins/actors_gl
+import ../../../plugins/actors_glfw
+import ../../../actors_tools
+
+type Window* = GLFWWindow
+var window* : Window
 
 proc getOpenglVersion() =
   var glGetString = cast[proc (name: GLenum): ptr GLubyte {.cdecl, gcsafe.}](glfwGetProcAddress("glGetString"))
@@ -20,7 +22,7 @@ proc start*(screensize: tuple[width: int, height: int], name: string) {.inline.}
   glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
   glfwWindowHint(GLFWDoubleBuffer, 0)
   
-  window =  glfwCreateWindow((cint)screensize.width, (cint)screensize.height, name, nil, nil)
+  window = glfwCreateWindow((cint)screensize.width, (cint)screensize.height, name, nil, nil)
   
   if window == nil:
     quit(-1)
@@ -32,10 +34,40 @@ proc start*(screensize: tuple[width: int, height: int], name: string) {.inline.}
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
 proc render_end*(vsync: int32) {.inline.} =
-  
   window.swapBuffers()
   glFlush()
 
-proc setVSync*(arg: int32) =
+proc setVSyncImpl*(arg: int32) =
   glfwSwapInterval(arg);
   window.makeContextCurrent()
+
+
+proc shouldQuit*():bool {.inline.} = window.windowShouldClose
+
+proc release*()= window.setWindowShouldClose(true)
+
+proc pollEvents*() {.inline.} =
+  glfwPollEvents()
+
+
+proc dispose*() =
+  window.destroyWindow()
+  window = nil
+  glfwTerminate()
+
+#@input
+proc pressKeyImpl*(keycode: cint): bool {.inline.} =
+  let state = window.getkey(keycode)
+  return state == GLFWPress 
+
+proc pressMouseImpl*(keycode: cint): bool {.inline.} =
+  let state = window.getMouseButton(keycode)
+  return state == GLFWPress 
+ 
+proc getMousePositionImpl*(): tuple[x: cfloat,y: cfloat] {.inline.} =
+  var x,y : cdouble
+  window.getCursorPos(addr x,addr y)
+  return (x.cfloat,y.cfloat)
+
+proc getTimeImpl*(): float =
+  glfwGetTime()

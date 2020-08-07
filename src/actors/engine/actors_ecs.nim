@@ -1,0 +1,2 @@
+import ecs/actors_ecs
+export actors_ecs

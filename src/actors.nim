@@ -2,53 +2,23 @@
 {.used.}
 {.experimental: "codeReordering".}
 
-import actors/actors_utils   as utils
-import actors/actors_vendor  as vendor
+import actors/actors_header  as internal
+import actors/actors_tools   as tools
+import actors/actors_plugins as plugins
 import actors/actors_engine  as engine
-import actors/actors_engine_internal as internal
-import actors/engine/ecs/actors_ecs
 
-type lid* = distinct uint32
 
-# proc getECS*(self: lid): SystemEcs =
-#   ecs[self.uint32]
-
-#echo ecs[0]
-
-export utils
+export tools
 export engine
-
-var render* : proc()
-
-engine.core.setProcs(engine.target.getTime)
-
-engine.core.pressKey         = engine.target.pressKeyImpl
-engine.core.pressMouse       = engine.target.pressMouseImpl 
-engine.core.getMousePosition = engine.target.getMousePositionImpl
 
 
 let app* = internal.app
-# app.time = AppTime()
-# app.settings = AppSettings()
-
-# internal.app = app
-#internal.app = app
-
-let layerApp* = app.addLayer(); layerApp.setActive()
-layerApp.entity()
-
 let input* = app.addInput()
-
-
-# proc getTime* (app: App) : float {.inline.} =
-#   engine.target.getTime()
 
 proc vsync*(app: App, arg: int32) =
   if arg != app.settings.vsync:
     app.settings.vsync = arg
-    engine.target.setVSync(app.settings.vsync)
-
-var context : ptr ImGuiContext
+    engine.target.setVSyncImpl(arg)
 
 var frame* : int
 
@@ -56,30 +26,24 @@ proc run*(app: App,init: proc(), update: proc(), draw: proc()) =
   engine.target.start(app.settings.display_size, app.settings.name)
   app.time.lag  = 0
   app.time.last = app.getTime()
-  engine.target.setVSync(app.settings.vsync)
+  engine.target.setVSyncImpl(app.settings.vsync)
 
-  context = igCreateContext()
-  igStyleColorsCherry()
-  assert igGlfwInitForOpenGL(window, true)
-  assert igOpenGL3Init()
   #var ms_update = 0f
   #var ms_render = 0f
 
   init()
 
   while not engine.target.shouldQuit():
-    
     app.time.frames += 1
     app.time.counter.frames += 1
     frame += 1
     engine.target.pollEvents()
     
-    clampUpdate():
-      update()
+    #clampUpdate():
+    #  update()
     
-    igOpenGL3NewFrame()
-    igGlfwNewFrame()
-    igNewFrame()
+    #igOpenGL3NewFrame()
+    plugins.imgui.renderer_begin()
     
     glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
     if app.settings.vsync == 1:
@@ -90,19 +54,13 @@ proc run*(app: App,init: proc(), update: proc(), draw: proc()) =
 
     draw()
     
-    igRender()
-    igOpenGL3RenderDrawData(igGetDrawData())
-    
-    
-    #ms_render = app.getTime() - ms_render
+    plugins.imgui.flush()
     renderer_end()
     
     # echo "msu: ", ms_update
     # echo "msr: ", ms_render
   
-  igOpenGL3Shutdown()
-  igGlfwShutdown()
-  context.igDestroyContext()
+  plugins.imgui.dispose()
   engine.target.dispose()
 
 
