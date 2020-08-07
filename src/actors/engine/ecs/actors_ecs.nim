@@ -1,7 +1,7 @@
 {.experimental: "codeReordering".}
 {.experimental: "dynamicBindSym".}
 
-include actors_ecs_header
+include actors_ecs_h
 
 # layer
 var layers : array[16,SystemEcs]
@@ -34,29 +34,6 @@ proc entity*(layerID: LayerID): ent =
     op.kind = OpKind.Init
     ecs.ents_alive.incl(result.id)
   result
-
-# proc entity*(this: Layer): ent {.inline, discardable.} =
-#     if ents_stash.len > 0:
-#         result = ents_stash[0]
-#         let e = addr entities[result.id]
-#         e.dirty = true
-#         e.layer = this
-#         ents_stash.del(0)
-#     else:
-#         let e = entities.addNew()
-#         e.dirty = true
-#         e.layer = this
-#         result.id = id_next
-#         result.age = 0
-#         id_next += 1
-    
-#     let op = this.ecs.operations.addNew()
-#     op.entity = result
-#     op.kind = OpKind.Init
-#     this.ecs.ents_alive.incl(result.id)
-
-# proc layer*(this: ent): Layer =
-#   entities[this.id].layer
 
 proc release*(self: ent) = 
     check_error_release_empty(self)
@@ -270,7 +247,6 @@ proc group*(layer: LayerID, incl: set[uint16]): Group {.inline, discardable.} =
 
 proc group*(layer: LayerID, incl: set[uint16], excl: set[uint16]): Group {.inline, discardable.} =
    group_impl(layer, incl, excl)
-# proc group*(this: Layer, incl: set[uint16]): Group =
 
 
 template insert(gr: Group, self: ent, entityMeta: ptr Entity) = 
@@ -444,7 +420,6 @@ macro formatComponentPretty(t: typedesc, compType: static CompType): untyped =
 
   result = parseStmt(source)
 
-
 var storages* = newSeq[StorageBase](1)
 
 #@storage
@@ -531,7 +506,7 @@ template impl_storage(t: typedesc, compType: CompType) {.used.} =
 
   formatComponentPretty(t, compType)
 
-macro add*(component: untyped, compType: CompType = Object): untyped =
+macro add*(self: App, component: untyped, compType: CompType = Object): untyped =
   result = nnkStmtList.newTree(
            nnkCommand.newTree(
               bindSym("impl_storage", brForceOpen),
@@ -541,7 +516,7 @@ macro add*(component: untyped, compType: CompType = Object): untyped =
           )
 
   var name_alias = $component
-  if (name_alias.contains("Component")):
+  if (name_alias.contains("Component") or name_alias.contains("Comp")):
       formatComponentAlias(name_alias)
       
       let node = nnkTypeSection.newTree(
@@ -572,41 +547,3 @@ proc binarysearch(this: ptr seq[ent], value: uint32): int {.discardable, inline.
 proc hash*(x: set[uint16]): Hash =
   result = x.hash
   result = !$result
-
-#@errors
-
-#import ../../actors_utils
-
-# Debug Implementation
-
-#action_check_error_remove_component = impl_ecs_check_error_remove_component
-#action_check_error_release_empty    = impl_ecs_check_error_release_empty
-#impl_ecs_check_error_remove_component((0'u32,0'u32),ent.type)
-
-# proc impl_ecs_check_error_remove_component(self: ent, t: typedesc) =
-#     let arg1 {.inject.} = t.name
-#     let arg2 {.inject.} = self.id
-#     if t.Id notin entities[self.id].signature:
-#       log_external fatal, &"You are trying to remove a {arg1} that is not attached to entity with id {arg2}"
-#       raise newException(EcsError,&"You are trying to remove a {arg1} that is not attached to entity with id {arg2}")
-# proc impl_ecs_check_error_release_empty(self: ent) =
-#     let arg1 {.inject.} = self.id
-#     if entities[self.id].signature.card == 0:
-#       log_external fatal, &"You are trying to release an empty entity with id {arg1}. Entities without any components are released automatically."
-#       raise newException(EcsError,&"You are trying to release an empty entity with id {arg1}. Entities without any components are released automatically.")
-
-
-# Actors API
-
-# macro add*(self: App, component: untyped, compType: CompType = Object): untyped =
-#   result = newCall("add", newCall(component, compType))
-
-# proc group*(layerID: LayerID,incl: set[uint16]): Group {.inline, discardable.} =
-#   result = group_impl(layerID.uint32, incl, {0'u16})
-
-# proc group*(layerID: LayerID, incl: set[uint16], excl: set[uint16]): Group {.inline, discardable.} =
-#   result = group_impl(layerID.uint32, incl, excl)
-
-
-
-#entity(0.LayerID).release()

@@ -8,9 +8,13 @@ app.settings.display_size = (1280, 720)
 app.settings.path_assets  = "examples/assets/"
 app.settings.path_shaders = "examples/assets/shaders/"
 
+type CompTest = object
 
+app.add CompTest
 
 proc init*() =
+  var c : CTest
+  #e = 
   discard
 
 proc update*() =
