@@ -19,7 +19,7 @@ proc renderer_begin*() =
 proc flush*() =
   igRender()
 
-proc dispose*()= 
+proc kill*()= 
   #igOpenGL3Shutdown()
   igGlfwShutdown()
   context.igDestroyContext()

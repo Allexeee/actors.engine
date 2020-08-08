@@ -13,7 +13,8 @@ proc getOpenglVersion() =
   var glVersion = cast[cstring](glGetString(GL_VERSION))
   log info, &"OpenGL {glVersion}"
 
-proc start*(screensize: tuple[width: int, height: int], name: string) {.inline.} = 
+
+proc bootstrap*(app: App) {.inline.} = 
   assert glfwInit()
   
   glfwWindowHint(GLFWContextVersionMajor, 4)
@@ -23,7 +24,7 @@ proc start*(screensize: tuple[width: int, height: int], name: string) {.inline.}
   glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
   glfwWindowHint(GLFWDoubleBuffer, 0)
   
-  window = glfwCreateWindow((cint)screensize.width, (cint)screensize.height, name, nil, nil)
+  window = glfwCreateWindow((cint)app.settings.screensize.width, (cint)app.settings.screensize.height, app.settings.name, nil, nil)
   
   if window == nil:
     quit(-1)
@@ -33,6 +34,11 @@ proc start*(screensize: tuple[width: int, height: int], name: string) {.inline.}
   getOpenglVersion()
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+proc kill*() =
+  window.destroyWindow()
+  window = nil
+  glfwTerminate()
 
 proc render_end*(vsync: int32) {.inline.} =
   window.swapBuffers()

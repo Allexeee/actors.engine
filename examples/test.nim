@@ -8,13 +8,39 @@ app.settings.display_size = (1280, 720)
 app.settings.path_assets  = "examples/assets/"
 app.settings.path_shaders = "examples/assets/shaders/"
 
-type CompTest = object
 
-app.add CompTest
+type ComponentObjar = object
+
+
+
+var l = addLayer()
+
+app.add ComponentObjar
+
+
+var e = l.entity()
+var e2 = l.entity()
+
+e.parent = e2
+e.parent = ent.none
+
+#e.kill()
+
+#e.release()
+#e.release()
+
+#e.kill()
+
+#e.kill()
+
+
+var oo = e.get ComponentObjar
+
+var p = e.parent
+# e.setParent(e2)
+# e.setParent ent.none
 
 proc init*() =
-  var c : CTest
-  #e = 
   discard
 
 proc update*() =

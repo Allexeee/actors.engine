@@ -1,27 +1,17 @@
-{.experimental: "codeReordering".}
+#{.experimental: "codeReordering".}
 {.experimental: "dynamicBindSym".}
 {.used.} 
 
-
 import sets
-import macros
-import strformat
-import strutils
-import times
-import tables
-import sets
-import hashes
-import typetraits 
-import math
-
 import ../../actors_h
-import ../../actors_tools
 
 type
   ent* = tuple
     id  : uint32
     age : uint32
-  
+
+  ents* = seq[ent]
+
   SystemEcs* = ref object
     operations*    : seq[Operation]
     ents_alive*    : HashSet[uint32]
@@ -46,7 +36,7 @@ type
     removed*          : seq[ent]
     events*           : seq[proc()]
   
-  ComponentMeta {.packed.} = object
+  ComponentMeta* {.packed.} = object
     id*        : uint16
     generation* : uint16
     bitmask*    : int
@@ -74,31 +64,13 @@ type
     entity*: ent 
     arg*   : uint16
 
-when defined(debug):
-  type
-    EcsError* = object of ValueError
-
-template check_error_remove_component(this: ent, t: typedesc): untyped =
-  when defined(debug):
-    let arg1 {.inject.} = t.name
-    let arg2 {.inject.} = this.id
-    if t.Id notin entities[this.id].signature:
-      log_external fatal, &"You are trying to remove a {arg1} that is not attached to entity with id {arg2}"
-      raise newException(EcsError,&"You are trying to remove a {arg1} that is not attached to entity with id {arg2}")
-
-template check_error_release_empty(this: ent): untyped =
-  when defined(debug):   
-    let arg1 {.inject.} = this.id
-    if entities[this.id].signature.card == 0:
-      log_external fatal, &"You are trying to release an empty entity with id {arg1}. Entities without any components are released automatically."
-      raise newException(EcsError,&"You are trying to release an empty entity with id {arg1}. Entities without any components are released automatically.")
-
 
 #@extensions
+template none*(T: typedesc[ent]): untyped =
+  (0'u32,0'u32)
 
-proc addNew[T](this: var seq[T]): ptr T {.inline.} =
-    this.add(T())
-    addr this[this.high]
-proc addNewRef[T](this: var seq[T]): var T {.inline.} =
-    this.add(T())
-    this[this.high]
+var storages* = newSeq[StorageBase](1)
+var layers* : array[16,SystemEcs]
+
+proc ecs*(layerID: LayerID): var SystemEcs {.inline, used.} =
+  layers[layerID.uint]

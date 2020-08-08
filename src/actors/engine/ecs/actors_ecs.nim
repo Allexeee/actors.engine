@@ -1,10 +1,28 @@
-{.experimental: "codeReordering".}
+#{.experimental: "codeReordering".}
 {.experimental: "dynamicBindSym".}
+{.used.} 
 
-include actors_ecs_h
+import hashes
+import math
+import strutils
+import typetraits 
+import macros
+import times
+import strformat
+import sets
 
-# layer
-var layers : array[16,SystemEcs]
+import ../../actors_h
+import ../../actors_tools
+import actors_ecs_h
+
+include actors_ecs_formatters
+include actors_ecs_debug
+include actors_ecs_utils
+
+export actors_ecs_h except
+  layers,
+  storages
+
 
 var id_next           {.global.} : uint32 = 0 # confusion with {.global.} in proc, redefining
 var id_entity_last    {.used.}   : uint32 = 0
@@ -35,7 +53,7 @@ proc entity*(layerID: LayerID): ent =
     ecs.ents_alive.incl(result.id)
   result
 
-proc release*(self: ent) = 
+proc kill*(self: ent) = 
     check_error_release_empty(self)
     var entity = addr entities[self.id]
     let layer = layers[entity.layer.uint32]
@@ -44,7 +62,7 @@ proc release*(self: ent) =
     op.kind = OpKind.Kill
    
     for e in entity.childs:
-        release(e)
+        kill(e)
     
     entity.signature = {0'u16}
     
@@ -62,25 +80,30 @@ proc release*(self: ent) =
   #   entityMeta.childs.setLen(0)
   #   ecs.ents_alive.excl(op.entity.id)
 
-proc parent*(this: ent): ent =
-    entities[this.id].parent
 
-proc setParent*(this: ent, par: ent) =
-    let entity_this = addr entities[this.id]
-    let entity_parent = addr entities[par.id]
-    entity_this.parent = par
-    entity_parent.childs.add(this)
-
-proc unparent*(this: ent) =
-    let entity_this = addr entities[this.id]
-    let entity_parent = addr entities[entity_this.parent.id]
+proc unparent(self: ent) =
+    let entity_self = addr entities[self.id]
+    let entity_parent = addr entities[entity_self.parent.id]
     
     for i in 0..entity_parent.childs.high:
-        if entity_parent.childs[i].id == this.id:
+        if entity_parent.childs[i].id == self.id:
             entity_parent.childs.del(i)
             break
     
-    entity_this.parent = (0'u32,0'u32)
+    entity_self.parent = ent.none
+
+
+proc `parent=`*(self: ent,parent: ent) {.inline.} =
+  if parent == ent.none:
+    unparent(self)
+  else:
+    let entity_this = addr entities[self.id]
+    let entity_parent = addr entities[parent.id]
+    entity_this.parent = parent
+    entity_parent.childs.add(self)
+
+proc parent*(self: ent): ent {.inline.} =
+    entities[self.id].parent
 
 
 proc `$`*(this: ent): string =
@@ -210,7 +233,6 @@ template mask*(T,Y,U,I,O,P,S,D: typedesc): set[uint16] =
 #@groups
 var id_next_group {.global.} : uint16 = 0
 
-
 proc groupImpl(layer: LayerID, incl: set[uint16], excl: set[uint16]): Group {.inline, discardable.} =
   let ecs = layers[layer.uint32]
   let groups = addr ecs.groups
@@ -333,7 +355,7 @@ proc execute*(ecs: SystemEcs) {.inline.} =
           of Remove:
             if entityMeta.signature == {}:
               for e in entityMeta.childs:
-                  e.release()
+                  e.kill()
               ecs.empty(op,entityMeta)
             else:
               changeEntity(op, entityMeta);
@@ -370,57 +392,7 @@ iterator items*(range: Group): ent =
       yield range.entities[i]
       inc i
 
-#@formatters
-proc formatComponent(s: var string) =
-  var indexes : array[8,int]
-  var i = 0
-  var index = 0
-  while i<s.len:
-     if s[i] in 'A'..'Z': 
-       indexes[index] = i
-       index += 1
-       assert index < 7, "too long name"
 
-     i+=1
-  if index>=2:
-    delete(s,1,indexes[1]-1)
-  s = toLowerAscii(s[0]) & substr(s, 1)
-
-proc formatComponentAlias(s: var string) =
-  var indexes : array[8,int]
-  var i = 0
-  var index = 0
-  while i<s.len:
-     if s[i] in 'A'..'Z': 
-       indexes[index] = i
-       index += 1
-       assert index < 7, "too long name"
-
-     i+=1
-  if index>=2:
-    delete(s,1,indexes[1]-1)
-  s = toUpperAscii(s[0]) & substr(s, 1)
-
-macro formatComponentPretty(t: typedesc, compType: static CompType): untyped =
-  let tName = strVal(t)
-  var proc_name = tName  
-  formatComponent(proc_name)
-  var source = ""
-  # WORKING SOLUTION!
-  if compType == CompType.Action:
-    source = &("""
-    template `{proc_name}`*(self: ent) =
-        impl_get_action(self,{tName})
-        """)
-  else:
-    source = &("""
-    template `{proc_name}`*(self: ent): ptr {tName} =
-        impl_get(self,{tName})
-        """)
-
-  result = parseStmt(source)
-
-var storages* = newSeq[StorageBase](1)
 
 #@storage
 template impl_storage(t: typedesc, compType: CompType) {.used.} =
@@ -451,7 +423,7 @@ template impl_storage(t: typedesc, compType: CompType) {.used.} =
 
   proc ID*(_:typedesc[t]): uint16 {.inline, discardable.} =
       storage.meta.id
-  template impl_get_action(self: ent, _: typedesc[t]) =
+  template impl_get_action(self: ent, _: typedesc[t]) {.used.} =
       storage.container[storage.entities[self.id]](self)
   proc impl_get(self: ent, _: typedesc[t]): ptr t {.inline, discardable, used.} =
       addr storage.container[storage.entities[self.id]]
@@ -506,7 +478,7 @@ template impl_storage(t: typedesc, compType: CompType) {.used.} =
 
   formatComponentPretty(t, compType)
 
-macro add*(self: App, component: untyped, compType: CompType = Object): untyped =
+macro add*(self: App, component: untyped, compType: static CompType = Object): untyped =
   result = nnkStmtList.newTree(
            nnkCommand.newTree(
               bindSym("impl_storage", brForceOpen),
@@ -528,22 +500,3 @@ macro add*(self: App, component: untyped, compType: CompType = Object): untyped 
       newIdentNode($component)
       ))
       result.add(node)
-
-#@utils
-proc binarysearch(this: ptr seq[ent], value: uint32): int {.discardable, inline.} =
-  var m : int = -1
-  var left = 0
-  var right = this[].high
-  while left <= right:
-      m = (left+right) div 2
-      if this[][m].id == value: 
-          discard
-      if this[][m].id < value:
-          left = m + 1
-      else:
-          right = m - 1
-  return m
-
-proc hash*(x: set[uint16]): Hash =
-  result = x.hash
-  result = !$result

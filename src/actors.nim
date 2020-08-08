@@ -5,9 +5,7 @@ import actors/actors_h       as header
 import actors/actors_tools   as tools
 import actors/actors_plugins as plugins
 import actors/actors_engine  as engine
-import actors/private/actors_engine as private
-#import actors/engine/private
-#import actors/engine/actors_platforms_internal
+import actors/private/actors_engine as in_engine
 
 export tools
 export engine
@@ -16,11 +14,17 @@ let app* = header.app
 let input* = app.addInput()
 
 
-proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
-  init()
-  while not private.target.shouldQuit():
-    discard
+proc addLayer*(): LayerId =
   discard
+
+proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
+  in_engine.target.bootstrap(app)
+  init()
+  while not in_engine.target.shouldQuit():
+    discard
+  
+  plugins.imgui.kill()
+  in_engine.target.kill()
 
 #var frame* : int
 
