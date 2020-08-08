@@ -23,8 +23,8 @@ proc bootstrap*(app: App) {.inline.} =
   glfwWindowHint(GLFWResizable, GLFW_FALSE)
   glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
   glfwWindowHint(GLFWDoubleBuffer, 0)
-  
-  window = glfwCreateWindow((cint)app.settings.screensize.width, (cint)app.settings.screensize.height, app.settings.name, nil, nil)
+  #echo (cint)app.settings.display_size.width
+  window = glfwCreateWindow((cint)app.settings.display_size.width, (cint)app.settings.display_size.height, app.settings.name, nil, nil)
   
   if window == nil:
     quit(-1)

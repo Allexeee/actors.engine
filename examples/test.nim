@@ -9,38 +9,9 @@ app.settings.path_assets  = "examples/assets/"
 app.settings.path_shaders = "examples/assets/shaders/"
 
 
-type ComponentObjar = object
-
-
-
-var l = addLayer()
-
-app.add ComponentObjar
-
-
-var e = l.entity()
-var e2 = l.entity()
-
-e.parent = e2
-e.parent = ent.none
-
-#e.kill()
-
-#e.release()
-#e.release()
-
-#e.kill()
-
-#e.kill()
-
-
-var oo = e.get ComponentObjar
-
-var p = e.parent
-# e.setParent(e2)
-# e.setParent ent.none
 
 proc init*() =
+  echo "po"
   discard
 
 proc update*() =

@@ -21,10 +21,12 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   in_engine.target.bootstrap(app)
   init()
   while not in_engine.target.shouldQuit():
-    discard
-  
-  plugins.imgui.kill()
-  in_engine.target.kill()
+    update()
+    in_engine.target.pollEvents()
+    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
+    in_engine.render_end(0)
+  #plugins.imgui.kill()
+  #in_engine.target.kill()
 
 #var frame* : int
 
