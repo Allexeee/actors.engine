@@ -7,48 +7,61 @@ import ../../actors_h
 
 type
   ent* = tuple
-    id  : uint32
-    age : uint32
+    id  : int
+    age : int
+  entid* = int
 
-  ents* = seq[ent]
+  ents* {.acyclic.} = seq[ent]
 
   SystemEcs* = ref object
     operations*    : seq[Operation]
-    ents_alive*    : HashSet[uint32]
+    ents_alive*    : HashSet[int]
     groups*        : seq[Group]
   
   Entity* {.packed.} = object
     dirty*            : bool        #dirty allows to set all components for a new entity in one init command
-    age*              : uint32
+    age*              : int
     layer*            : LayerID
     parent*           : ent
     signature*        : set[uint16] 
     signature_groups* : set[uint16] # what groups are already used
     childs*           : seq[ent]
   
-  Group* = ref object of RootObj
+  Group* {.acyclic.} = ref object of RootObj
     id*               : uint16
     layer*            : LayerID
     signature*        : set[uint16]
     signature_excl*   : set[uint16]
     entities*         : seq[ent]
-    added*            : seq[ent]
-    removed*          : seq[ent]
-    events*           : seq[proc()]
-  
+
   ComponentMeta* {.packed.} = object
     id*        : uint16
     generation* : uint16
     bitmask*    : int
   
-  StorageBase* = ref object of RootObj
+  StorageBase* {.acyclic.} = ref object of RootObj
     meta*      : ComponentMeta
     groups*    : seq[Group]
   
-  Storage*[T] = ref object of StorageBase
-    entities*  : seq[int]
-    container* : seq[T]
-  
+  Storage*[T] {.acyclic.} = ref object of StorageBase
+    indices*    : seq[int] # sparse
+    entities*   : seq[entid] # packed
+    components* : seq[T]
+
+
+# EntityIndices
+# A sparse array
+# Contains integers which are the indices in EntityList.
+# The index (not the value) of this sparse array is itself the entity id.
+# EntityList
+# A packed array
+# Contains integers - which are the entity ids themselves
+# The index doesn't have inherent meaning, other than it must be correct from EntityIndices
+# ComponentList
+# A packed array
+# Contains component data (of this pool type)
+# It is aligned with EntityList such that the element at EntityList[N] has component data of ComponentList[N]
+
   CompType* = enum
     Object,
     Action
@@ -65,12 +78,46 @@ type
     arg*   : uint16
 
 
+ #proc `[]`*[I: Ordinal;T](a: T; i: I): T {.
 #@extensions
+proc `[]`*[I: Ordinal;T: Group](self: T; i: I): ent =
+  self.entities[i]
+
 template none*(T: typedesc[ent]): untyped =
-  (0'u32,0'u32)
+  (0,0)
 
 var storages* = newSeq[StorageBase](1)
 var layers* : array[16,SystemEcs]
 
 proc ecs*(layerID: LayerID): var SystemEcs {.inline, used.} =
   layers[layerID.uint]
+
+proc addEcs*(layerID: LayerID) =
+  #layers[layerID.uint] = SystemEcs()
+  let ecs = layers[layerID.uint].addr
+  ecs[] = SystemEcs()
+  ecs.operations = newSeq[Operation]()
+  ecs.groups = newSeq[Group]()
+
+proc makeEnts*(): ents =
+  newSeq[ent]()
+
+proc makeStorage*[t](): Storage[t] =
+  result = Storage[t]()
+  result.components = newSeq[t]()
+  result.indices  = newSeq[int](4096)
+  result.entities = newSeq[entid]()
+  result.groups = newSeqOfCap[Group](32)
+
+#   EntityIndices
+# A sparse array
+# Contains integers which are the indices in EntityList.
+# The index (not the value) of this sparse array is itself the entity id.
+# EntityList
+# A packed array
+# Contains integers - which are the entity ids themselves
+# The index doesn't have inherent meaning, other than it must be correct from EntityIndices
+# ComponentList
+# A packed array
+# Contains component data (of this pool type)
+# It is aligned with EntityList such that the element at EntityList[N] has component data of ComponentList[N]

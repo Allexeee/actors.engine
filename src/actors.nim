@@ -9,24 +9,43 @@ import actors/private/actors_engine as in_engine
 
 export tools
 export engine
+export plugins
 
 let app* = header.app
-let input* = app.addInput()
+
 
 
 proc addLayer*(): LayerId =
   discard
 
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
-  in_engine.target.bootstrap(app)
+  var w = in_engine.target.bootstrap(app)
+  #plugins.imgui.bootstrap(w)
+
   init()
+  
   while not in_engine.target.shouldQuit():
-    update()
+    
+    in_engine.count_metrics_begin()
     in_engine.target.pollEvents()
-    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-    in_engine.render_end(0)
+    
+    update()
+    
+
+    in_engine.target.render_begin()
+    #plugins.imgui.render_begin()
+    
+    #draw()
+
+   # plugins.imgui.flush()
+    in_engine.target.render_end()
+    in_engine.count_metrics_end()
+  
   #plugins.imgui.kill()
-  #in_engine.target.kill()
+  in_engine.target.kill()
+    
+#plugins.imgui.kill()
+#in_engine.target.kill()
 
 #var frame* : int
 

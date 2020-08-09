@@ -8,17 +8,62 @@ app.settings.display_size = (1280, 720)
 app.settings.path_assets  = "examples/assets/"
 app.settings.path_shaders = "examples/assets/shaders/"
 
+var l = addLayer()
+l.addEcs()
 
+type CompA = object
+  arg: int
+type CompB = object
+  arg: int
+type CompC = object
+  arg: int
+
+app.add CompA
+app.add CompB
+app.add CompC
+
+
+var entities = makeEnts()
+var size = 100
+var ticks = 60*3600
+for i in 0..size:
+  var e = l.entity()
+  e.get CompA
+  e.get CompB
+  e.get CompC
+  entities.add(e)
+
+var gr = l.group({CompA.ID})
+
+l.ecs.execute()
+
+var e = gr[10]
+
+echo e.has(CompA)
+echo e.sizeof
+# profile.start "by ent":
+#   for x in 0..ticks:
+#     for e in gr:
+#       let ca = e.ca()
+#       ca.arg += 1
+
+
+# profile.log
 
 proc init*() =
-  echo "po"
+  makeUIDebug().add()
   discard
 
 proc update*() =
-  if input.down Key.Space:
+  if input.down Key.Esc:
     app.quit()
 
-app.run(init,update,nil)
+proc draw*() =
+  for ui in uis:
+    ui.draw()
+  discard
+
+app.run(init,update,draw)
 
 # newUIDebugGame()
 

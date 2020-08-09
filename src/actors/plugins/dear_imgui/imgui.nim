@@ -31,8 +31,11 @@ when defined(linux):
 
 when not defined(cpp) or defined(cimguiDLL):
   when defined(windows):
-    const imguiDll* = "cimgui.dll"
-    echo imguiDll
+    when defined(x64):
+      const imguiDll* = "cimgui6.dll"
+    else: 
+      const imguiDll* = "cimgui.dll"
+    # imguiDll
   elif defined(macosx):
     const imguiDll* = "cimgui.dylib"
   else:
@@ -40,10 +43,9 @@ when not defined(cpp) or defined(cimguiDLL):
   {.passc: "-DCIMGUI_DEFINE_ENUMS_AND_STRUCTS".}
   {.pragma: imgui_header, header: "cimgui.h".}
 else:
-  {.compile: "cimgui.cpp",
+  {.
     compile: "imgui/imgui.cpp",
     compile: "imgui/imgui_draw.cpp",
-    compile: "imgui/imgui_demo.cpp",
     compile: "imgui/imgui_widgets.cpp".}
   {.pragma: imgui_header, header: "ncimgui.h".}
 

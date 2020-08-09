@@ -6,6 +6,8 @@
 ## Feel free to use and modify this implementation.
 ## This needs to be used along with a Renderer.
 
+# import impl_opengl
+#include imgui
 import imgui
 import ../actors_glfw
 

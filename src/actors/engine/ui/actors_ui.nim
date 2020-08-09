@@ -1,4 +1,3 @@
 {.used.}
-import ../../actors_h
-import ../../actors_plugins
+import actors_ui_debug
 

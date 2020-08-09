@@ -1,7 +1,10 @@
-when defined(renderer_opengl):
-  when defined(target_windows):
-    import dear_imgui/impl_glfw_actors as imgui
+{.used.}
+import dear_imgui/impl_glfw
+import dear_imgui/impl_opengl
+import dear_imgui/imgui
+import dear_imgui/impl_glfw_actors
 
-when defined(renderer_opengl):
-  when defined(target_windows):
-    export imgui
+export imgui
+export impl_glfw
+export impl_opengl
+export impl_glfw_actors

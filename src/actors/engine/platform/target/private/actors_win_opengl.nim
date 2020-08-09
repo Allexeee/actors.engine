@@ -5,7 +5,7 @@ import ../../../../plugins/actors_glfw
 import ../../../../actors_tools
 
 type Window* = GLFWWindow
-var window* : Window
+var window* : GLFWWindow
 
 proc getOpenglVersion() =
   var glGetString = cast[proc (name: GLenum): ptr GLubyte {.cdecl, gcsafe.}](glfwGetProcAddress("glGetString"))
@@ -14,12 +14,12 @@ proc getOpenglVersion() =
   log info, &"OpenGL {glVersion}"
 
 
-proc bootstrap*(app: App) {.inline.} = 
+proc bootstrap*(app: App): GLFWWindow {.inline.}= 
   assert glfwInit()
   
   glfwWindowHint(GLFWContextVersionMajor, 4)
   glfwWindowHint(GLFWContextVersionMinor, 5)
-  glfwWindowHint(GLFWOpenglForwardCompat, GLFW_TRUE)
+  #glfwWindowHint(GLFWOpenglForwardCompat, GLFW_TRUE)
   glfwWindowHint(GLFWResizable, GLFW_FALSE)
   glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
   glfwWindowHint(GLFWDoubleBuffer, 0)
@@ -30,17 +30,31 @@ proc bootstrap*(app: App) {.inline.} =
     quit(-1)
   
   window.makeContextCurrent()
+  # if (!gladLoadGL()) {
+  #       std::cout << "Failed to initialize OpenGL context" << std::endl;
+  #       return -1;
+  #   }
+  # if gladLoadGL(glfwGetProcAddress)==false:
+  #   echo "FAILD"
+  #echo glGetStringi.repr
   assert gladLoadGL(glfwGetProcAddress)
+
   getOpenglVersion()
+
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+  window
 
 proc kill*() =
   window.destroyWindow()
   window = nil
   glfwTerminate()
 
-proc render_end*(vsync: int32) {.inline.} =
+proc render_begin*() {.inline.} =
+  glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
+  glClearColor(0.2f, 0.3f, 0.3f, 1.0f)
+
+proc render_end*() {.inline.} =
   window.swapBuffers()
   glFlush()
 

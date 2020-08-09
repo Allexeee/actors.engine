@@ -1,3 +1,5 @@
+{.used.}
+
 # Copyright 2018, NimGL contributors.
 
 ## ImGUI OpenGL (modern OpenGL with shaders / programmatic pipeline) Implementation
@@ -9,15 +11,18 @@
 ## HACK: To be honest, there are a lot of things to optimize in here if you have control of every step.
 
 #import ../imgui, ../opengl
-import imgui
 import ../actors_gl
+import imgui
+
+let GL_FLOAT = 0x1406.GLenum
+let GL_FALSE = false
 
 var
   gGlslVersionString: cstring = "#version 330 core"
   gFontTexture: uint32 = 0
   gShaderHandle: uint32 = 0
-  gVertHandle: uint32 = 0
-  gFragHandle: uint32 = 0
+  gVertHandle: Gluint = 0
+  gFragHandle: Gluint = 0
   gAttribLocationTex: int32 = 0
   gAttribLocationProjMtx: int32 = 0
   gAttribLocationPosition: int32 = 0
@@ -112,17 +117,13 @@ void main() {
   """
   vertex_shader_glsl = $gGlslVersionString & "\n" & $vertex_shader_glsl
   fragment_shader_glsl = $gGlslVersionString & "\n" & $fragment_shader_glsl
-  
-    
 
   gVertHandle = glCreateShader(GL_VERTEX_SHADER)
-  #glShaderSource(gVertHandle, 1, vertex_shader_glsl.addr, nil)
   glShaderSource(gVertHandle, 1, cast[cstringArray](vertex_shader_glsl.addr), nil)
   glCompileShader(gVertHandle)
   igOpenGL3CheckShader(gVertHandle, "vertex shader")
 
   gFragHandle = glCreateShader(GL_FRAGMENT_SHADER)
-  #glShaderSource(gFragHandle, 1, fragment_shader_glsl.addr, nil)
   glShaderSource(gFragHandle, 1, cast[cstringArray](fragment_shader_glsl.addr), nil)
   glCompileShader(gFragHandle)
   igOpenGL3CheckShader(gFragHandle, "fragment shader")
@@ -227,8 +228,8 @@ proc igOpenGL3RenderDrawData*(data: ptr ImDrawData) =
   glEnableVertexAttribArray(gAttribLocationPosition.uint32)
   glEnableVertexAttribArray(gAttribLocationUV.uint32)
   glEnableVertexAttribArray(gAttribLocationColor.uint32)
-  glVertexAttribPointer(gAttribLocationPosition.uint32, 2, cGL_FLOAT, false, ImDrawVert.sizeof().int32, cast[pointer](0)) # @TODO: actually calculate offset
-  glVertexAttribPointer(gAttribLocationUV.uint32, 2, cGL_FLOAT, false, ImDrawVert.sizeof().int32, cast[pointer](8))
+  glVertexAttribPointer(gAttribLocationPosition.uint32, 2, GL_FLOAT, false, ImDrawVert.sizeof().int32, cast[pointer](0)) # @TODO: actually calculate offset
+  glVertexAttribPointer(gAttribLocationUV.uint32, 2, GL_FLOAT, false, ImDrawVert.sizeof().int32, cast[pointer](8))
   glVertexAttribPointer(gAttribLocationColor.uint32, 4, GL_UNSIGNED_BYTE, true, ImDrawVert.sizeof().int32, cast[pointer](16))
 
   let pos = data.displayPos

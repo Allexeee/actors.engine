@@ -2,11 +2,11 @@
 
 import
   plugins/actors_stb_image,
-  plugins/actors_imgui
+  plugins/actors_imgui as imgui
 
 export
   actors_stb_image,
-  actors_imgui
+  imgui
 
 when defined(renderer_opengl):
   import 

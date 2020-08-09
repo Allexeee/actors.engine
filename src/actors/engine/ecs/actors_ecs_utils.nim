@@ -4,7 +4,10 @@ import hashes
 
 import actors_ecs_h
 
-proc binarysearch(this: ptr seq[ent], value: uint32): int {.discardable, used, inline.} =
+#template `@`(arg: untyped):untyped =
+#  (entid)
+
+proc binarysearch(this: ptr seq[ent], value: int): int {.discardable, used, inline.} =
   var m : int = -1
   var left = 0
   var right = this[].high

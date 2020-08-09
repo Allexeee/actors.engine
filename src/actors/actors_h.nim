@@ -1,13 +1,17 @@
 {.used.}
 
 type
-  LayerId* = distinct uint32
+  LayerId* = distinct int
 
   FpsCounter* = object
     updates* : float
     updates_last* : float
     frames*  : float
     frames_last* : float
+  
+  AppStats* = object
+    updates* : int
+    frames*  : int
 
   AppSettings* = object
     display_size* : tuple[width: int, height: int]
@@ -33,6 +37,8 @@ type
 
 
 let app* = App()
+var stats* = AppStats()
+
 app.settings = AppSettings()
 app.time = AppTime()
 

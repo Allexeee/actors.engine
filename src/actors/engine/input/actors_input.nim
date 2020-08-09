@@ -6,6 +6,8 @@ import ../private/actors_platform as platform
 
 var inputs = newSeq[Input](0)
 
+let input* = app.addInput()
+
 proc addInput*(self: App): InputIndex {.discardable.} =
   var id {.global.} = 0
   let index = id.InputIndex
