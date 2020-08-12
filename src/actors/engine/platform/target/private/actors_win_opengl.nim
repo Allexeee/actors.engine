@@ -8,41 +8,41 @@ type Window* = GLFWWindow
 var window* : GLFWWindow
 
 proc getOpenglVersion() =
-  var glGetString = cast[proc (name: GLenum): ptr GLubyte {.cdecl, gcsafe.}](glfwGetProcAddress("glGetString"))
+  var glGetString = cast[proc (name: GLenum): ptr GLubyte {.stdcall.}](glGetProc("glGetString"))
   if glGetString == nil: return
   var glVersion = cast[cstring](glGetString(GL_VERSION))
   log info, &"OpenGL {glVersion}"
 
+# var glGetString = cast[proc (name: GLenum): ptr GLubyte {.stdcall.}](glGetProc("glGetString"))
+#   if glGetString == nil: return
+#   var glVersion = cast[cstring](glGetString(GL_VERSION))
+#   log info, &"OpenGL {glVersion}"
 
 proc bootstrap*(app: App): GLFWWindow {.inline.}= 
   assert glfwInit()
   
   glfwWindowHint(GLFWContextVersionMajor, 4)
-  glfwWindowHint(GLFWContextVersionMinor, 5)
-  #glfwWindowHint(GLFWOpenglForwardCompat, GLFW_TRUE)
-  glfwWindowHint(GLFWResizable, GLFW_FALSE)
+  glfwWindowHint(GLFWContextVersionMinor, 1)
+  glfwWindowHint(GLFWOpenglForwardCompat, GLFW_TRUE)
   glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
-  glfwWindowHint(GLFWDoubleBuffer, 0)
-  #echo (cint)app.settings.display_size.width
-  window = glfwCreateWindow((cint)app.settings.display_size.width, (cint)app.settings.display_size.height, app.settings.name, nil, nil)
+  glfwWindowHint(GLFWResizable, GLFW_FALSE)
+ # glfwWindowHint(GLFWDoubleBuffer, 0)
+  
+  window = glfwCreateWindow(1280, 720) #glfwCreateWindow((cint)app.settings.display_size.width, (cint)app.settings.display_size.height, app.settings.name, nil, nil)
   
   if window == nil:
     quit(-1)
   
   window.makeContextCurrent()
-  # if (!gladLoadGL()) {
-  #       std::cout << "Failed to initialize OpenGL context" << std::endl;
-  #       return -1;
-  #   }
-  # if gladLoadGL(glfwGetProcAddress)==false:
-  #   echo "FAILD"
-  #echo glGetStringi.repr
-  assert gladLoadGL(glfwGetProcAddress)
+  
+  assert glInit()
+  #assert gladLoadGL(glfwGetProcAddress)
 
   getOpenglVersion()
-
+  echo "poo"
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+  echo window[]
   window
 
 proc kill*() =

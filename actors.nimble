@@ -12,6 +12,11 @@ binDir        = "bin"
 
 requires "nim == 1.0.8"
 
+task releasec, "Build":
+   exec "nim c -d:release --passC:-flto --passL:-s --gc:refc --out: bin/game examples/test.nim"
+task releasecpp, "Build":
+   exec "nim cpp -d:release --passC:-flto --passL:-s --gc:refc --out: bin/game examples/test.nim"
+
 
 task release, "BUILD":
    exec "nim c -d:release --passC:-flto --passL:-s --gc:refc --out: bin/game examples/test.nim"

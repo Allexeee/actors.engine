@@ -1,9 +1,10 @@
 ## closure ienumerators
 {.used.}
 {.experimental: "codeReordering".}
+
+import actors/actors_plugins as plugins
 import actors/actors_h       as header
 import actors/actors_tools   as tools
-import actors/actors_plugins as plugins
 import actors/actors_engine  as engine
 import actors/private/actors_engine as in_engine
 
@@ -20,7 +21,13 @@ proc addLayer*(): LayerId =
 
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   var w = in_engine.target.bootstrap(app)
-  #plugins.imgui.bootstrap(w)
+  #log w[]
+  let context = igCreateContext()
+  assert igGlfwInitForOpenGL(w, true)
+  assert igOpenGL3Init()
+  igStyleColorsCherry()
+
+  #plugins.bootstrap(w)
 
   init()
   
@@ -28,20 +35,27 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
     
     in_engine.count_metrics_begin()
     in_engine.target.pollEvents()
+
+    igOpenGL3NewFrame()
+    igGlfwNewFrame()
+    igNewFrame()
     
     update()
     
 
     in_engine.target.render_begin()
-    #plugins.imgui.render_begin()
+    #plugins.render_begin()
     
-    #draw()
+    draw()
+    igRender()
 
-   # plugins.imgui.flush()
+    #plugins.flush()
+    igOpenGL3RenderDrawData(igGetDrawData())
     in_engine.target.render_end()
+
     in_engine.count_metrics_end()
   
-  #plugins.imgui.kill()
+  #plugins.kill()
   in_engine.target.kill()
     
 #plugins.imgui.kill()

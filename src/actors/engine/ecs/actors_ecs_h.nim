@@ -1,123 +1,54 @@
-#{.experimental: "codeReordering".}
-{.experimental: "dynamicBindSym".}
-{.used.} 
-
-import sets
 import ../../actors_h
 
+const ENTS_INIT_SIZE* = 102048
+
 type
-  ent* = tuple
-    id  : int
-    age : int
-  entid* = int
+  ent* = tuple[id: int, age: int]
+  entid* = distinct int
+  cid*   = uint16
+  ecsid* = distinct int
 
-  ents* {.acyclic.} = seq[ent]
+  EntityMeta* = object
+    layer*    : LayerID
+    childs*   : seq[ent]
+    alive*    : bool
+    age*      : int
 
-  SystemEcs* = ref object
-    operations*    : seq[Operation]
-    ents_alive*    : HashSet[int]
-    groups*        : seq[Group]
-  
-  Entity* {.packed.} = object
-    dirty*            : bool        #dirty allows to set all components for a new entity in one init command
-    age*              : int
-    layer*            : LayerID
-    parent*           : ent
-    signature*        : set[uint16] 
-    signature_groups* : set[uint16] # what groups are already used
-    childs*           : seq[ent]
+  SystemEcs* = object
   
   Group* {.acyclic.} = ref object of RootObj
     id*               : uint16
     layer*            : LayerID
-    signature*        : set[uint16]
-    signature_excl*   : set[uint16]
+    signature*        : set[cid]
+    signature_excl*   : set[cid]
     entities*         : seq[ent]
-
-  ComponentMeta* {.packed.} = object
-    id*        : uint16
-    generation* : uint16
-    bitmask*    : int
   
-  StorageBase* {.acyclic.} = ref object of RootObj
-    meta*      : ComponentMeta
-    groups*    : seq[Group]
-  
-  Storage*[T] {.acyclic.} = ref object of StorageBase
-    indices*    : seq[int] # sparse
-    entities*   : seq[entid] # packed
-    components* : seq[T]
+  CompStorageBase* = ref object of RootObj
+     compType*     : string
+     compAlias*    : string
+     size*        : int
+     id*          : cid
+     indices*     : seq[int] # sparse 
+     entities*    : seq[ent] # packed
+     cache*       : pointer
+     filterid*    : int
+  CompStorage*[T] = ref object of CompStorageBase
+     comps*      : seq[T]   
+
+template none*(): ent =
+  (int.high,0)
+
+template none*(T: typedesc[ent]): ent =
+  (int.high,0)
+
+proc `$`*(self: ent): string =
+    $self.id
 
 
-# EntityIndices
-# A sparse array
-# Contains integers which are the indices in EntityList.
-# The index (not the value) of this sparse array is itself the entity id.
-# EntityList
-# A packed array
-# Contains integers - which are the entity ids themselves
-# The index doesn't have inherent meaning, other than it must be correct from EntityIndices
-# ComponentList
-# A packed array
-# Contains component data (of this pool type)
-# It is aligned with EntityList such that the element at EntityList[N] has component data of ComponentList[N]
-
-  CompType* = enum
-    Object,
-    Action
-    
-  OpKind* = enum
-    Init
-    Add,
-    Remove,
-    Kill
-  
-  Operation* {.packed.} = object
-    kind*  : OpKind
-    entity*: ent 
-    arg*   : uint16
-
-
- #proc `[]`*[I: Ordinal;T](a: T; i: I): T {.
-#@extensions
-proc `[]`*[I: Ordinal;T: Group](self: T; i: I): ent =
-  self.entities[i]
-
-template none*(T: typedesc[ent]): untyped =
-  (0,0)
-
-var storages* = newSeq[StorageBase](1)
-var layers* : array[16,SystemEcs]
-
-proc ecs*(layerID: LayerID): var SystemEcs {.inline, used.} =
-  layers[layerID.uint]
-
-proc addEcs*(layerID: LayerID) =
-  #layers[layerID.uint] = SystemEcs()
-  let ecs = layers[layerID.uint].addr
-  ecs[] = SystemEcs()
-  ecs.operations = newSeq[Operation]()
-  ecs.groups = newSeq[Group]()
-
-proc makeEnts*(): ents =
-  newSeq[ent]()
-
-proc makeStorage*[t](): Storage[t] =
-  result = Storage[t]()
-  result.components = newSeq[t]()
-  result.indices  = newSeq[int](4096)
-  result.entities = newSeq[entid]()
-  result.groups = newSeqOfCap[Group](32)
-
-#   EntityIndices
-# A sparse array
-# Contains integers which are the indices in EntityList.
-# The index (not the value) of this sparse array is itself the entity id.
-# EntityList
-# A packed array
-# Contains integers - which are the entity ids themselves
-# The index doesn't have inherent meaning, other than it must be correct from EntityIndices
-# ComponentList
-# A packed array
-# Contains component data (of this pool type)
-# It is aligned with EntityList such that the element at EntityList[N] has component data of ComponentList[N]
+var ents_meta*  = newSeqOfCap[EntityMeta](ENTS_INIT_SIZE)
+var ents_free*  = newSeqOfCap[ent](ENTS_INIT_SIZE)
+var layers*     = newSeq[SystemEcs]()
+var storages*   = newSeq[CompStorageBase]()
+#var ecs* = 0.ecsid
+#var storages* : seq[CompStorageBase]#= newSeq[CompStorageBase]()
+#storages = newSeq[CompStorageBase](10)

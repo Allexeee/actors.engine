@@ -1,6 +1,20 @@
 import macros
 {.used.}
 
+
+#converter floatToInt*(f: float): int = f.int
+#converter float64ToInt*(f: float64): int = f.int
+#converter intToFloat*(f: int): float = f.float
+
+
+#@collections
+proc push*[T](self: var seq[T], elem: T) {.inline.} =
+  self.add(elem)
+
+proc push_addr*[T](self: var seq[T]): ptr T =
+  self.setLen(self.len+1)
+  addr self[self.high]
+
 template usePtr*[T]() =
   template `+`(p: ptr T, off: SomeInteger ): ptr T =
     cast[ptr type(p[])](cast[ByteAddress](p) +% int(off) * sizeof(p[]))
@@ -28,6 +42,8 @@ proc debug_macro*(arg: string): NimNode =
             )
         )
 
+
+
 proc remove*[T](this: var openArray[T], elem: T) =
   this.remove(elem)
 
@@ -37,6 +53,8 @@ proc add_new_delegate*[T](this: var seq[T], arg: T)=
 proc inc*[T](this: var seq[T]): ptr T {.inline.} =
     this.add(T())
     addr this[this.high]
+
+
 
 
 proc add_new*[T](this: var seq[T]): ptr T {.inline.} =

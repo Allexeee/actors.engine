@@ -9,7 +9,7 @@ app.settings.path_assets  = "examples/assets/"
 app.settings.path_shaders = "examples/assets/shaders/"
 
 var l = addLayer()
-l.addEcs()
+#l.addEcs()
 
 type CompA = object
   arg: int
@@ -24,23 +24,88 @@ app.add CompC
 
 
 var entities = makeEnts()
-var size = 100
-var ticks = 60*3600
+var size = 20
+var ticks = 1#60*3600
+let h1 = (size.float*0.5).int
+let h2 = (size.float*0.75).int
 for i in 0..size:
   var e = l.entity()
-  e.get CompA
-  e.get CompB
-  e.get CompC
+
+  if i<h1:
+    e.get CompA
+    e.get CompC
+  if i<h2:
+    e.get CompB
   entities.add(e)
 
-var gr = l.group({CompA.ID})
+var gr = l.group(mask(CompA,CompB,CompC))
 
-l.ecs.execute()
+var e1 = (10,0)
+var e2 = (51,0)
+var check = false
 
-var e = gr[10]
+profile.start"by group":
+  for x in 0..ticks:
+    for e in gr:
+      let ca = e.cA
+      let cb = e.cB
+      let cc = e.cc
+      ca.arg+=1
+      cb.arg+=1
+      cc.arg+=1
 
-echo e.has(CompA)
-echo e.sizeof
+profile.start "by indice":
+  for x in 0..ticks:
+    for c in group(CA,CB,CC):
+      c.a.arg += 1
+      c.b.arg += 1
+      c.c.arg += 1
+
+profile.log
+
+import macros
+
+dumptree:
+  iterator group*(t: typedesc, y: typedesc, u: typedesc): tuple[e: ent, a: ptr t, b: ptr y, c: ptr u] =
+    let comps1 = t.GetComps()
+    let comps2 = y.GetComps()
+    let comps3 = u.GetComps()
+
+    let st1 = t.GetStorage()
+    let len1 = comps1[].len
+    let len2 = comps2[].len
+    let len3 = comps3[].len
+    let max = if len1 > len2: len2 else: len1
+    var i = 0
+    while i < max:
+      let e = st1.indices[i]
+      yield ((e,entitiesMeta[e].age), comps1[][i].addr,comps2[][e].addr, comps3[][e].addr)
+      inc i
+#[ C
+[15:49:17] Benchmark:
+Time elapsed for by indice: 0.000000000
+Time elapsed for by mask: 2.868000000
+]#
+
+#[ CPP
+
+[15:50:30] Benchmark:
+Time elapsed for by indice: 0.000000000
+Time elapsed for by mask: 2.824000000
+
+]#
+
+# var e = (32,0)
+
+# echo e.has(CompA)
+
+# echo e.HasPoo(CompA)
+
+# l.ecs.execute()
+
+
+
+# echo e.sizeof
 # profile.start "by ent":
 #   for x in 0..ticks:
 #     for e in gr:
