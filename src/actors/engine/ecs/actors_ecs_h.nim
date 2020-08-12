@@ -15,8 +15,9 @@ type
     age*      : int
 
   SystemEcs* = object
+    groups* : seq[Group]
   
-  Group* {.acyclic.} = ref object of RootObj
+  Group* = ref object of RootObj
     id*               : uint16
     layer*            : LayerID
     signature*        : set[cid]
@@ -25,18 +26,14 @@ type
   
   CompStorageBase* = ref object of RootObj
      compType*     : string
-     compAlias*    : string
-     size*        : int
-     id*          : cid
-     indices*     : seq[int] # sparse 
-     entities*    : seq[ent] # packed
-     cache*       : pointer
-     filterid*    : int
+     groups*       : seq[Group]
+     id*           : cid
+     indices*      : seq[int] # sparse 
+     entities*     : seq[ent] # packed
+     filterid*     : int
+  
   CompStorage*[T] = ref object of CompStorageBase
      comps*      : seq[T]   
-
-template none*(): ent =
-  (int.high,0)
 
 template none*(T: typedesc[ent]): ent =
   (int.high,0)

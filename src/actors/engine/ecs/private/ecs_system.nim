@@ -3,12 +3,70 @@ import strutils
 import macros
 import sets
 import algorithm
-
+import ../../../actors_h
+import ../../../actors_tools
 import ../actors_ecs_h
 import ecs_entity
 import ecs_utils
 
 var storageCache = newSeq[CompStorageBase](1222)
+
+var maskCache* = newSeq[cid]()
+
+proc by*(t: typedesc): seq[cid] =
+    maskCache.setLen(0)
+    maskCache.add(t.id)
+    maskCache
+
+proc excl*(t: typedesc): seq[cid] =
+    maskCache.setLen(0)
+    maskCache.add(t.id)
+    maskCache
+
+proc group*(layer: LayerID, incl: seq[cid],excl: seq[cid]) : Group {.inline, discardable.} =
+  discard
+  # echo incl[0]
+  # echo excl[0]
+# proc groupImpl(layer: LayerID, incl: set[uint16], excl: set[uint16]): Group {.inline, discardable.} =
+#   let ecs = layers[layer.uint32]
+#   let groups = addr ecs.groups
+  
+#   var group_next : Group = nil
+
+#   for i in 0..groups[].high:
+#       let gr = groups[][i]
+#       if gr.signature == incl:
+#           group_next = gr
+#           break
+  
+#   if group_next.isNil:
+#       group_next = groups[].add_new_ref()
+#       group_next.id = id_next_group
+#       group_next.signature = incl
+#       group_next.signature_excl = excl
+#       group_next.entities = newSeqOfCap[ent](1000)
+#       #group_next.added = newSeqOfCap[ent](500)
+#       #group_next.removed = newSeqOfCap[ent](500)
+#       group_next.layer = layer
+#       if not incl.contains(0):
+#         for id in incl:
+#           storages[id].groups.add(group_next)
+#       if not excl.contains(0):
+#        for id in excl:
+#          storages[id].groups.add(group_next)
+#       id_next_group += 1
+  
+#   group_next
+
+# proc group*(layer: LayerID, incl: set[uint16]): Group {.inline, discardable.} =
+#    group_impl(layer, incl, {0'u16})
+
+# proc group*(layer: LayerID, incl: set[uint16], excl: set[uint16]): Group {.inline, discardable.} =
+#    group_impl(layer, incl, excl)
+
+
+
+#proc group*(layer: LayerId) = 
 
 #dumptree:
  # let ca {.inject.} =  cast[ptr seq[CompA]](storageCache[0].compss)   

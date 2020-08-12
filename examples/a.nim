@@ -12,10 +12,6 @@ import strformat
 import tables
 import strutils
 
-# dumptree:
-#   var t = (0,0)
-#   var m1 {.inject.} = "test"
-
 type CompA = object
   arg: int
 type CompB = object
@@ -23,19 +19,17 @@ type CompB = object
 type CompC = object
   arg: int
 
-
 app.add CompA
 app.add CompB
 app.add CompC
 
-#var st1 = CompA.getStorageBase()
-#echo st1.compAlias
-#var st1 = CompA.getStorageBase()
-#№st1.getComps()
 
 var lgame = addLayer()
 
-let size = 10000
+# var none = ent.none
+# echo none
+
+let size = 10
 let half = (size.float * 0.5f).int
 let quat = (size.float * 0.75f).int
 #echo quat
@@ -103,7 +97,7 @@ profile.start "dynamic3":
     for e, ca in comps2(CompA):
       ca.arg += 1
       e.cb.arg+=1
-#Profile TEST took 4.835365100 seconds to complete over 1 iteration, averaging 4.835365100 seconds per call
+#Profile TEST UNITY took 4.835365100 seconds to complete over 1 iteration, averaging 4.835365100 seconds per call
 profile.start "group":
    for i in 0..steps:
      for e in ents:

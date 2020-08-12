@@ -36,10 +36,10 @@ template impl_storage(T: typedesc) {.used.} =
   for i in 0..storage.indices.high:
     storage.indices[i] = int.high
   storage.id = id_next_component; id_next_component += 1
-  storage.compType = $T
-  storage.compAlias = storage.compType
-  formatComponent(storage.compAlias)
-  storage.cache = storage.comps.addr
+  #storage.compType = $T
+ # storage.compAlias = storage.compType
+  #formatComponent(storage.compAlias)
+ # storage.cache = storage.comps.addr
   # block:
   #   let a {.inject.} = storage.compAlias 
   #   let b {.inject.} = storage.compType 
@@ -53,24 +53,7 @@ template impl_storage(T: typedesc) {.used.} =
   proc id*(_: typedesc[T]): cid =
     storage.id 
   
-  proc BABA*(_:typedesc[T]) =
-    echo storage.compType
-
-  iterator boomer*[Y,U](_:typedesc[T]): (ptr T, ptr Y, ptr U) =
-    let max = storage.comps.high
-    var st2 = Y.getStorage()
-    var st3 = U.getStorage()
-
-    for i in 0..max:
-      yield (storage.comps[i].addr,st2.comps[st2.indices[storage.entities[i].id]],st3.comps[st2.indices[storage.entities[i].id]])
- 
-  #template genComp*(_: typedesc[T]): untyped =
-
-  # template getCompss*(_: typedesc[T]): untyped =
-  #   var cb {.inject.} = storage.comps.addr
-  # template genComp*(n* untyped): untyped {.inject.} =
-  # discard  
-
+  
   proc getStorageBase*(_: typedesc[T]): CompStorageBase =
     storage
 
@@ -79,29 +62,11 @@ template impl_storage(T: typedesc) {.used.} =
 
   proc getComps*(_: typedesc[T]): ptr seq[T] =
     storage.comps.addr
-  
-  proc compa*(index: int, _: typedesc[T]): ptr T =
-    if storage.small:
-      storage.comps[index].addr
-    else:
-      storage.comps[index].addr
 
   proc get*(self: ent, _: typedesc[T]): ptr T {.inline, discardable.} =
       
-     #const st = storage
-    # let st = storage
-     
-    # let cid = st.meta.id
-     #let entity = addr ents_meta[self.id]
-     
     if has(_, self):
-      echo "IDD ", storage.entities.len , "____", storage.indices[self.id]
       return addr storage.comps[storage.indices[self.id]]
- 
-    #if t.ID in entitiesMeta[self.id].signature:
-    #  storage.container[storage.entities[self.id]] = arg
-    #else:
-    #  storage.container.add(arg)
  
     if self.id >= storage.indices.high:
       storage.indices.setLen(self.id+1)
@@ -110,18 +75,8 @@ template impl_storage(T: typedesc) {.used.} =
     storage.entities.add(self)
     
     let comp = storage.comps.push_addr()
-   # echo storage.indices
-   # echo storage.entities
-   # echo storage.comps
     comp
-      #entity.signature.incl(cid)
-      
-     # if not entity.dirty:
-     #   let op = entity.layer.ecs.operations.addNew()
-     #   op.entity = self
-     #   op.kind = OpKind.Add
-     #   op.arg  = cid
-  
+
   proc remove*(self: ent, _: typedesc[T]) {.inline, discardable.} = 
     #checkErrorRemoveComponent(self, t)
    # let entity = addr ents_meta[self.id]
