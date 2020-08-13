@@ -11,6 +11,14 @@ import macros
 proc push*[T](self: var seq[T], elem: T) {.inline.} =
   self.add(elem)
 
+proc getref*[T](self: var seq[T]) : var T {.inline.} =
+  self.add(T())
+  self[self.high]
+
+# proc add_new_ref*[T](this: var seq[T]): var T {.inline.} =
+#     this.add(T())
+#     this[this.high]
+
 proc push_addr*[T](self: var seq[T]): ptr T =
   self.setLen(self.len+1)
   addr self[self.high]

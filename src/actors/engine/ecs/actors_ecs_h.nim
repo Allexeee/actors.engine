@@ -14,11 +14,11 @@ type
     alive*    : bool
     age*      : int
 
-  SystemEcs* = object
+  SystemEcs* = ref object
     groups* : seq[Group]
   
   Group* = ref object of RootObj
-    id*               : uint16
+    id*               : int
     layer*            : LayerID
     signature*        : set[cid]
     signature_excl*   : set[cid]
@@ -44,8 +44,13 @@ proc `$`*(self: ent): string =
 
 var ents_meta*  = newSeqOfCap[EntityMeta](ENTS_INIT_SIZE)
 var ents_free*  = newSeqOfCap[ent](ENTS_INIT_SIZE)
-var layers*     = newSeq[SystemEcs]()
+var layers*     = newSeq[SystemEcs](32)
 var storages*   = newSeq[CompStorageBase]()
-#var ecs* = 0.ecsid
-#var storages* : seq[CompStorageBase]#= newSeq[CompStorageBase]()
-#storages = newSeq[CompStorageBase](10)
+
+
+proc addEcs*(layerID: LayerID) =
+  let ecs = layers[layerID.uint].addr
+  ecs[] = SystemEcs()
+  ecs.groups = newSeq[Group]()
+
+a_layer_added.add(addEcs)

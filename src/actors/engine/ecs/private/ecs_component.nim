@@ -36,16 +36,8 @@ template impl_storage(T: typedesc) {.used.} =
   for i in 0..storage.indices.high:
     storage.indices[i] = int.high
   storage.id = id_next_component; id_next_component += 1
-  #storage.compType = $T
- # storage.compAlias = storage.compType
-  #formatComponent(storage.compAlias)
- # storage.cache = storage.comps.addr
-  # block:
-  #   let a {.inject.} = storage.compAlias 
-  #   let b {.inject.} = storage.compType 
-  #   let c {.inject.} = storage.id 
-  #   storage.ast = &("""let {a} = cast[ptr seq[{b}]](storages[{c}].cache)""")
-
+  storages.add(storage)
+ 
   proc has*(_:typedesc[T], self: ent): bool {.inline,discardable.} =
     #echo storage.indices[self.id]
     storage.indices[self.id] != ent.none.id

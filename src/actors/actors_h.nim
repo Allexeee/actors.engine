@@ -34,13 +34,20 @@ type
   App* = ref object
     settings* : AppSettings
     time*     : AppTime
+  
+  ActionOnLayer* = proc(layer: LayerId)
+
 
 
 let app* = App()
 var stats* = AppStats()
+var a_layer_added* = newSeq[ActionOnLayer]()
 
 app.settings = AppSettings()
 app.time = AppTime()
+
+
+
 
 # import macros
 

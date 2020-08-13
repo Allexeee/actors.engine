@@ -9,22 +9,89 @@ import ../actors_ecs_h
 import ecs_entity
 import ecs_utils
 
+
 var storageCache = newSeq[CompStorageBase](1222)
+var id_next_group = 0
+var mask_exclude* : set[cid]
+var mask_include* : set[cid]
 
-var maskCache* = newSeq[cid]()
 
-proc by*(t: typedesc): seq[cid] =
-    maskCache.setLen(0)
-    maskCache.add(t.id)
-    maskCache
+macro group*(layer: LayerId, t: varargs[untyped]) =
+  var n = newNimNode(nnkStmtList)
+  template genMask(arg: untyped): NimNode =
+    var n = newNimNode(nnkCall)
+    if arg.len > 0 and $arg[0] == "!":
+      n.insert(0,newDotExpr(ident("mask_exclude"), ident("incl")))
+      n.insert(1,newDotExpr(ident($arg[1]), ident("id")))
+    else:
+      n.insert(0,newDotExpr(ident("mask_include"), ident("incl")))
+      n.insert(1,newDotExpr(ident($arg), ident("id")))
+    n
+  var i = 0
+  for x in t.children:
+    n.insert(i,genMask(x))
+    i += 1
 
-proc excl*(t: typedesc): seq[cid] =
-    maskCache.setLen(0)
-    maskCache.add(t.id)
-    maskCache
+  n.insert(i,newDotExpr(ident($layer), ident("makeGroup")))
+  result = n
 
-proc group*(layer: LayerID, incl: seq[cid],excl: seq[cid]) : Group {.inline, discardable.} =
-  discard
+
+proc makeGroup*(layer: LayerID) : Group {.inline, discardable.} =
+  let ecs = layers[layer.int]
+  let groups = addr ecs.groups
+  var group_next : Group = nil
+
+  for i in 0..groups[].high:
+    let gr = groups[][i]
+    if gr.signature == mask_include:
+      group_next = gr
+      break
+  if group_next.isNil:
+    group_next = groups[].getref()
+    group_next.id = id_next_group
+    group_next.signature = mask_include
+    group_next.signature_excl = mask_exclude
+    group_next.entities = newSeqOfCap[ent](1000)
+    group_next.layer = layer
+    if not mask_include.contains(0):
+      for id in mask_include:
+        storages[id].groups.add(group_next)
+    if not mask_exclude.contains(0):
+     for id in mask_exclude:
+       storages[id].groups.add(group_next)
+    id_next_group += 1
+
+  group_next
+
+proc group*(layer: LayerID, incl: set[cid],excl: set[cid]) : Group {.inline, discardable.} =
+  let ecs = layers[layer.int]
+  let groups = addr ecs.groups
+
+  var group_next : Group = nil
+
+  for i in 0..groups[].high:
+    let gr = groups[][i]
+    if gr.signature == incl:
+      group_next = gr
+      break
+  if group_next.isNil:
+    group_next = groups[].getref()
+    group_next.id = id_next_group
+    group_next.signature = incl
+    group_next.signature_excl = excl
+    group_next.entities = newSeqOfCap[ent](1000)
+    group_next.layer = layer
+    if not incl.contains(0):
+      for id in incl:
+        storages[id].groups.add(group_next)
+    if not excl.contains(0):
+     for id in excl:
+       storages[id].groups.add(group_next)
+    id_next_group += 1
+
+  group_next
+  
+  
   # echo incl[0]
   # echo excl[0]
 # proc groupImpl(layer: LayerID, incl: set[uint16], excl: set[uint16]): Group {.inline, discardable.} =
@@ -48,13 +115,13 @@ proc group*(layer: LayerID, incl: seq[cid],excl: seq[cid]) : Group {.inline, dis
 #       #group_next.added = newSeqOfCap[ent](500)
 #       #group_next.removed = newSeqOfCap[ent](500)
 #       group_next.layer = layer
-#       if not incl.contains(0):
-#         for id in incl:
-#           storages[id].groups.add(group_next)
-#       if not excl.contains(0):
-#        for id in excl:
-#          storages[id].groups.add(group_next)
-#       id_next_group += 1
+      # if not incl.contains(0):
+      #   for id in incl:
+      #     storages[id].groups.add(group_next)
+      # if not excl.contains(0):
+      #  for id in excl:
+      #    storages[id].groups.add(group_next)
+      # id_next_group += 1
   
 #   group_next
 

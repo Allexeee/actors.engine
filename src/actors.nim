@@ -11,13 +11,18 @@ import actors/private/actors_engine as in_engine
 export tools
 export engine
 export plugins
+export header.LayerId
 
 let app* = header.app
 
 
 
-proc addLayer*(): LayerId =
-  discard
+proc addLayer*(app: App): LayerId =
+  var next_id {.global.} = 0
+  result = next_id.LayerId; next_id += 1
+  for a in a_layer_added:
+    a(result.LayerId)
+
 
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   var w = in_engine.target.bootstrap(app)
