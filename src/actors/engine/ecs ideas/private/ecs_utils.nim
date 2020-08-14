@@ -4,12 +4,6 @@ import strformat
 import ../actors_ecs_h
 
 
-template gen_indices*(self: var seq[int]) {.used.} =
-  self = newSeq[int](ENTS_INIT_SIZE)
-  for i in 0..self.high:
-    self[i] = ent.nil.id
-
-
 proc formatComponentAlias*(s: var string) {.used.}=
   var indexes : array[8,int]
   var i = 0
@@ -83,3 +77,33 @@ func sortStorages*(x,y: CompStorageBase): int =
   let cy = y.entities
   if cx.len <= cy.len: -1
   else: 1
+
+template gen_indices*(self: var seq[int]) {.used.} =
+  self = newSeq[int](ENTS_INIT_SIZE)
+  for i in 0..self.high:
+    self[i] = ent.none.id
+
+
+# macro formatester*(t: typedesc): untyped {.used.} =
+#   let tName = strVal(t)
+#   var proc_name = tName  
+#   formatComponent(proc_name)
+#   var source = ""
+#   source = &("""
+#     template getComper*(_:{tName}, arg: untyped): untyped =
+#       var {proc_name} = storage.comps.addr
+#         """)
+
+#   result = parseStmt(source)
+
+# 10000*210*4
+# 3500*210*8 average
+
+# 14.28 mb + 0.28 mb
+
+# 147 mb info
+
+# 10*4 = 40 mb art
+#        60 mb sound
+# 28*10000
+

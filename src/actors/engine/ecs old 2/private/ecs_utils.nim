@@ -4,12 +4,6 @@ import strformat
 import ../actors_ecs_h
 
 
-template gen_indices*(self: var seq[int]) {.used.} =
-  self = newSeq[int](ENTS_INIT_SIZE)
-  for i in 0..self.high:
-    self[i] = ent.nil.id
-
-
 proc formatComponentAlias*(s: var string) {.used.}=
   var indexes : array[8,int]
   var i = 0
@@ -83,3 +77,40 @@ func sortStorages*(x,y: CompStorageBase): int =
   let cy = y.entities
   if cx.len <= cy.len: -1
   else: 1
+func sortStoragesByType*(x,y: CompStorageBase): int =
+  let cx = x.entities
+  let cy = y.entities
+  if cx.len <= cy.len: -1
+  else: 1
+
+template isGrouped*(entity: ptr EntityMeta, group: Group): bool {.used.} =
+  if group.id in entity.signature_groups:
+    true
+  else: false
+
+template isValidForGroup*(eid: int, group: Group): bool {.used.} =
+  var result = true
+  for cid in group.signature:
+    let storage = storages[cid.int]
+    if storage.indices[eid] == int.high:
+      result = false
+      break
+  if result:
+    for cid in group.signature_excl:
+      let storage = storages[cid.int]
+      if storage.indices[eid] != int.high:
+        result = false
+        break
+  result
+
+# macro formatester*(t: typedesc): untyped {.used.} =
+#   let tName = strVal(t)
+#   var proc_name = tName  
+#   formatComponent(proc_name)
+#   var source = ""
+#   source = &("""
+#     template getComper*(_:{tName}, arg: untyped): untyped =
+#       var {proc_name} = storage.comps.addr
+#         """)
+
+#   result = parseStmt(source)

@@ -21,13 +21,13 @@ proc addLayer*(app: App): LayerId =
   var next_id {.global.} = 0
   result = next_id.LayerId; next_id += 1
   for a in a_layer_added:
-    a(result.LayerId)
+    a(result)
 
 
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   var w = in_engine.target.bootstrap(app)
   #log w[]
-  let context = igCreateContext()
+  let context {.used.} = igCreateContext()
   assert igGlfwInitForOpenGL(w, true)
   assert igOpenGL3Init()
   igStyleColorsCherry()

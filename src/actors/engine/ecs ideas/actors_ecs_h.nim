@@ -7,7 +7,7 @@ type
   ent* = tuple[id: int, age: int]
   entid* = distinct int
   cid*   = uint16
-  #ecsid* = distinct int
+  ecsid* = distinct int
 
   EntityMeta* = object
     layer*            : LayerID
@@ -56,13 +56,12 @@ type
     entity*: ent 
     arg*   : uint16
 
-template `nil`*(T: typedesc[ent]): ent =
+template none*(T: typedesc[ent]): ent =
   (int.high,0)
 
 proc `$`*(self: ent): string =
     $self.id
 
-var e = ent.nil
 
 var ents_meta*  = newSeqOfCap[EntityMeta](ENTS_INIT_SIZE)
 var ents_free*  = newSeqOfCap[ent](ENTS_INIT_SIZE)
@@ -84,3 +83,6 @@ proc addEcs*(layerID: LayerID) =
   ecs.operations = newSeqOfCap[Operation](1024)
 
 a_layer_added.add(addEcs)
+
+
+

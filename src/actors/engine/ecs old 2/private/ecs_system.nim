@@ -34,16 +34,14 @@ macro group*(layer: LayerId, t: varargs[untyped]) =
 
   n.insert(i,newDotExpr(ident($layer), ident("makeGroup")))
   result = n
-
-
 proc makeGroup*(layer: LayerID) : Group {.inline, discardable.} =
   let ecs = layers[layer.int]
   let groups = addr ecs.groups
   var group_next : Group = nil
-
   for i in 0..groups[].high:
     let gr = groups[][i]
     if gr.signature == mask_include:
+     # echo gr.signature, "---", mask_include
       group_next = gr
       break
   if group_next.isNil:
@@ -51,92 +49,17 @@ proc makeGroup*(layer: LayerID) : Group {.inline, discardable.} =
     group_next.id = id_next_group
     group_next.signature = mask_include
     group_next.signature_excl = mask_exclude
-    group_next.entities = newSeqOfCap[ent](1000)
+    #group_next.entities = newSeqOfCap[ent](1000)
     group_next.layer = layer
-    if not mask_include.contains(0):
-      for id in mask_include:
-        storages[id].groups.add(group_next)
-    if not mask_exclude.contains(0):
-     for id in mask_exclude:
-       storages[id].groups.add(group_next)
+    for id in mask_include:
+      storages[id].groups.add(group_next)
+    for id in mask_exclude:
+      storages[id].groups.add(group_next)
     id_next_group += 1
-
+  
+  mask_include = {}
+  mask_exclude = {}
   group_next
-
-proc group*(layer: LayerID, incl: set[cid],excl: set[cid]) : Group {.inline, discardable.} =
-  let ecs = layers[layer.int]
-  let groups = addr ecs.groups
-
-  var group_next : Group = nil
-
-  for i in 0..groups[].high:
-    let gr = groups[][i]
-    if gr.signature == incl:
-      group_next = gr
-      break
-  if group_next.isNil:
-    group_next = groups[].getref()
-    group_next.id = id_next_group
-    group_next.signature = incl
-    group_next.signature_excl = excl
-    group_next.entities = newSeqOfCap[ent](1000)
-    group_next.layer = layer
-    if not incl.contains(0):
-      for id in incl:
-        storages[id].groups.add(group_next)
-    if not excl.contains(0):
-     for id in excl:
-       storages[id].groups.add(group_next)
-    id_next_group += 1
-
-  group_next
-  
-  
-  # echo incl[0]
-  # echo excl[0]
-# proc groupImpl(layer: LayerID, incl: set[uint16], excl: set[uint16]): Group {.inline, discardable.} =
-#   let ecs = layers[layer.uint32]
-#   let groups = addr ecs.groups
-  
-#   var group_next : Group = nil
-
-#   for i in 0..groups[].high:
-#       let gr = groups[][i]
-#       if gr.signature == incl:
-#           group_next = gr
-#           break
-  
-#   if group_next.isNil:
-#       group_next = groups[].add_new_ref()
-#       group_next.id = id_next_group
-#       group_next.signature = incl
-#       group_next.signature_excl = excl
-#       group_next.entities = newSeqOfCap[ent](1000)
-#       #group_next.added = newSeqOfCap[ent](500)
-#       #group_next.removed = newSeqOfCap[ent](500)
-#       group_next.layer = layer
-      # if not incl.contains(0):
-      #   for id in incl:
-      #     storages[id].groups.add(group_next)
-      # if not excl.contains(0):
-      #  for id in excl:
-      #    storages[id].groups.add(group_next)
-      # id_next_group += 1
-  
-#   group_next
-
-# proc group*(layer: LayerID, incl: set[uint16]): Group {.inline, discardable.} =
-#    group_impl(layer, incl, {0'u16})
-
-# proc group*(layer: LayerID, incl: set[uint16], excl: set[uint16]): Group {.inline, discardable.} =
-#    group_impl(layer, incl, excl)
-
-
-
-#proc group*(layer: LayerId) = 
-
-#dumptree:
- # let ca {.inject.} =  cast[ptr seq[CompA]](storageCache[0].compss)   
 
 macro injectComponent*(arg: untyped, arg2: untyped, arg3: static int) =
 
@@ -153,17 +76,7 @@ macro injectComponent*(arg: untyped, arg2: untyped, arg3: static int) =
 macro injectComponent*(arg: untyped) =
   let targ = strVal(arg)
   result = parseStmt(targ)
-# macro formatComponentPretty*(t: typedesc): untyped {.used.}=
-#   let tName = strVal(t)
-#   var proc_name = tName  
-#   formatComponent(proc_name)
-#   var source = ""
-#   source = &("""
-#     template `{proc_name}`*(self: ent): ptr {tName} =
-#         impl_get(self,{tName})
-#         """)
 
-#   result = parseStmt(source)
 
 macro makeTypeAlias(t: untyped, arg: untyped): untyped =
   var name_alias = $t
@@ -181,18 +94,6 @@ macro makeTypeAlias(t: untyped, arg: untyped): untyped =
               )
             )
 
-#var storageIds = newSeq[cid]()
-
-
-
-func sortStorages(x,y: CompStorageBase): int =
-  let cx = x.entities
-  let cy = y.entities
-  if cx.len <= cy.len: -1
-  else: 1
-  #elif cx.len == cy.len: -1
-
-
 
 
 
@@ -209,6 +110,7 @@ proc view*(t,y,u: typedesc) =
   storageCache.add(u.getStorageBase())
   storageCache.sort(sortStorages)
 import typetraits
+
 template viewer*(t,y,u: typedesc, code: untyped): untyped =
   storageCache.setLen(0)
   storageCache.add(t.getStorageBase())

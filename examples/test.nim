@@ -1,86 +1,12 @@
-import actors
+import sets
 
-app.settings.fps = 60
-app.settings.ups = 60
-app.settings.name = "Game"
+var s1 = {2}
+var s2 = {1,2}
+#s1 = {0'u16}
+s1 = {1}
+echo card(s2 * s1)
+#group.signature_excl <= entityMeta.signature
 
-app.settings.display_size = (1280, 720)
-app.settings.path_assets  = "examples/assets/"
-app.settings.path_shaders = "examples/assets/shaders/"
-
-var l = addLayer()
-#l.addEcs()
-
-type CompA = object
-  arg: int
-type CompB = object
-  arg: int
-type CompC = object
-  arg: int
-
-app.add CompA
-app.add CompB
-app.add CompC
-
-
-var entities = makeEnts()
-var size = 20
-var ticks = 1#60*3600
-let h1 = (size.float*0.5).int
-let h2 = (size.float*0.75).int
-for i in 0..size:
-  var e = l.entity()
-
-  if i<h1:
-    e.get CompA
-    e.get CompC
-  if i<h2:
-    e.get CompB
-  entities.add(e)
-
-var gr = l.group(mask(CompA,CompB,CompC))
-
-var e1 = (10,0)
-var e2 = (51,0)
-var check = false
-
-profile.start"by group":
-  for x in 0..ticks:
-    for e in gr:
-      let ca = e.cA
-      let cb = e.cB
-      let cc = e.cc
-      ca.arg+=1
-      cb.arg+=1
-      cc.arg+=1
-
-profile.start "by indice":
-  for x in 0..ticks:
-    for c in group(CA,CB,CC):
-      c.a.arg += 1
-      c.b.arg += 1
-      c.c.arg += 1
-
-profile.log
-
-import macros
-
-dumptree:
-  iterator group*(t: typedesc, y: typedesc, u: typedesc): tuple[e: ent, a: ptr t, b: ptr y, c: ptr u] =
-    let comps1 = t.GetComps()
-    let comps2 = y.GetComps()
-    let comps3 = u.GetComps()
-
-    let st1 = t.GetStorage()
-    let len1 = comps1[].len
-    let len2 = comps2[].len
-    let len3 = comps3[].len
-    let max = if len1 > len2: len2 else: len1
-    var i = 0
-    while i < max:
-      let e = st1.indices[i]
-      yield ((e,entitiesMeta[e].age), comps1[][i].addr,comps2[][e].addr, comps3[][e].addr)
-      inc i
 #[ C
 [15:49:17] Benchmark:
 Time elapsed for by indice: 0.000000000
@@ -115,20 +41,20 @@ Time elapsed for by mask: 2.824000000
 
 # profile.log
 
-proc init*() =
-  makeUIDebug().add()
-  discard
+# proc init*() =
+#   makeUIDebug().add()
+#   discard
 
-proc update*() =
-  if input.down Key.Esc:
-    app.quit()
+# proc update*() =
+#   if input.down Key.Esc:
+#     app.quit()
 
-proc draw*() =
-  for ui in uis:
-    ui.draw()
-  discard
+# proc draw*() =
+#   for ui in uis:
+#     ui.draw()
+#   discard
 
-app.run(init,update,draw)
+# app.run(init,update,draw)
 
 # newUIDebugGame()
 

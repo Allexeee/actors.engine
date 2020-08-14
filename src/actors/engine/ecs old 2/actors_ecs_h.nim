@@ -1,21 +1,20 @@
 import ../../actors_h
 
-const ENTS_INIT_SIZE* = 200
-const SIZE_STEP* = 256
+const ENTS_INIT_SIZE* = 102048
 
 type
   ent* = tuple[id: int, age: int]
   entid* = distinct int
   cid*   = uint16
-  #ecsid* = distinct int
+  ecsid* = distinct int
 
   EntityMeta* = object
     layer*            : LayerID
     childs*           : seq[ent]
     alive*            : bool
     age*              : int
-    signature*        : set[cid] 
-    signature_groups* : set[cid] # what groups are already used
+    signature*        : seq[cid] 
+    signature_groups* : seq[int] # what groups are already used
     dirty*            : bool
 
   SystemEcs* = ref object
@@ -24,12 +23,11 @@ type
     entids*        : seq[int]
   
   Group* = ref object of RootObj
-    id*               : cid
+    id*               : int
     layer*            : LayerID
-    signature*        : set[cid]
-    signature_excl*   : set[cid]
-    indices*          : seq[int]
-    entities*         : seq[ent]
+    signature*        : set[cid] 
+    signature_excl*   : set[cid] 
+    entities*         : ptr seq[ent]
 
   IStorage* = object
     destroy*: proc (self: ent)
@@ -42,7 +40,7 @@ type
      indices*      : seq[int] # sparse 
      entities*     : seq[ent] # packed
      filterid*     : int
-     actions*      : IStorage
+     istorage*     : IStorage
      
   
   CompStorage*[T] = ref object of CompStorageBase
@@ -56,31 +54,33 @@ type
     entity*: ent 
     arg*   : uint16
 
-template `nil`*(T: typedesc[ent]): ent =
+template none*(T: typedesc[ent]): ent =
   (int.high,0)
 
 proc `$`*(self: ent): string =
     $self.id
 
-var e = ent.nil
 
 var ents_meta*  = newSeqOfCap[EntityMeta](ENTS_INIT_SIZE)
 var ents_free*  = newSeqOfCap[ent](ENTS_INIT_SIZE)
 var layers*     = newSeq[SystemEcs](32)
 var storages*   = newSeq[CompStorageBase]()
-var allgroups*  = newSeq[Group]()
 
 proc ecs*(lid: LayerId): SystemEcs {.inline.} =
   layers[lid.int]
-
-template meta*(self: ent): ptr EntityMeta =
-  ents_meta[self.id].addr
 
 proc addEcs*(layerID: LayerID) =
   let ecs = layers[layerID.uint].addr
   ecs[] = SystemEcs()
   ecs.groups = newSeq[Group]()
   ecs.entids = newSeq[int]()
-  ecs.operations = newSeqOfCap[Operation](1024)
+  ecs.operations = newSeqOfCap[Operation](256)
+
+proc len*(self:Group): int =
+  if self.entities.isNil: 0
+  else: self.entities[].len
 
 a_layer_added.add(addEcs)
+
+
+
