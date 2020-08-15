@@ -1,16 +1,17 @@
+{.used.}
+#import algorithm
+#import strutils
 import strformat
-import strutils
 import macros
 import sets
-import algorithm
 import ../../../actors_h
 import ../../../actors_tools
 import ../actors_ecs_h
 import ecs_utils
 
-
-var storageCache = newSeq[CompStorageBase](1222)
 var id_next_group : cid = 0
+var storageCache {.used.} = newSeq[CompStorageBase](256)
+
 var mask_exclude* : set[cid]
 var mask_include* : set[cid]
 
@@ -32,6 +33,7 @@ macro group*(layer: LayerId, t: varargs[untyped]) =
 
   n.insert(i,newDotExpr(ident($layer), ident("makeGroup")))
   result = n
+#import sequtils
 proc makeGroup*(layer: LayerID) : Group {.inline, discardable.} =
   let ecs = layers[layer.int]
   let groups = addr ecs.groups
@@ -46,6 +48,11 @@ proc makeGroup*(layer: LayerID) : Group {.inline, discardable.} =
     group_next.id = id_next_group
     group_next.signature = mask_include
     group_next.signature_excl = mask_exclude
+    for i in mask_include:
+     group_next.signature2.add(i) 
+    for i in mask_exclude:
+     group_next.signature_excl2.add(i) 
+    
     group_next.entities = newSeqOfCap[ent](256)
     group_next.indices.gen_indices()
     group_next.layer = layer

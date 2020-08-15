@@ -2,13 +2,30 @@ import strutils
 import macros
 import strformat
 import ../actors_ecs_h
+import hashes
 
+proc binarysearch*(this: ptr seq[ent], value: int): int {.discardable, used, inline.} =
+  var m : int = -1
+  var left = 0
+  var right = this[].high
+  while left <= right:
+      m = (left+right) div 2
+      if this[][m].id == value: 
+          return m
+      if this[][m].id < value:
+          left = m + 1
+      else:
+          right = m - 1
+  return m
+
+proc hash*(x: set[uint16]): Hash =
+  result = x.hash
+  result = !$result
 
 template gen_indices*(self: var seq[int]) {.used.} =
   self = newSeq[int](ENTS_INIT_SIZE)
   for i in 0..self.high:
     self[i] = ent.nil.id
-
 
 proc formatComponentAlias*(s: var string) {.used.}=
   var indexes : array[8,int]

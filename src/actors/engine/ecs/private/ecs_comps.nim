@@ -11,6 +11,8 @@ import ../../../actors_tools
 import ../../../actors_h
 import ../actors_ecs_h
 import ecs_utils
+import ecs_ops
+import ecs_debug
 #import ecs_operations
 
 var id_next_component : cid = 0
@@ -28,62 +30,9 @@ template impl_storage(T: typedesc) {.used.} =
   storages.add(storage)
   storage.compType = $T
   
- 
-  #   for group in groups:
-  #     let in_group = self.is_inside(group)
-  #     let fits = self.fits(group)
-  #    # let len = storage.entities.high
-  #     if in_group and not fits:
-  #      # let last = storage.entities[len]
-  #       let eid = group.indices[self.id]
-  #       #echo eid,"  ",group.entities.len," ",self.id
-  #       group.entities.delete(eid)
-  #       group.indices[self.id] = ent.none.id
-  #      # swap(group.indices[last.id], group.indices[self.id])
-  #       self.meta.signature_groups.excl(group.id)
-  #     elif not in_group and fits:
-  #       group.insert(self)
-  #       #group.indices[self.id] = ent.none.id
-  #   let len = storage.entities.high
-  #   let last = storage.entities[len]
-    
-  #   echo self.id, " puk ", storage.indices[self.id], " ", storage.entities.len, " ", storage.compType
-    
-  #   storage.entities.delete(storage.indices[self.id])
-  #   storage.comps.delete(storage.indices[self.id])
-  #   #storage.entities.setLen(len)
-  #   #storage.comps.setLen(len)
-  #   storage.indices[self.id] = ent.none.id
-  #   #swap(storage.indices[last.id], storage.indices[self.id])
-    
-  #   let groups = storage.groups
-  #   for group in groups:
-  #     let in_group = self.is_inside(group)
-  #     let fits = self.fits(group)
-  #    # let len = storage.entities.high
-  #     if in_group and not fits:
-  #      # let last = storage.entities[len]
-  #       let eid = group.indices[self.id]
-  #       #echo eid,"  ",group.entities.len," ",self.id
-  #       group.entities.delete(eid)
-  #       group.indices[self.id] = ent.none.id
-  #      # swap(group.indices[last.id], group.indices[self.id])
-  #       self.meta.signature_groups.excl(group.id)
-  #     elif not in_group and fits:
-  #       group.insert(self)
-  #       #group.indices[self.id] = ent.none.id
-
-    
-    
-  #  # echo indices[last.id]
-  #  # echo storage.indices[last.id]
-       
-  #storage.actions = IStorage(destroy: proc(self: ent) = T.remove(self))
-
   proc has*(_:typedesc[T], self: ent): bool {.inline,discardable.} =
-    storage.indices[self.id] != ent.none.id
+    storage.indices[self.id] != ent.nil.id
   
-
   proc id*(_: typedesc[T]): cid =
     storage.id 
   
@@ -97,6 +46,7 @@ template impl_storage(T: typedesc) {.used.} =
     storage.comps.addr
  
   proc get*(self: ent, _: typedesc[T]): ptr T {.inline, discardable.} = 
+    
     if self.id >= storage.indices.high:
       storage.indices.setLen(self.id+256)
 
@@ -105,10 +55,8 @@ template impl_storage(T: typedesc) {.used.} =
 
     let st = storage
     let cid = st.id
-    let meta = addr ents_meta[self.id]
+    let meta = self.meta
  
-
-     
     storage.indices[self.id] = storage.entities.len
     storage.entities.add(self)
 
@@ -122,20 +70,21 @@ template impl_storage(T: typedesc) {.used.} =
     
     comp
   
+
   proc remove*(self: ent, _: typedesc[T]) {.inline, discardable.} = 
-    #checkErrorRemoveComponent(self, t)
-   # let entity = addr ents_meta[self.id]
+    checkErrorRemoveComponent(self, T)
+    var last = storage.indices[storage.entities[storage.entities.high].id]
     var index = storage.indices[self.id]
-    storage.indices[self.id] = int.high
-    storage.entities.delete(index)
-    storage.comps.delete(index)
-    #storage.comps.del(id)
-    #storage.entities.del(id)
-   # let op = entity.layer.ecs.operations.addNew()
-    #op.entity = self
-    #op.arg = storage.meta.id
-   # op.kind = OpKind.Remove
-    #entity.signature.excl(op.arg)
+
+    storage.entities.del(index)
+    storage.comps.del(index)
+    swap(storage.indices[index],storage.indices[last])
+  
+    let op = self.layer.ecs.operations.addNew()
+    op.entity = self
+    op.arg = storage.id
+    op.kind = OpKind.Remove
+    self.meta.signature.excl(op.arg)
   
   proc impl_get(self: ent, _: typedesc[T]): ptr T {.inline, discardable, used.} =
     addr storage.comps[storage.indices[self.id]]
@@ -143,7 +92,7 @@ template impl_storage(T: typedesc) {.used.} =
   proc theget*(self: int, _: typedesc[T]): ptr T {.inline, discardable, used.} =
     addr storage.comps[storage.indices[storage.entities[self].id]]
   
-  
+
   formatComponentPretty(T)
   formatComponentPrettyAndLong(T)
 
@@ -155,8 +104,6 @@ macro add*(self: App, component: untyped): untyped =
               newIdentNode($component)
             )
           )
-  
-
   var name_alias = $component
   if (name_alias.contains("Component") or name_alias.contains("Comp")):
       formatComponentAlias(name_alias)

@@ -1,6 +1,6 @@
 import ../../actors_h
 
-const ENTS_INIT_SIZE* = 200
+const ENTS_INIT_SIZE* = 50000
 const SIZE_STEP* = 256
 
 type
@@ -12,6 +12,7 @@ type
   EntityMeta* = object
     layer*            : LayerID
     childs*           : seq[ent]
+    parent*           : ent
     alive*            : bool
     age*              : int
     signature*        : set[cid] 
@@ -28,6 +29,8 @@ type
     layer*            : LayerID
     signature*        : set[cid]
     signature_excl*   : set[cid]
+    signature2*        : seq[cid]
+    signature_excl2*   : seq[cid]
     indices*          : seq[int]
     entities*         : seq[ent]
 
@@ -49,7 +52,11 @@ type
      comps*      : seq[T]
   
   OpKind* = enum
-    Init
+    Init,
+    Add,
+    Remove,
+    Kill
+
     
   Operation* {.packed.} = object
     kind*  : OpKind
@@ -64,17 +71,24 @@ proc `$`*(self: ent): string =
 
 var e = ent.nil
 
-var ents_meta*  = newSeqOfCap[EntityMeta](ENTS_INIT_SIZE)
+var metas*   = newSeqOfCap[EntityMeta](ENTS_INIT_SIZE)
 var ents_free*  = newSeqOfCap[ent](ENTS_INIT_SIZE)
 var layers*     = newSeq[SystemEcs](32)
 var storages*   = newSeq[CompStorageBase]()
 var allgroups*  = newSeq[Group]()
 
-proc ecs*(lid: LayerId): SystemEcs {.inline.} =
+
+
+template ecs*(lid: LayerId): SystemEcs =
   layers[lid.int]
 
 template meta*(self: ent): ptr EntityMeta =
-  ents_meta[self.id].addr
+  metas[self.id].addr
+
+template layer*(self: ent): LayerId  =
+  let meta = self.meta
+  meta.layer
+  
 
 proc addEcs*(layerID: LayerID) =
   let ecs = layers[layerID.uint].addr
