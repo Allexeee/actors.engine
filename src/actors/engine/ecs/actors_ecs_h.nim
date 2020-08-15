@@ -1,13 +1,13 @@
 import ../../actors_h
 
-const ENTS_INIT_SIZE* = 50000
-const SIZE_STEP* = 256
+const ENTS_INIT_SIZE* = 5000
+const GROW_SIZE* = 256
 
 type
   ent* = tuple[id: int, age: int]
+  Ent* = ent
   entid* = distinct int
   cid*   = uint16
-  #ecsid* = distinct int
 
   EntityMeta* = object
     layer*            : LayerID

@@ -22,7 +22,12 @@ proc hash*(x: set[uint16]): Hash =
   result = x.hash
   result = !$result
 
-template gen_indices*(self: var seq[int]) {.used.} =
+func incAge*(age: var int) =
+  if age == high(int):
+    age = 0
+  else: age += 1
+
+template genIndices*(self: var seq[int]) {.used.} =
   self = newSeq[int](ENTS_INIT_SIZE)
   for i in 0..self.high:
     self[i] = ent.nil.id

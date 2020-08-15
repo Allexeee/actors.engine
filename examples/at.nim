@@ -37,7 +37,7 @@ proc mk_a*(layer: LayerID): ent {.discardable.} =
   result = layer.entity()
   result.get CompA
 
-var size = 15000
+var size = 12
 var randoms = newSeq[int](size)
 
 for i in 0..<size:
@@ -56,14 +56,33 @@ for i in 0..<size:
 
 game.ecs.execute()
 
+var gg_a = newSeq[CompA](1)
+
 var steps = 60*3600
 profile.start "dynamic":
   for st in 0..steps:
-    for e, ca in comps(CompA):
+    for e, ca in query(Ent, CompA):
+      ca.arg+=1
+
+profile.start "dynamic2":
+  for st in 0..steps:
+    for ca,cb in query(CompA,CompB):
       ca.arg+=1
 profile.start "groups":
   for st in 0..steps:
     for e in gr_a:
       e.ca.arg+=1
+profile.start "linear":
+  for st in 0..steps:
+    for i in 0..gg_a.high:
+      gg_a[i].arg += 1
 
 profile.log
+
+var e = (1,0)
+e.get CompA
+e.get(CompA)
+e.get(CompA):
+  echo "sdf"
+
+e.kill()

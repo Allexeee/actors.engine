@@ -9,6 +9,7 @@ import ../../../actors_tools
 import ../actors_ecs_h
 import ecs_utils
 
+
 var id_next_group : cid = 0
 var storageCache {.used.} = newSeq[CompStorageBase](256)
 
@@ -33,7 +34,7 @@ macro group*(layer: LayerId, t: varargs[untyped]) =
 
   n.insert(i,newDotExpr(ident($layer), ident("makeGroup")))
   result = n
-#import sequtils
+
 proc makeGroup*(layer: LayerID) : Group {.inline, discardable.} =
   let ecs = layers[layer.int]
   let groups = addr ecs.groups
@@ -65,3 +66,4 @@ proc makeGroup*(layer: LayerID) : Group {.inline, discardable.} =
   mask_include = {}
   mask_exclude = {}
   group_next
+

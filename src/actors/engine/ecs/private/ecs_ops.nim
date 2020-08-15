@@ -10,8 +10,6 @@ template partof*(self: ent, group: Group): bool =
   if group.id in self.meta.signature_groups:
     true
   else: false
-
-# 10000 checks: Time elapsed for modern: 1.363000000
 template match*(self: ent, group: Group):  bool  =
    var result = true
    for i in group.signature2:
@@ -21,6 +19,43 @@ template match*(self: ent, group: Group):  bool  =
      if storages[i.int].indices[self.id] != ent.nil.id:
        result = false; break
    result
+
+macro get*(this: ent, args: varargs[untyped]): untyped =
+  var command = nnkCommand.newTree(
+                  nnkDotExpr.newTree(
+                      ident($this),
+                      ident("has")))
+  var code = args[args.len-1]
+  for i in 0..args.len-2:
+    var elem = args[i]
+    command.add(ident($elem))
+    var elem_name = $elem
+    formatComponentAlias(elem_name) 
+    var elem_var = toLowerAscii(elem_name[0]) & substr(elem_name, 1)
+    formatComponent(elem_var)
+    var n = nnkLetSection.newTree(
+        nnkIdentDefs.newTree(
+            newIdentNode(elem_var),
+            newEmptyNode(),
+            nnkDotExpr.newTree(
+                newIdentNode($this),
+                newIdentNode(elem_var)
+            ),
+        )
+    )
+    code.insert(0,n)
+  
+  var node_head = nnkStmtList.newTree(
+      nnkIfStmt.newTree(
+          nnkElifBranch.newTree(
+              command,
+               nnkStmtList.newTree(
+                   code
+               )
+          )
+      )
+  )
+  result = node_head
 
 template insert*(gr: Group, self: ent) = 
   var len = gr.entities.len
@@ -129,47 +164,156 @@ iterator items*(range: Group): ent =
       yield range.entities[i]
       inc i
 
-iterator comps*(t,y,u: typedesc): (ptr t, ptr y,ptr u) {.inline.} =
-  
-  var st1 = t.getStorage()
-  var st2 = y.getStorage()
-  var st3 = u.getStorage()
+iterator query*(E: typedesc[ent],T: typedesc): (ent, ptr T) {.inline.} =
+  var st1 = T.getStorage()
+  let max = st1.comps.high
+  for i in 0..max:
+    yield (st1.entities[i],st1.comps[i].addr)
+
+iterator query*(E: typedesc[ent],T,Y: typedesc):  (ent, ptr T, ptr Y) {.inline.} =
+  var st1 = T.getStorage()
+  var st2 = Y.getStorage()
+  var smallest : CompStorageBase = st1; smallest.filterid = 0
+  if st2.entities.len < smallest.entities.len: smallest = st2; smallest.filterid = 1
+  case smallest.filterid:
+  of 0:
+    let max = st1.comps.high
+    for i in 0..max:
+      yield (st1.entities[i], st1.comps[i].addr,st2.comps[st2.indices[st1.entities[i].id]].addr)
+  of 1:
+    let max = st2.comps.high
+    for i in 0..max:
+      yield (st2.entities[i], st1.comps[st1.indices[st2.entities[i].id]].addr,st2.comps[i].addr)
+  else:
+      discard
+
+iterator query*(E: typedesc[ent],T,Y,U: typedesc):  (ent, ptr T, ptr Y, ptr U) {.inline.} =
+  var st1 = T.getStorage()
+  var st2 = Y.getStorage()
+  var st3 = U.getStorage()
   var smallest : CompStorageBase = st1; smallest.filterid = 0
   if st2.entities.len < smallest.entities.len: smallest = st2; smallest.filterid = 1
   if st3.entities.len < smallest.entities.len: smallest = st3; smallest.filterid = 2
 
   case smallest.filterid:
-    of 0:
-      let max = st1.comps.high
-      for i in 0..max:
-        yield (st1.comps[i].addr,st2.comps[st2.indices[st1.entities[i].id]].addr,st3.comps[st3.indices[st1.entities[i].id]].addr)
-    of 1:
-      let max = st2.comps.high
-      for i in 0..max:
-        yield (st1.comps[st1.indices[st2.entities[i].id]].addr,st2.comps[i].addr,st3.comps[st3.indices[st2.entities[i].id]].addr)
-    of 2:
-      let max = st3.comps.high
-      for i in 0..max:
-        yield (st1.comps[st1.indices[st3.entities[i].id]].addr,st2.comps[st2.indices[st3.entities[i].id]].addr,st3.comps[i].addr)
-    else:
+  of 0:
+    let max = st1.comps.high
+    for i in 0..max:
+      yield (st1.entities[i], st1.comps[i].addr,st2.comps[st2.indices[st1.entities[i].id]].addr,st3.comps[st3.indices[st1.entities[i].id]].addr)
+  of 1:
+    let max = st2.comps.high
+    for i in 0..max:
+      yield (st2.entities[i], st1.comps[st1.indices[st2.entities[i].id]].addr,st2.comps[i].addr,st3.comps[st3.indices[st1.entities[i].id]].addr)
+  of 2:
+    let max = st3.comps.high
+    for i in 0..max:
+      yield (st3.entities[i], st1.comps[st1.indices[st3.entities[i].id]].addr,st2.comps[st2.indices[st3.entities[i].id]].addr,st3.comps[i].addr)
+  else:
       discard
 
-iterator comps*(t: typedesc): (ent, ptr t) {.inline.} =
-  var st1 = t.getStorage()
+iterator query*(E: typedesc[ent],T,Y,U,I: typedesc):  (ent, ptr T, ptr Y, ptr U, ptr I) {.inline.} =
+  var st1 = T.getStorage()
+  var st2 = Y.getStorage()
+  var st3 = U.getStorage()
+  var st4 = I.getStorage()
+  var smallest : CompStorageBase = st1; smallest.filterid = 0
+  if st2.entities.len < smallest.entities.len: smallest = st2; smallest.filterid = 1
+  if st3.entities.len < smallest.entities.len: smallest = st3; smallest.filterid = 2
+  if st4.entities.len < smallest.entities.len: smallest = st4; smallest.filterid = 3
+
+  case smallest.filterid:
+  of 0:
+    let max = st1.comps.high
+    for i in 0..max:
+      yield (st1.entities[i], st1.comps[i].addr,st2.comps[st2.indices[st1.entities[i].id]].addr,st3.comps[st3.indices[st1.entities[i].id]].addr,st4.comps[st4.indices[st1.entities[i].id]].addr)
+  of 1:
+    let max = st2.comps.high
+    for i in 0..max:
+      yield (st2.entities[i], st1.comps[st1.indices[st2.entities[i].id]].addr,st2.comps[i].addr,st3.comps[st3.indices[st1.entities[i].id]].addr,st4.comps[st4.indices[st2.entities[i].id]].addr)
+  of 2:
+    let max = st3.comps.high
+    for i in 0..max:
+      yield (st3.entities[i], st1.comps[st1.indices[st3.entities[i].id]].addr,st2.comps[st2.indices[st3.entities[i].id]].addr,st3.comps[i].addr,st4.comps[st4.indices[st3.entities[i].id]].addr)
+  of 3:
+    let max = st4.comps.high
+    for i in 0..max:
+      yield (st4.entities[i], st1.comps[st1.indices[st4.entities[i].id]].addr,st2.comps[st2.indices[st4.entities[i].id]].addr,st3.comps[st3.indices[st4.entities[i].id]].addr, st4.comps[i].addr)
+  else:
+      discard
+
+iterator query*(T: typedesc): ptr T {.inline.} =
+  var st1 = T.getStorage()
   let max = st1.comps.high
   for i in 0..max:
-    yield (st1.entities[i],st1.comps[i].addr)
+    yield st1.comps[i].addr
 
+iterator query*(T,Y: typedesc):  (ptr T, ptr Y) {.inline.} =
+  var st1 = T.getStorage()
+  var st2 = Y.getStorage()
+  var smallest : CompStorageBase = st1; smallest.filterid = 0
+  if st2.entities.len < smallest.entities.len: smallest = st2; smallest.filterid = 1
+  case smallest.filterid:
+  of 0:
+    let max = st1.comps.high
+    for i in 0..max:
+      yield (st1.comps[i].addr,st2.comps[st2.indices[st1.entities[i].id]].addr)
+  of 1:
+    let max = st2.comps.high
+    for i in 0..max:
+      yield (st1.comps[st1.indices[st2.entities[i].id]].addr,st2.comps[i].addr)
+  else:
+      discard
 
+iterator query*(T,Y,U: typedesc):  (ptr T, ptr Y, ptr U) {.inline.} =
+  var st1 = T.getStorage()
+  var st2 = Y.getStorage()
+  var st3 = U.getStorage()
+  var smallest : CompStorageBase = st1; smallest.filterid = 0
+  if st2.entities.len < smallest.entities.len: smallest = st2; smallest.filterid = 1
+  if st3.entities.len < smallest.entities.len: smallest = st3; smallest.filterid = 2
 
+  case smallest.filterid:
+  of 0:
+    let max = st1.comps.high
+    for i in 0..max:
+      yield (st1.comps[i].addr,st2.comps[st2.indices[st1.entities[i].id]].addr,st3.comps[st3.indices[st1.entities[i].id]].addr)
+  of 1:
+    let max = st2.comps.high
+    for i in 0..max:
+      yield (st1.comps[st1.indices[st2.entities[i].id]].addr,st2.comps[i].addr,st3.comps[st3.indices[st1.entities[i].id]].addr)
+  of 2:
+    let max = st3.comps.high
+    for i in 0..max:
+      yield (st1.comps[st1.indices[st3.entities[i].id]].addr,st2.comps[st2.indices[st3.entities[i].id]].addr,st3.comps[i].addr)
+  else:
+      discard
 
+iterator query*(T,Y,U,I: typedesc):  (ptr T, ptr Y, ptr U, ptr I) {.inline.} =
+  var st1 = T.getStorage()
+  var st2 = Y.getStorage()
+  var st3 = U.getStorage()
+  var st4 = I.getStorage()
+  var smallest : CompStorageBase = st1; smallest.filterid = 0
+  if st2.entities.len < smallest.entities.len: smallest = st2; smallest.filterid = 1
+  if st3.entities.len < smallest.entities.len: smallest = st3; smallest.filterid = 2
+  if st4.entities.len < smallest.entities.len: smallest = st4; smallest.filterid = 3
 
-# 10000 checks Time elapsed for classic: 1.907000000
-# template fits*(self: ent, group: Group):  bool  =
-#    let meta = self.meta
-#    if group.signature <= meta.signature and card(group.signature_excl * meta.signature)==0: true
-#    else: false
-
-# template partof2*(self: ent, group: Group): bool  =
-#   if group.indices[self.id] == ent.nil.id: false
-#   else: true
+  case smallest.filterid:
+  of 0:
+    let max = st1.comps.high
+    for i in 0..max:
+      yield (st1.comps[i].addr,st2.comps[st2.indices[st1.entities[i].id]].addr,st3.comps[st3.indices[st1.entities[i].id]].addr,st4.comps[st4.indices[st1.entities[i].id]].addr)
+  of 1:
+    let max = st2.comps.high
+    for i in 0..max:
+      yield (st1.comps[st1.indices[st2.entities[i].id]].addr,st2.comps[i].addr,st3.comps[st3.indices[st1.entities[i].id]].addr,st4.comps[st4.indices[st2.entities[i].id]].addr)
+  of 2:
+    let max = st3.comps.high
+    for i in 0..max:
+      yield (st1.comps[st1.indices[st3.entities[i].id]].addr,st2.comps[st2.indices[st3.entities[i].id]].addr,st3.comps[i].addr,st4.comps[st4.indices[st3.entities[i].id]].addr)
+  of 3:
+    let max = st4.comps.high
+    for i in 0..max:
+      yield (st1.comps[st1.indices[st4.entities[i].id]].addr,st2.comps[st2.indices[st4.entities[i].id]].addr,st3.comps[st3.indices[st4.entities[i].id]].addr, st4.comps[i].addr)
+  else:
+      discard

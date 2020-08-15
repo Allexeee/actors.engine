@@ -2,7 +2,7 @@ import ../actors_ecs_h
 import ../../../actors_h
 import ../../../actors_tools
 import ecs_debug
-#import ecs_operations
+import ecs_utils
 
 proc entity*(lid: LayerId): ent =
   let ecs = layers[lid.int]
@@ -31,28 +31,47 @@ proc entity*(lid: LayerId): ent =
   result
 
 proc kill*(self: ent) = 
-    check_error_release_empty(self)
-    var meta = self.meta
-    let ecs = self.layer.ecs
-    let op = ecs.operations.addNew()
-    op.entity = self
-    op.kind = OpKind.Kill
-   
-    for e in meta.childs:
-        kill(e)
-    
-    meta.signature = {}
-    
-    if meta.age == high(int):
-      meta.age = 0
-    else: meta.age += 1
-  #   op.entity.age == high(uint32):
-  #   op.entity.age = 0
-  # else:
-  #   op.entity.age += 1
-  #   entityMeta.age = op.entity.age
-  #   ents_stash.add(op.entity)
-  #   entityMeta.signature_groups = {0'u16}
-  #   entityMeta.parent = (0'u32,0'u32)
-  #   entityMeta.childs.setLen(0)
-  #   ecs.ents_alive.excl(op.entity.id)
+  check_error_release_empty(self)
+  let meta = self.meta
+  let ecs = self.layer.ecs
+ 
+  for e in meta.childs:
+      kill(e)
+
+  meta.signature = {}  
+  meta.age.incAge()
+  
+  let op = ecs.operations.addNew()
+  op.entity = self
+  op.kind = OpKind.Kill
+
+
+template has*(self:ent, t: typedesc): bool =
+  t.has(self)
+template has*(self:ent, t,y: typedesc): bool =
+  t.has(self) and 
+  y.has(self)
+template has*(self:ent, t,y,u: typedesc): bool =
+  t.has(self) and
+  y.has(self) and
+  u.has(self)
+template has*(self:ent, t,y,u,i: typedesc): bool =
+  t.has(self) and
+  y.has(self) and
+  u.has(self) and
+  i.has(self)
+template has*(self:ent, t,y,u,i,o: typedesc): bool =
+ t.has(self) and
+ y.has(self) and
+ u.has(self) and
+ i.has(self) and
+ o.has(self)
+template has*(self:ent, t,y,u,i,o,p: typedesc): bool =
+ t.has(self) and
+ y.has(self) and
+ u.has(self) and
+ i.has(self) and
+ o.has(self) and
+ p.has(self)
+
+

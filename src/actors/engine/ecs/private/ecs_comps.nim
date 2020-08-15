@@ -13,22 +13,22 @@ import ../actors_ecs_h
 import ecs_utils
 import ecs_ops
 import ecs_debug
-#import ecs_operations
 
 var id_next_component : cid = 0
 
-
-
 template impl_storage(T: typedesc) {.used.} =
-  var storage* =  CompStorage[T]() #init_storage[T]()
-  storage.comps = newSeq[T]()
-  storage.indices = newSeq[int](ENTS_INIT_SIZE)
-  storage.entities = newSeq[ent]()
-  for i in 0..storage.indices.high:
-    storage.indices[i] = int.high
+  #INIT##
+  var storage* =  CompStorage[T]()
   storage.id = id_next_component; id_next_component += 1
-  storages.add(storage)
   storage.compType = $T
+
+  storage.comps = newSeqOfCap[T](ENTS_INIT_SIZE)
+  storage.entities = newSeqOfCap[ent](ENTS_INIT_SIZE)
+  genIndices(storage.indices)
+
+  storages.add(storage)
+
+  #API##
   
   proc has*(_:typedesc[T], self: ent): bool {.inline,discardable.} =
     storage.indices[self.id] != ent.nil.id
@@ -36,15 +36,9 @@ template impl_storage(T: typedesc) {.used.} =
   proc id*(_: typedesc[T]): cid =
     storage.id 
   
-  proc getStorageBase*(_: typedesc[T]): CompStorageBase =
-    storage
-
   proc getStorage*(_: typedesc[T]): CompStorage[T] =
     storage
 
-  proc getComps*(_: typedesc[T]): ptr seq[T] =
-    storage.comps.addr
- 
   proc get*(self: ent, _: typedesc[T]): ptr T {.inline, discardable.} = 
     
     if self.id >= storage.indices.high:
@@ -70,7 +64,6 @@ template impl_storage(T: typedesc) {.used.} =
     
     comp
   
-
   proc remove*(self: ent, _: typedesc[T]) {.inline, discardable.} = 
     checkErrorRemoveComponent(self, T)
     var last = storage.indices[storage.entities[storage.entities.high].id]
@@ -89,15 +82,10 @@ template impl_storage(T: typedesc) {.used.} =
   proc impl_get(self: ent, _: typedesc[T]): ptr T {.inline, discardable, used.} =
     addr storage.comps[storage.indices[self.id]]
   
-  proc theget*(self: int, _: typedesc[T]): ptr T {.inline, discardable, used.} =
-    addr storage.comps[storage.indices[storage.entities[self].id]]
-  
-
   formatComponentPretty(T)
   formatComponentPrettyAndLong(T)
 
 macro add*(self: App, component: untyped): untyped =
-
   result = nnkStmtList.newTree(
           nnkCommand.newTree(
               bindSym("impl_storage", brForceOpen),
