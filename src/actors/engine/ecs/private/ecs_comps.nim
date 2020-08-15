@@ -17,7 +17,7 @@ import ecs_debug
 var id_next_component : cid = 0
 
 template impl_storage(T: typedesc) {.used.} =
-  #INIT##
+  #init
   var storage* =  CompStorage[T]()
   storage.id = id_next_component; id_next_component += 1
   storage.compType = $T
@@ -28,21 +28,29 @@ template impl_storage(T: typedesc) {.used.} =
 
   storages.add(storage)
 
-  #API##
+  #private
+  proc impl_get(self: ent, _: typedesc[T]): ptr T {.inline, discardable, used.} =
+    addr storage.comps[storage.indices[self.id]] 
   
+  #api
   proc has*(_:typedesc[T], self: ent): bool {.inline,discardable.} =
     storage.indices[self.id] != ent.nil.id
   
-  proc id*(_: typedesc[T]): cid =
+  proc id*(_: typedesc[T]): cid {.inline.} =
     storage.id 
   
-  proc getStorage*(_: typedesc[T]): CompStorage[T] =
+  proc getStorage*(_: typedesc[T]): CompStorage[T] {.inline.} =
     storage
 
   proc get*(self: ent, _: typedesc[T]): ptr T {.inline, discardable.} = 
     
-    if self.id >= storage.indices.high:
-      storage.indices.setLen(self.id+256)
+    if self.id >= storage.indices.len:
+      let oldsize = storage.indices.len
+      let newSize = self.id + GROW_SIZE
+      storage.indices.setLen(newSize)
+      for i in oldsize..<newsize:
+        storage.indices[i] = ent.nil.id
+     # echo self.id, "_", storage.indices.len
 
     if has(_, self):
       return addr storage.comps[storage.indices[self.id]]
@@ -59,12 +67,14 @@ template impl_storage(T: typedesc) {.used.} =
     meta.signature.incl(cid)
     
     if not meta.dirty:
-      discard
-      #changeEntity
+      let op = meta.layer.ecs.operations.push_addr()
+      op.entity = self
+      op.kind = OpKind.Add
+      op.arg  = cid
     
     comp
   
-  proc remove*(self: ent, _: typedesc[T]) {.inline, discardable.} = 
+  proc remove*(self: ent, _: typedesc[T]) {.inline.} = 
     checkErrorRemoveComponent(self, T)
     var last = storage.indices[storage.entities[storage.entities.high].id]
     var index = storage.indices[self.id]
@@ -78,9 +88,6 @@ template impl_storage(T: typedesc) {.used.} =
     op.arg = storage.id
     op.kind = OpKind.Remove
     self.meta.signature.excl(op.arg)
-  
-  proc impl_get(self: ent, _: typedesc[T]): ptr T {.inline, discardable, used.} =
-    addr storage.comps[storage.indices[self.id]]
   
   formatComponentPretty(T)
   formatComponentPrettyAndLong(T)

@@ -15,9 +15,9 @@ proc getref*[T](self: var seq[T]) : var T {.inline.} =
   self.add(T())
   self[self.high]
 
-# proc add_new_ref*[T](this: var seq[T]): var T {.inline.} =
-#     this.add(T())
-#     this[this.high]
+proc push_addr*[T](self: var seq[T], grow_size: int): ptr T =
+  self.setLen(self.len+grow_size)
+  addr self[self.high]
 
 proc push_addr*[T](self: var seq[T]): ptr T =
   self.setLen(self.len+1)

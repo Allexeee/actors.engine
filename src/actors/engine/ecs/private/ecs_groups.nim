@@ -1,4 +1,5 @@
 {.used.}
+{.experimental: "dynamicBindSym".}
 #import algorithm
 #import strutils
 import strformat
@@ -31,11 +32,11 @@ macro group*(layer: LayerId, t: varargs[untyped]) =
   for x in t.children:
     n.insert(i,genMask(x))
     i += 1
-
-  n.insert(i,newDotExpr(ident($layer), ident("makeGroup")))
+  #bindSym("impl_storage_compact", brForceOpen) 
+  n.insert(i,newDotExpr(ident($layer), bindSym("makeGroup",brForceOpen)))
   result = n
 
-proc makeGroup*(layer: LayerID) : Group {.inline, discardable.} =
+proc makeGroup(layer: LayerID) : Group {.inline, used, discardable.} =
   let ecs = layers[layer.int]
   let groups = addr ecs.groups
   var group_next : Group = nil
@@ -66,4 +67,13 @@ proc makeGroup*(layer: LayerID) : Group {.inline, discardable.} =
   mask_include = {}
   mask_exclude = {}
   group_next
+
+template len*(self: Group): int =
+  self.entities.len
+
+template high*(self: Group): int =
+  self.entities.high
+
+template `[]`*(self: Group, key: int): ent =
+  self.entities[key]
 

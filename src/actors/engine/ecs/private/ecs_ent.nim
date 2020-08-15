@@ -4,6 +4,9 @@ import ../../../actors_tools
 import ecs_debug
 import ecs_utils
 
+
+var next_id = 0
+
 proc entity*(lid: LayerId): ent =
   let ecs = layers[lid.int]
   if ents_free.len > 0:
@@ -13,17 +16,21 @@ proc entity*(lid: LayerId): ent =
   
   else:
     
-    result.id = metas.len
+    result.id = next_id; next_id.inc
     result.age = 0
-
-    let meta     = metas.push_addr()
+    
+    if result.id > metas.high:
+      metas.setLen(result.id+GROW_SIZE)
+    
+    let meta     = metas[result.id].addr
     meta.layer   = lid
     meta.age     = 0
     meta.alive   = true
     meta.childs  = newSeq[ent]()
+    meta.signature_groups = {}
 
     
-  let op = ecs.operations.push_addr()
+  let op = ecs.operations.inc
   op.entity = result
   op.kind = OpKind.Init
   ecs.entids.add(result.id)

@@ -66,12 +66,10 @@ type
 template `nil`*(T: typedesc[ent]): ent =
   (int.high,0)
 
-proc `$`*(self: ent): string =
-    $self.id
+# proc `$`*(self: ent): string =
+#     $self.id
 
-var e = ent.nil
-
-var metas*   = newSeqOfCap[EntityMeta](ENTS_INIT_SIZE)
+var metas*      = newSeq[EntityMeta](ENTS_INIT_SIZE)
 var ents_free*  = newSeqOfCap[ent](ENTS_INIT_SIZE)
 var layers*     = newSeq[SystemEcs](32)
 var storages*   = newSeq[CompStorageBase]()

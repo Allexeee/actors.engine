@@ -85,7 +85,15 @@ template insert*(gr: Group, self: ent) =
               gr.entities.add self
           else:
               gr.entities[right] = self
+
   meta.signature_groups.incl(gr.id)
+
+  if self.id >= gr.indices.len:
+    let size = gr.indices.len
+    let sizenew = self.id + GROW_SIZE
+    gr.indices.setLen(sizenew)
+    for i in size..<sizenew:
+      gr.indices[i] = ent.nil.id
   gr.indices[self.id] = right
 
 template remove*(gr: Group, self: ent) =
