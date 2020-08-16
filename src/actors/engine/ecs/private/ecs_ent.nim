@@ -4,7 +4,6 @@ import ../../../actors_tools
 import ecs_debug
 import ecs_utils
 
-
 var next_id = 0
 
 proc entity*(lid: LayerId): ent =
@@ -39,7 +38,6 @@ proc entity*(lid: LayerId): ent =
   ecs.entids.add(result.id)
   
   result
-
 proc kill*(self: ent) = 
   check_error_release_empty(self)
   let meta = self.meta
@@ -54,7 +52,10 @@ proc kill*(self: ent) =
   let op = ecs.operations.addNew()
   op.entity = self
   op.kind = OpKind.Kill
-
+proc exist*(self:ent): bool =
+  let meta = self.meta
+  if meta.alive and meta.age==self.age: true
+  else: false
 
 template has*(self:ent, t: typedesc): bool =
   t.has(self)

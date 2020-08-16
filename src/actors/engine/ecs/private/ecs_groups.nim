@@ -1,15 +1,14 @@
 {.used.}
 {.experimental: "dynamicBindSym".}
-#import algorithm
-#import strutils
+
 import strformat
 import macros
 import sets
+
 import ../../../actors_h
 import ../../../actors_tools
 import ../actors_ecs_h
 import ecs_utils
-
 
 var id_next_group : cid = 0
 var storageCache {.used.} = newSeq[CompStorageBase](256)
@@ -42,32 +41,35 @@ proc makeGroup(layer: LayerID) : Group {.inline, used, discardable.} =
   for i in 0..groups[].high:
     let gr = groups[][i]
     var isvalid = true
-    for i in gr.signature2:
+    for i in gr.signature:
       if not mask_include.contains(i):
         isvalid = false; break
-      if mask_exclude.contains(i):
+    for i in gr.signature_excl:
+      if not mask_exclude.contains(i):
         isvalid = false; break
-     
+
     if isvalid:
       group_next = gr
 
   if group_next.isNil:
+    
     group_next = groups[].getref()
     group_next.id = id_next_group
-   # group_next.signature = mask_include
-    #group_next.signature_excl = mask_exclude
+    group_next.ecs = ecs
     for i in mask_include:
-     group_next.signature2.add(i) 
+     group_next.signature.add(i) 
     for i in mask_exclude:
-     group_next.signature_excl2.add(i) 
+     group_next.signature_excl.add(i) 
     
     group_next.entities = newSeqOfCap[ent](256)
     group_next.indices.gen_indices()
     group_next.layer = layer
+    
     for id in mask_include:
-      storages[id].groups.add(group_next)
+      storages[id][layer.int].groups.add(group_next)
     for id in mask_exclude:
-      storages[id].groups.add(group_next)
+      storages[id][layer.int].groups.add(group_next)
+    
     id_next_group += 1
   
   mask_include = {}
@@ -76,10 +78,8 @@ proc makeGroup(layer: LayerID) : Group {.inline, used, discardable.} =
 
 template len*(self: Group): int =
   self.entities.len
-
 template high*(self: Group): int =
   self.entities.high
-
 template `[]`*(self: Group, key: int): ent =
   self.entities[key]
 

@@ -4,7 +4,7 @@ import strformat
 import ../actors_ecs_h
 import hashes
 
-proc binarysearch*(this: ptr seq[ent], value: int): int {.discardable, used, inline.} =
+func binarysearch*(this: ptr seq[ent], value: int): int {.discardable, used, inline.} =
   var m : int = -1
   var left = 0
   var right = this[].high
@@ -17,20 +17,13 @@ proc binarysearch*(this: ptr seq[ent], value: int): int {.discardable, used, inl
       else:
           right = m - 1
   return m
-
-proc hash*(x: set[uint16]): Hash =
+func hash*(x: set[uint16]): Hash =
   result = x.hash
   result = !$result
-
 func incAge*(age: var int) =
   if age == high(int):
     age = 0
   else: age += 1
-
-template genIndices*(self: var seq[int]) {.used.} =
-  self = newSeq[int](ENTS_INIT_SIZE)
-  for i in 0..self.high:
-    self[i] = ent.nil.id
 
 proc formatComponentAlias*(s: var string) {.used.}=
   var indexes : array[8,int]
@@ -46,7 +39,6 @@ proc formatComponentAlias*(s: var string) {.used.}=
   if index>=2:
     delete(s,1,indexes[1]-1)
   s = toUpperAscii(s[0]) & substr(s, 1)
-
 proc formatComponent*(s: var string) {.used.}=
   var indexes : array[8,int]
   var i = 0
@@ -61,7 +53,6 @@ proc formatComponent*(s: var string) {.used.}=
   if index>=2:
     delete(s,1,indexes[1]-1)
   s = toLowerAscii(s[0]) & substr(s, 1)
-
 proc formatComponentLong*(s: var string) {.used.}=
   var indexes : array[8,int]
   var i = 0
@@ -77,6 +68,11 @@ proc formatComponentLong*(s: var string) {.used.}=
     delete(s,1,indexes[1]-1)
   s = toUpperAscii(s[0]) & substr(s, 1)
 
+template genIndices*(self: var seq[int]) {.used.} =
+  self = newSeq[int](ENTS_INIT_SIZE)
+  for i in 0..self.high:
+    self[i] = ent.nil.id
+
 macro formatComponentPrettyAndLong*(T: typedesc): untyped {.used.}=
   let tName = strVal(T)
   var proc_name = tName  
@@ -87,7 +83,6 @@ macro formatComponentPrettyAndLong*(T: typedesc): untyped {.used.}=
       impl_get(self,{tName})
       """)
   result = parseStmt(source)
-
 macro formatComponentPrettyAndLongEid*(T: typedesc): untyped {.used.}=
   let tName = strVal(T)
   var proc_name = tName  
@@ -98,7 +93,6 @@ macro formatComponentPrettyAndLongEid*(T: typedesc): untyped {.used.}=
       impl_get(self,{tName})
       """)
   result = parseStmt(source)
-
 macro formatComponentPretty*(t: typedesc): untyped {.used.}=
   let tName = strVal(t)
   var proc_name = tName  
@@ -110,7 +104,6 @@ macro formatComponentPretty*(t: typedesc): untyped {.used.}=
         """)
 
   result = parseStmt(source)
-
 macro formatComponentPrettyEid*(t: typedesc): untyped {.used.}=
   let tName = strVal(t)
   var proc_name = tName  

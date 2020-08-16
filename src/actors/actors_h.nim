@@ -37,15 +37,24 @@ type
   
   ActionOnLayer* = proc(layer: LayerId)
   
+  ILayer* = object
+    Change*: proc (self: LayerId)
 
 
 
 let app* = App()
 var stats* = AppStats()
 var a_layer_added* = newSeq[ActionOnLayer]()
+var a_layer_changed* = newSeq[ILayer]()
+var highest_layer_id*  = 0
+var layer_current* = 0
+var layer* = 0.LayerId
+
+
 
 app.settings = AppSettings()
 app.time = AppTime()
+
 
 
 

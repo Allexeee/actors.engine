@@ -11,43 +11,30 @@ type CompD {.final.} = object
   arg: int
 type CompF {.final.} = object
   arg: int
+ 
+var game  = app.addLayer(); game.use()
 
 app.add CompA
-app.add CompB
-app.add CompC
-app.add CompD
-app.add CompF
 
-var game = app.addLayer()
-var gr_abc = game.group(CompA,CompB,CompC,CompD)
-var gr_ab = game.group(CompA,CompB)
-var gr_a = game.group(CompA)
+var players = game.group(CompA)
 
-proc make_abc*(layer: LayerID): ent {.discardable.} =
+proc makePlayer*(layer: LayerID): ent {.discardable.} =
   result = layer.entity()
   result.get CompA
-  result.get CompB
-  result.get CompC
- 
-proc make_ab*(layer: LayerID): ent {.discardable.} =
-  result = layer.entity()
-  result.get CompA
-  result.get CompB
 
-for i in 0..<5000:
-  game.make_abc()
+
+var amount = 5000
+var steps = 60*3600
+
+for i in 0..<amount:
+  game.makePlayer()
 
 game.ecs.execute()
 
-
-var steps = 60*3600
-
-for x in 0..<steps:
-  profile.start "q2":
-    exclude CompB,CompC
+profile.start "query":
+  for x in 0..<steps:
     for ca in query(CompA):
-      ca.arg.inc
+      ca.arg += 1
 
-echo gr_a[0].ca.arg
- 
 profile.log
+

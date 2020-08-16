@@ -16,12 +16,19 @@ export header.LayerId
 let app* = header.app
 
 
+proc layer*(self: App): LayerId {.discardable.} =
+  header.layer
 
 proc addLayer*(app: App): LayerId =
-  var next_id {.global.} = 0
-  result = next_id.LayerId; next_id += 1
+  result = highest_layer_id.LayerId; highest_layer_id += 1
   for a in a_layer_added:
     a(result)
+
+proc use*(self: LayerID) =
+  layer_current = self.int
+  header.layer = self
+  for a in a_layer_changed:
+    a.Change(self)
 
 
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
@@ -32,7 +39,6 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   assert igOpenGL3Init()
   igStyleColorsCherry()
 
-  #plugins.bootstrap(w)
 
   init()
   
