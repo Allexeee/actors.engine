@@ -54,7 +54,7 @@ template insert*(gr: Group, self: ent) =
           else:
               gr.entities[right] = self
 
-  meta.signature_groups.incl(gr.id)
+  meta.signature_groups.add(gr.id)
 
   if self.id >= gr.indices.len:
     let size = gr.indices.len
@@ -68,16 +68,18 @@ template remove*(gr: Group, self: ent) =
   let index = binarysearch(addr gr.entities, self.id)
   gr.entities.delete(index)
   gr.indices[self.id] = ent.nil.id
-  meta.signature_groups.excl(gr.id)
-template empty*(self: ent) =
+ # let gid_index = meta.signature_groups.find(gr.id)
+
+  meta.signature_groups.delete(meta.signature_groups.find(gr.id))
+proc empty*(self: ent) =
   let meta = self.meta
   let ecs = meta.layer.ecs
   for gid in meta.signature_groups:
     let group = ecs.groups[gid]
-    group.remove(op.entity)
+    group.remove(self)
 
-  ents_free.add(op.entity)
-  meta.signature_groups = {}
+  ents_free.add(self)
+  meta.signature_groups.setLen(0)
   meta.parent = (0,0)
   meta.childs.setLen(0)
   meta.alive = false
@@ -85,7 +87,7 @@ template empty*(self: ent) =
 template emptyOnLayerKill(id: int) {.used.} =
   let meta = metas[id].addr
   ents_free.add((id,meta.age))
-  meta.signature_groups = {}
+  meta.signature_groups.setLen(0)
   meta.parent = (0,0)
   meta.childs.setLen(0)
   meta.alive = false
@@ -102,26 +104,26 @@ template changeEntity*(self: ent, cid: uint16) =
 
 proc execute*(ecs: SystemEcs) {.inline.} =
   let operations = addr ecs.operations
- 
+  
   for i in 0..operations[].high:
      let op = addr operations[][i]
      let meta = op.entity.meta
-
      while true:
        case op.kind:
           of Kill:
-            op.entity.empty()
+        
+            #op.entity.empty()
             break
           of Remove:
-            if meta.signature == {}:
-              for e in meta.childs:
-                e.kill()
-              op.entity.empty()
-            else:
-              changeEntity(op.entity,op.arg)
+            # if meta.signature.len == 0:
+            #   for e in meta.childs:
+            #     e.kill()
+            #   op.entity.empty()
+            # else:
+            #   changeEntity(op.entity,op.arg)
             break
           of Add:
-            changeEntity(op.entity,op.arg)
+            #changeEntity(op.entity,op.arg)
             break
 
           of Init:
@@ -142,9 +144,14 @@ proc kill*(ecs: SystemEcs) {.inline.} =
     for i in 0..g.indices.high:
       g.indices[i] = ent.nil.id
   ecs.operations.setLen(0)
-  for e in ecs.entids:
-    emptyOnLayerKill(e)
-  ecs.entids.setLen(0)
+  
+  for i in 0..metas.high:
+    let m = metas[i].addr
+    if m.layer.int == ecs.layer.int:
+      emptyOnLayerKill(i)
+  #for e in ecs.entids:
+  #  emptyOnLayerKill(e)
+  #ecs.entids.setLen(0)
 
   #var lstorages = storages[ecs.layer.int]
   for st in storages:

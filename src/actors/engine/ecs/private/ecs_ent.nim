@@ -6,38 +6,36 @@ import ecs_utils
 
 var next_id = 0
 
-proc entity*(lid: LayerId): ent =
-  let ecs = layers[lid.int]
+proc entity*(lid: LayerId): ent {. discardable, inline.} =
   if ents_free.len > 0:
     result = ents_free.pop()
     let meta = result.meta
     meta.alive = true
     meta.dirty = true
-  
   else:
-    
-    result.id = next_id; next_id.inc
+    result.id = next_id; next_id+=1
     result.age = 0
 
-    if result.id > metas.high:
-      metas.setLen(result.id+GROW_SIZE)
+    # if result.id > metas.high:
+    #   metas.setLen(result.id+GROW_SIZE)
     
     let meta     = metas[result.id].addr
     meta.layer   = lid
-    meta.age     = 0
     meta.alive   = true
-    meta.dirty = true
-    meta.childs  = newSeq[ent]()
-    meta.signature_groups = {}
-
+    meta.dirty   = true
+    #meta.signature_groups = newSeq[uint16]()
+    #meta.signature        = newSeq[uint16]()
  
-  let op = ecs.operations.inc
-  #echo ecs.operations.len
+  let ecs = layers[lid.int]
+  let op = ecs.operations.push_addr
   op.entity = result
   op.kind = OpKind.Init
-  ecs.entids.add(result.id)
+  #ecs.entids[result.id] = result.id
+  #ecs.entids.add(result.id)
   
   result
+
+
 proc kill*(self: ent) = 
   check_error_release_empty(self)
   let meta = self.meta
@@ -46,7 +44,7 @@ proc kill*(self: ent) =
   for e in meta.childs:
       kill(e)
 
-  meta.signature = {}  
+ # meta.signature = {}  
   meta.age.incAge()
   
   let op = ecs.operations.addNew()

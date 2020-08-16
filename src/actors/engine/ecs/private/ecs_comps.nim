@@ -41,28 +41,29 @@ template impl_storage(T: typedesc) {.used.} =
   
   proc getStorage*(_: typedesc[T]): CompStorage[T] {.inline.} =
     storage
+  
   proc get*(self: ent, _: typedesc[T]): ptr T {.inline, discardable.} = 
-    if self.id >= storage.indices.len:
-      let oldsize = storage.indices.len
-      let newSize = self.id + GROW_SIZE
-      storage.indices.setLen(newSize)
-      for i in oldsize..<newsize:
-        storage.indices[i] = ent.nil.id
+  
+    # if self.id >= storage.indices.len:
+    #   let oldsize = storage.indices.len
+    #   let newSize = self.id + GROW_SIZE
+    #   storage.indices.setLen(newSize)
+    #   for i in oldsize..<newsize:
+    #     storage.indices[i] = ent.nil.id
    
     if has(_, self):
       return addr storage.comps[storage.indices[self.id]]
     
-
-    let st = storage
-    let cid = st.id
+   
+    let cid = storage.id
     let meta = self.meta
     
-    st.indices[self.id] = st.entities.len
-    st.entities.add(self)
+    storage.indices[self.id] = storage.entities.len
+    storage.entities.add(self)
 
-    let comp = st.comps.push_addr()
+    #let comp = storage.comps.push_addr()
 
-    meta.signature.incl(cid)
+    meta.signature.add(cid)
     
 
     if not meta.dirty:
@@ -71,8 +72,27 @@ template impl_storage(T: typedesc) {.used.} =
       op.kind = OpKind.Add
       op.arg  = cid
     
-    comp 
+    storage.comps.push_addr() 
   
+  proc sett*(self: ent, _: typedesc[T]): ptr T {.inline, discardable.} = 
+    
+      # if self.id >= storage.indices.len:
+      #   let oldsize = storage.indices.len
+      #   let newSize = self.id + GROW_SIZE
+      #   storage.indices.setLen(newSize)
+      #   for i in oldsize..<newsize:
+      #     storage.indices[i] = ent.nil.id
+    
+
+     # let meta = self.meta
+      
+      storage.indices[self.id] = storage.entities.len
+      storage.entities.add(self)
+
+      self.meta.signature.add(storage.id)
+      
+      storage.comps.push_addr()
+
   proc remove*(self: ent, _: typedesc[T]) {.inline.} = 
     checkErrorRemoveComponent(self, T)
     var last = storage.indices[storage.entities[storage.entities.high].id]

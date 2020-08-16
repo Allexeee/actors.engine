@@ -15,7 +15,7 @@ proc getref*[T](self: var seq[T]) : var T {.inline.} =
   self.add(T())
   self[self.high]
 
-proc push_addr*[T](self: var seq[T], grow_size: int): ptr T =
+proc push_addr*[T](self: var seq[T], grow_size: int): ptr T {.inline.} =
   self.setLen(self.len+grow_size)
   addr self[self.high]
 
