@@ -13,12 +13,13 @@ proc entity*(lid: LayerId): ent =
     result = ents_free.pop()
     let meta = result.meta
     meta.alive = true
+    meta.dirty = true
   
   else:
     
     result.id = next_id; next_id.inc
     result.age = 0
-    
+
     if result.id > metas.high:
       metas.setLen(result.id+GROW_SIZE)
     
@@ -26,11 +27,13 @@ proc entity*(lid: LayerId): ent =
     meta.layer   = lid
     meta.age     = 0
     meta.alive   = true
+    meta.dirty = true
     meta.childs  = newSeq[ent]()
     meta.signature_groups = {}
 
-    
+ 
   let op = ecs.operations.inc
+  #echo ecs.operations.len
   op.entity = result
   op.kind = OpKind.Init
   ecs.entids.add(result.id)

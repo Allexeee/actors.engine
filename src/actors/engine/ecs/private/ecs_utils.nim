@@ -88,6 +88,17 @@ macro formatComponentPrettyAndLong*(T: typedesc): untyped {.used.}=
       """)
   result = parseStmt(source)
 
+macro formatComponentPrettyAndLongEid*(T: typedesc): untyped {.used.}=
+  let tName = strVal(T)
+  var proc_name = tName  
+  proc_name  = toLowerAscii(proc_name[0]) & substr(proc_name, 1)
+  formatComponent(proc_name)
+  var source = &("""
+  template `{proc_name}`*(self: eid): ptr {tName} =
+      impl_get(self,{tName})
+      """)
+  result = parseStmt(source)
+
 macro formatComponentPretty*(t: typedesc): untyped {.used.}=
   let tName = strVal(t)
   var proc_name = tName  
@@ -100,8 +111,14 @@ macro formatComponentPretty*(t: typedesc): untyped {.used.}=
 
   result = parseStmt(source)
 
-func sortStorages*(x,y: CompStorageBase): int =
-  let cx = x.entities
-  let cy = y.entities
-  if cx.len <= cy.len: -1
-  else: 1
+macro formatComponentPrettyEid*(t: typedesc): untyped {.used.}=
+  let tName = strVal(t)
+  var proc_name = tName  
+  formatComponent(proc_name)
+  var source = ""
+  source = &("""
+    template `{proc_name}`*(self: eid): ptr {tName} =
+        impl_get(self,{tName})
+        """)
+
+  result = parseStmt(source)

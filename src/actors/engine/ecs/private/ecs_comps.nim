@@ -11,7 +11,6 @@ import ../../../actors_tools
 import ../../../actors_h
 import ../actors_ecs_h
 import ecs_utils
-import ecs_ops
 import ecs_debug
 
 var id_next_component : cid = 0
@@ -31,7 +30,9 @@ template impl_storage(T: typedesc) {.used.} =
   #private
   proc impl_get(self: ent, _: typedesc[T]): ptr T {.inline, discardable, used.} =
     addr storage.comps[storage.indices[self.id]] 
-  
+  proc impl_get(self: eid, _: typedesc[T]): ptr T {.inline, discardable, used.} =
+    addr storage.comps[storage.indices[self.int]]
+    
   #api
   proc has*(_:typedesc[T], self: ent): bool {.inline,discardable.} =
     storage.indices[self.id] != ent.nil.id
@@ -50,7 +51,6 @@ template impl_storage(T: typedesc) {.used.} =
       storage.indices.setLen(newSize)
       for i in oldsize..<newsize:
         storage.indices[i] = ent.nil.id
-     # echo self.id, "_", storage.indices.len
 
     if has(_, self):
       return addr storage.comps[storage.indices[self.id]]
@@ -90,7 +90,9 @@ template impl_storage(T: typedesc) {.used.} =
     self.meta.signature.excl(op.arg)
   
   formatComponentPretty(T)
+  formatComponentPrettyEid(T)
   formatComponentPrettyAndLong(T)
+  formatComponentPrettyAndLongEid(T)
 
 macro add*(self: App, component: untyped): untyped =
   result = nnkStmtList.newTree(

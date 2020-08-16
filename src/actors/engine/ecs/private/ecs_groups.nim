@@ -32,7 +32,6 @@ macro group*(layer: LayerId, t: varargs[untyped]) =
   for x in t.children:
     n.insert(i,genMask(x))
     i += 1
-  #bindSym("impl_storage_compact", brForceOpen) 
   n.insert(i,newDotExpr(ident($layer), bindSym("makeGroup",brForceOpen)))
   result = n
 
@@ -42,14 +41,21 @@ proc makeGroup(layer: LayerID) : Group {.inline, used, discardable.} =
   var group_next : Group = nil
   for i in 0..groups[].high:
     let gr = groups[][i]
-    if mask_include == gr.signature:
+    var isvalid = true
+    for i in gr.signature2:
+      if not mask_include.contains(i):
+        isvalid = false; break
+      if mask_exclude.contains(i):
+        isvalid = false; break
+     
+    if isvalid:
       group_next = gr
-      break
+
   if group_next.isNil:
     group_next = groups[].getref()
     group_next.id = id_next_group
-    group_next.signature = mask_include
-    group_next.signature_excl = mask_exclude
+   # group_next.signature = mask_include
+    #group_next.signature_excl = mask_exclude
     for i in mask_include:
      group_next.signature2.add(i) 
     for i in mask_exclude:
