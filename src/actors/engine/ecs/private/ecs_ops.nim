@@ -24,45 +24,50 @@ template match*(self: ent, group: Group):  bool  =
      if indices[].high<self.id or indices[][self.id] != ent.nil.id:
        result = false; break
    result
+
 template insert*(gr: Group, self: ent) = 
   var len = gr.entities.len
   var left, index = 0
   var right = len
   let meta = self.meta
   len+=1
-  if self.id > gr.indices.high:
-      gr.entities.add self
-      gr.indices.setLen(self.id+GROW_SIZE)
-      gr.indices[self.id] = gr.entities.high
-  else:
-      var conditionSort = right - 1
-      if conditionSort > -1 and self.id < gr.entities[conditionSort].id:
-          while right > left:
-              var midIndex = (right+left) div 2
-              if gr.entities[midIndex].id == self.id:
-                  index = midIndex
-                  break
-              if gr.entities[midIndex].id < self.id:
-                  left = midIndex+1
-              else:
-                  right = midIndex
-              index = left
-          gr.entities.insert(self, index)
-      else:
-          if right == 0 or right >= gr.entities.high:
-              gr.entities.add self
+  # if self.id > gr.indices.high:
+  #     echo "sf"
+  #     gr.entities.add self
+  #     gr.indices.setLen(self.id+GROW_SIZE)
+  #     gr.indices[self.id] = gr.entities.high
+  # else:
+  var conditionSort = right - 1
+  if conditionSort > -1 and self.id < gr.entities[conditionSort].id:
+      while right > left:
+          var midIndex = (right+left) div 2
+          if gr.entities[midIndex].id == self.id:
+              index = midIndex
+              break
+          if gr.entities[midIndex].id < self.id:
+              left = midIndex+1
           else:
-              gr.entities[right] = self
+              right = midIndex
+          index = left
+      gr.entities.insert(self, index)
+  else:
+      if right == 0 or right >= gr.entities.high:
+          gr.entities.add self
+      else:
+          gr.entities[right] = self
 
   meta.signature_groups.add(gr.id)
 
-  if self.id >= gr.indices.len:
-    let size = gr.indices.len
-    let sizenew = self.id + GROW_SIZE
-    gr.indices.setLen(sizenew)
-    for i in size..<sizenew:
-      gr.indices[i] = ent.nil.id
+  # if self.id >= gr.indices.len:
+  #   echo "sdfsfsdfsf"
+  #   let size = gr.indices.len
+  #   let sizenew = self.id + GROW_SIZE
+  #   gr.indices.setLen(sizenew)
+  #   for i in size..<sizenew:
+  #     gr.indices[i] = ent.nil.id
+  
   gr.indices[self.id] = right
+
 template remove*(gr: Group, self: ent) =
   let meta = self.meta
   let index = binarysearch(addr gr.entities, self.id)
@@ -71,6 +76,7 @@ template remove*(gr: Group, self: ent) =
  # let gid_index = meta.signature_groups.find(gr.id)
 
   meta.signature_groups.delete(meta.signature_groups.find(gr.id))
+
 proc empty*(self: ent) =
   let meta = self.meta
   let ecs = meta.layer.ecs
@@ -84,7 +90,7 @@ proc empty*(self: ent) =
   meta.childs.setLen(0)
   meta.alive = false
 
-template emptyOnLayerKill(id: int) {.used.} =
+proc emptyOnLayerKill(id: int) {.used.} =
   let meta = metas[id].addr
   ents_free.add((id,meta.age))
   meta.signature_groups.setLen(0)
@@ -104,28 +110,25 @@ template changeEntity*(self: ent, cid: uint16) =
 
 proc execute*(ecs: SystemEcs) {.inline.} =
   let operations = addr ecs.operations
-  
   for i in 0..operations[].high:
      let op = addr operations[][i]
      let meta = op.entity.meta
      while true:
        case op.kind:
           of Kill:
-        
-            #op.entity.empty()
+            op.entity.empty()
             break
           of Remove:
-            # if meta.signature.len == 0:
-            #   for e in meta.childs:
-            #     e.kill()
-            #   op.entity.empty()
-            # else:
-            #   changeEntity(op.entity,op.arg)
+            if meta.signature.len == 0:
+              for e in meta.childs:
+                e.kill()
+              op.entity.empty()
+            else:
+              changeEntity(op.entity,op.arg)
             break
           of Add:
-            #changeEntity(op.entity,op.arg)
+            changeEntity(op.entity,op.arg)
             break
-
           of Init:
             meta.dirty = false
             for cid in meta.signature:
@@ -137,12 +140,35 @@ proc execute*(ecs: SystemEcs) {.inline.} =
 
   operations[].setLen(0)
 
+proc execute2*(ecs: SystemEcs) {.inline.} =
+  var operations = ecs.operations
+  for i in 0..operations.high:
+     let op = addr operations[i]
+     let meta = op.entity.meta
+     #meta.dirty = false
+     for cid in meta.signature:
+       let groups = storages[cid][meta.layer.int].groups
+       for group in groups:
+         if not op.entity.partof(group) and op.entity.match(group):    
+           group.insert(op.entity)
+
+  operations.setLen(0)
+
+proc build*(self: ent) {.inline.} =
+  let meta = self.meta
+  for cid in meta.signature:
+     let groups = storages[cid][meta.layer.int].groups
+     for group in groups:
+       if not self.partof(group) and self.match(group):    
+         group.insert(self)
+
 proc kill*(ecs: SystemEcs) {.inline.} =
   let groups = ecs.groups
   for g in groups:
     g.entities.setLen(0)
     for i in 0..g.indices.high:
       g.indices[i] = ent.nil.id
+  
   ecs.operations.setLen(0)
   
   for i in 0..metas.high:

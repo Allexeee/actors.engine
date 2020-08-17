@@ -12,7 +12,7 @@ type
  
   cid*   = uint16
    
-  EntityMeta* {.packed.} = object
+  EntityMeta* = object
     layer*            : LayerID
     childs*           : seq[ent]
     parent*           : ent
@@ -64,7 +64,8 @@ type
     arg*   : uint16
 
 
-var metas*      = newSeqOfCap[EntityMeta](ENTS_INIT_SIZE)
+var metas*      = newSeq[EntityMeta](ENTS_INIT_SIZE)
+
 var ents_free*  = newSeqOfCap[ent](256)
 var layers*     = newSeq[SystemEcs](12)
 var storages*   = newSeq[ptr seq[CompStorageBase]]()

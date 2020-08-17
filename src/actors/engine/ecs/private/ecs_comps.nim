@@ -29,7 +29,7 @@ template impl_storage(T: typedesc) {.used.} =
   proc cleanup(_:typedesc[T], straw: CompStorageBase) =
     let st = cast[CompStorage[T]](straw)
     st.entities.setLen(0); st.comps.setLen(0)
-    discard
+
     
 
   #api

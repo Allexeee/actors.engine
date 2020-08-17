@@ -23,7 +23,9 @@ template profileStart(arg: string) =
     if not pairs.hasKey(arg):
      var el: ProfileElement   
      pairs.add(arg,el)
+     #echo arg, "       dsfsf"
      index+=1
+   # echo "lol a   ", arg
     pairs[arg].name = arg
     pairs[arg].t0 = cpuTime()
 
@@ -41,7 +43,7 @@ template log*(this: Profile): untyped=
             let arg1 {.inject.} = pe.name
             let arg2 {.inject.} = pe.total_time
             let arg3 {.inject.} =  pe.total_calls
-
+            #echo pe
             if pe.total_calls>1:
                 let elapsedStr{.inject.} = formatFloat(arg2 / arg3.float,format = ffDecimal,precision = 9)
                 let elapsedStr0{.inject.} = formatFloat(arg2,format = ffDecimal,precision = 9)
@@ -49,6 +51,7 @@ template log*(this: Profile): untyped=
                     benches.add(&"Time elapsed for {arg1}: {elapsedStr0} seconds over {arg3} iterations, averaging: {elapsedStr} seconds\n")
                 else: benches.add(&"Time elapsed for {arg1}: {elapsedStr0} seconds over {arg3} iterations, averaging: {elapsedStr} seconds\n") 
             else:
+                #echo arg1, pe.name
                 let elapsedStr{.inject.} = formatFloat(arg2,format = ffDecimal,precision = 9)
                 if i==index:
                     benches.add(&"Time elapsed for {arg1}: {elapsedStr} seconds\n")
