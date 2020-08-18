@@ -17,9 +17,9 @@ func binarysearch*(this: ptr seq[eid], value: int): int {.discardable, used, inl
       else:
           right = m - 1
   return m
-func hash*(x: set[uint16]): Hash =
-  result = x.hash
-  result = !$result
+# func hash*(x: set[uint16]): Hash =
+#   result = x.hash
+#   result = !$result
 func incAge*(age: var int) =
   if age == high(int):
     age = 0

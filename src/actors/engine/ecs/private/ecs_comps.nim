@@ -34,6 +34,9 @@ template impl_storage(T: typedesc) {.used.} =
     
 
   #api
+  proc has*(_:typedesc[T], self: eid): bool {.inline,discardable.} =
+    storage.indices[self.int] != ent.nil.id and storage.indices[self.int] < storage.entities.len
+  
   proc has*(_:typedesc[T], self: ent): bool {.inline,discardable.} =
     storage.indices[self.id] != ent.nil.id and storage.indices[self.id] < storage.entities.len
   
@@ -43,54 +46,67 @@ template impl_storage(T: typedesc) {.used.} =
   proc getStorage*(_: typedesc[T]): CompStorage[T] {.inline.} =
     storage
   
-  proc `set`*(self: ent, _: typedesc[T]): ptr T {.inline, discardable.} = 
-    storage.indices[self.id] = storage.entities.len
-    storage.entities.add(self)
-
-    #self.meta.signature.add(storage.id)
-    storage.comps.push_addr() 
-
-  proc get*(self: ent, _: typedesc[T]): ptr T {.inline, discardable.} = 
+  proc get*(self: ent|eid, _: typedesc[T]): ptr T {.inline, discardable.} = 
   
     if has(_, self):
       return addr storage.comps[storage.indices[self.id]]
-    
-   
+
     let cid = storage.id
     let meta = self.meta
     
     storage.indices[self.id] = storage.entities.len
     storage.entities.add(self)
 
-
-    #meta.signature.add(cid)
+    meta.signature.add(cid)
     
     if not meta.dirty:
-      let op = meta.layer.ecs.operations.push_addr()
-      op.entity = self.id.eid
-      op.kind = OpKind.Add
-      op.arg  = cid
-    
+      changeEntity(self,cid)
+
     storage.comps.push_addr() 
+  
+
+#  if meta.signature.len == 0:
+#               for e in meta.childs:
+#                 e.kill()
+#               empty(meta,ecs,op.entity)
+#               #op.entity.empty()
+#             else:
+#               changeEntity(op.entity,op.arg)
 
 
-  proc remove*(self: ent, _: typedesc[T]) {.inline.} = 
+  proc remove*(self: ent|eid, _: typedesc[T]) {.inline.} = 
     checkErrorRemoveComponent(self, T)
-    var last = storage.indices[storage.entities[storage.entities.high].id]
+    
+    var last = storage.indices[storage.entities[storage.entities.high].int]
     var index = storage.indices[self.id]
 
     storage.entities.del(index)
     storage.comps.del(index)
     swap(storage.indices[index],storage.indices[last])
   
-    let op = self.layer.ecs.operations.addNew()
-    op.entity = self
-    op.arg = storage.id
-    op.kind = OpKind.Remove
-    self.meta.signature.excl(op.arg)
+    # let op = self.layer.ecs.operations.addNew()
+    # op.entity = self
+    # op.arg = storage.id
+    # op.kind = OpKind.Remove
+    let meta = self.meta
+    meta.signature.del(meta.signature.find(storage.id))
+    if meta.signature.len == 0:
+      for e in meta.childs:
+        e.kill()
+      empty(meta,meta.layer.ecs,self)
+    else:
+      changeEntity(self,storage.id)
+
+    #  if meta.signature.len == 0:
+#               for e in meta.childs:
+#                 e.kill()
+#               empty(meta,ecs,op.entity)
+#               #op.entity.empty()
+#             else:
+#               changeEntity(op.entity,op.arg)
   
   proc removefast(_: typedesc[T], self: eid) {.inline.} = 
-    var last = storage.indices[storage.entities[storage.entities.high].id]
+    var last = storage.indices[storage.entities[storage.entities.high].int]
     var index = storage.indices[self.int]
     storage.entities.del(index)
     storage.comps.del(index)
@@ -101,7 +117,7 @@ template impl_storage(T: typedesc) {.used.} =
     result.id = id_next_component
     result.compType = $T
     result.comps = newSeqOfCap[T](ENTS_MAX_SIZE)
-    result.entities = newSeqOfCap[ent](ENTS_MAX_SIZE)
+    result.entities = newSeqOfCap[eid](ENTS_MAX_SIZE)
     genIndices(result.indices)
     result.actions = IStorage(cleanup: proc(st: CompStorageBase)=cleanup(T,st), destroy: proc(self: eid)=removefast(T, self))
     

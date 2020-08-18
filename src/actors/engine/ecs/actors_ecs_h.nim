@@ -1,6 +1,9 @@
+import tables
 import ../../actors_h
 
-const ENTS_MAX_SIZE* = 100_000_0
+
+
+const ENTS_MAX_SIZE* = 1_000_000
 #const ENTS_MAX_SIZE* = ENTS_INIT_SIZE - 1
 #const GROW_SIZE* = 256
 
@@ -44,7 +47,7 @@ type
      groups*       : seq[Group]
      id*           : cid
      indices*      : seq[int] # sparse 
-     entities*     : seq[ent] # packed
+     entities*     : seq[eid] # packed
      filterid*     : int
      actions*      : IStorage
  
@@ -65,43 +68,51 @@ type
 var metas*      = newSeq[EntityMeta](ENTS_MAX_SIZE)
 
 var entities*   = newSeq[ent](ENTS_MAX_SIZE)
-var available*  = ENTS_MAX_SIZE.high
+var available*  = ENTS_MAX_SIZE
 var layers*     = newSeq[SystemEcs](12)
 var storages*   = newSeq[ptr seq[CompStorageBase]]()
 var allgroups*  = newSeq[Group]()
+
+var groups_table* = newTable[int,Group]()
+var groups_table_exclude* = newTable[int,Group]()
+var groups_table_with_exclude* = newTable[int,TableRef[int,Group]]()
 
 converter toEnt*(x: eid): ent =
   (x.int,entities[x.int].age)
 converter toEid*(x: ent): eid =
   x.id.eid
 
+template id*(self: eid): int =
+  self.int
+
 template `nil`*(T: typedesc[ent]): ent =
   (int.high,0)
+
 template ecs*(lid: LayerId): SystemEcs =
   layers[lid.int]
 
-template meta*(self: ent): ptr EntityMeta =
+proc meta*(self: ent): ptr EntityMeta {.inline.} =
   metas[self.id].addr
-
-template meta*(self: eid): ptr EntityMeta =
+proc meta*(self: eid): ptr EntityMeta {.inline.} =
   metas[self.int].addr
-template layer*(self: ent): LayerId  =
-  let meta = self.meta
-  meta.layer
-var eca* : SystemEcs
+proc layer*(self: ent): LayerId {.inline.} =
+  self.meta.layer
+
 proc addEcs*(layerID: LayerID) =
   var ecs = layers[layerID.uint].addr
   ecs[] = SystemEcs()
   ecs.layer = layerID
   ecs.groups = newSeq[Group]()
   ecs.operations = newSeqOfCap[Operation](ENTS_MAX_SIZE)
-  eca = ecs[] 
 
 
 for i in 0..<ENTS_MAX_SIZE:
   entities[i].id = i
   entities[i].age = 1
-  #metas[i].signature.setLen(0) 
- # metas[i].signature_groups.setLen(0)
+  metas[i].signature        = newSeqOfCap[cid](8)
+  metas[i].signature_groups = newSeqOfCap[cid](4)
+  metas[i].dirty = true
+  
+
 
 a_layer_added.add(addEcs)

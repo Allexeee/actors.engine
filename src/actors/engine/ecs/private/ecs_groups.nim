@@ -4,6 +4,9 @@
 import strformat
 import macros
 import sets
+import hashes
+import tables
+
 
 import ../../../actors_h
 import ../../../actors_tools
@@ -15,6 +18,7 @@ var storageCache {.used.} = newSeq[CompStorageBase](256)
 
 var mask_exclude* : set[cid]
 var mask_include* : set[cid]
+
 
 macro group*(layer: LayerId, t: varargs[untyped]) =
   var n = newNimNode(nnkStmtList)
@@ -69,6 +73,13 @@ proc makeGroup(layer: LayerID) : Group {.inline, used, discardable.} =
       storages[id][layer.int].groups.add(group_next)
     for id in mask_exclude:
       storages[id][layer.int].groups.add(group_next)
+    
+    groups_table.add(mask_include.hash,group_next)
+    groups_table_with_exclude.add(mask_include.hash, newTable[int,Group]())
+  #  groups_table_exclude.add(mask_exclude.hash,group_next)
+    var t = groups_table_with_exclude[mask_include.hash].addr
+    t[].add(mask_exclude.hash,group_next)
+    #groups_table_with_exclude.add(mask_include.hash,add(mask_exclude,group_next))
     
     id_next_group += 1
   
