@@ -4,92 +4,61 @@ import ../../../actors_tools
 import ecs_debug
 import ecs_utils
 
-var next_id = 0
+
+template makeEntity*(lid: LayerId, code: untyped): untyped =
+  let r = lid.entity()
+  block:
+    let e {.inject.} = r
+    code
+  r
 
 proc entity*(lid: LayerId): ent {. discardable, inline.} =
-  if ents_free.len > 0:
-    result = ents_free.pop()
-    let meta = result.meta
-    meta.alive = true
-    meta.dirty = true
-    meta.layer   = lid
-  else:
-    result.id = next_id; next_id+=1
-    result.age = 0
-
-    # if result.id > metas.high:
-    #   metas.setLen(result.id+GROW_SIZE)
-    
-    let meta     = metas[result.id].addr
-    meta.layer   = lid
-    meta.alive   = true
-    meta.signature_groups = newSeq[uint16]()
-    meta.signature        = newSeq[uint16]()
-    #meta.dirty   = true
-    #meta.signature_groups = newSeq[uint16]()
-    #meta.signature        = newSeq[uint16]()
- 
-   #meta.dirty = false
-   
-  # let ecs = layers[lid.int]
-  # let op = ecs.operations.push_addr
-  # op.entity = result
-  # op.kind = OpKind.Init
-  #ecs.entids[result.id] = result.id
-  #ecs.entids.add(result.id)
+  var e1 {.global.} : ptr ent
+  var e2 {.global.} : ptr ent
+  let next = ENTS_MAX_SIZE.high-available
+  e1 = entities[next].addr
+  e2 = entities[e1.id].addr
+  swap(e1.age,e2.age)
+  result = entities[e2.id]
+  swap(e1.id,e2.id)
   
-  result
-
-proc entity2*(lid: LayerId): ent {. discardable, inline.} =
-  if ents_free.len > 0:
-    result = ents_free.pop()
-    let meta = result.meta
-    meta.alive = true
-    meta.dirty = true
-    meta.layer   = lid
-  else:
-    result.id = next_id; next_id+=1
-    result.age = 0
-
-    # if result.id > metas.high:
-    #   metas.setLen(result.id+GROW_SIZE)
-    
-    let meta     = metas[result.id].addr
-    meta.layer   = lid
-    meta.alive   = true
-    meta.dirty   = true
-    meta.signature_groups = newSeq[uint16]()
-    meta.signature        = newSeq[uint16]()
- 
-   #meta.dirty = false
-   
-  let ecs = layers[lid.int]
-  let op = ecs.operations.push_addr
-  op.entity = result
-  op.kind = OpKind.Init
-  #ecs.entids[result.id] = result.id
-  #ecs.entids.add(result.id)
+  let metas = metas[result.id].addr
+  metas.layer   = lid
+  metas.dirty   = true
+  available -= 1
   
-  result
-  
-proc kill*(self: ent) {.inline.} = 
+  # let ops = layers[lid.int].operations.addr
+  # ops[].setLen(ops[].len+1) 
+  # let op = ops[ops[].high].addr
+  # op.entity = result.id.eid
+  # op.kind = OpKind.Init 
+
+# int available = 0
+
+# 0  1    2  3  4  5  6    (0)
+# 0  x    2  3  4  5  6    (0)
+# 0  6|1  2  3  4  5  1|0  (1)
+
+#age = 0
+# size - available
+    #1|0
+
+proc kill*(self: ent) {.inline.} =
   check_error_release_empty(self)
+  available += 1
+  system.swap(entities[self.id],entities[entities.len-available])
+  entities[self.id].age.incAge()
   let meta = self.meta
   let ecs = self.layer.ecs
- 
   for e in meta.childs:
-      kill(e)
-
- # meta.signature = {}  
-  meta.age.incAge()
-  
-  let op = ecs.operations.addNew()
-  op.entity = self
+    kill(e)
+  let op = ecs.operations.inc()
+  op.entity = self.id.eid
   op.kind = OpKind.Kill
+
 proc exist*(self:ent): bool =
-  let meta = self.meta
-  if meta.alive and meta.age==self.age: true
-  else: false
+  let cached = entities[self.id].addr
+  cached.id == self.id and cached.age == self.age
 
 template has*(self:ent, t: typedesc): bool =
   t.has(self)
@@ -118,5 +87,3 @@ template has*(self:ent, t,y,u,i,o,p: typedesc): bool =
  i.has(self) and
  o.has(self) and
  p.has(self)
-
-

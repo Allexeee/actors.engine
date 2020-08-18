@@ -4,15 +4,15 @@ import strformat
 import ../actors_ecs_h
 import hashes
 
-func binarysearch*(this: ptr seq[ent], value: int): int {.discardable, used, inline.} =
+func binarysearch*(this: ptr seq[eid], value: int): int {.discardable, used, inline.} =
   var m : int = -1
   var left = 0
   var right = this[].high
   while left <= right:
       m = (left+right) div 2
-      if this[][m].id == value: 
+      if this[][m].int == value: 
           return m
-      if this[][m].id < value:
+      if this[][m].int < value:
           left = m + 1
       else:
           right = m - 1
@@ -69,7 +69,7 @@ proc formatComponentLong*(s: var string) {.used.}=
   s = toUpperAscii(s[0]) & substr(s, 1)
 
 template genIndices*(self: var seq[int]) {.used.} =
-  self = newSeq[int](ENTS_INIT_SIZE)
+  self = newSeq[int](ENTS_MAX_SIZE)
   for i in 0..self.high:
     self[i] = ent.nil.id
 

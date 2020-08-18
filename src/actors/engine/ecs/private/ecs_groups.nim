@@ -61,7 +61,7 @@ proc makeGroup(layer: LayerID) : Group {.inline, used, discardable.} =
     for i in mask_exclude:
      group_next.signature_excl.add(i) 
     
-    group_next.entities = newSeqOfCap[ent](256)
+    group_next.entities = newSeqOfCap[eid](256)
     group_next.indices.gen_indices()
     group_next.layer = layer
     

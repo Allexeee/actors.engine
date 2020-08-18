@@ -1,7 +1,7 @@
 {.used.}
 
 type
-  LayerId* = distinct int
+  LayerId* = distinct byte
 
   FpsCounter* = object
     updates* : float

@@ -25,26 +25,20 @@ template match*(self: ent, group: Group):  bool  =
        result = false; break
    result
 
-template insert*(gr: Group, self: ent) = 
+template insert*(gr: Group, self: eid) = 
   var len = gr.entities.len
   var left, index = 0
   var right = len
   let meta = self.meta
   len+=1
-  # if self.id > gr.indices.high:
-  #     echo "sf"
-  #     gr.entities.add self
-  #     gr.indices.setLen(self.id+GROW_SIZE)
-  #     gr.indices[self.id] = gr.entities.high
-  # else:
   var conditionSort = right - 1
-  if conditionSort > -1 and self.id < gr.entities[conditionSort].id:
+  if conditionSort > -1 and self.int < gr.entities[conditionSort].int:
       while right > left:
           var midIndex = (right+left) div 2
-          if gr.entities[midIndex].id == self.id:
+          if gr.entities[midIndex].int == self.int:
               index = midIndex
               break
-          if gr.entities[midIndex].id < self.id:
+          if gr.entities[midIndex].int < self.int:
               left = midIndex+1
           else:
               right = midIndex
@@ -66,39 +60,58 @@ template insert*(gr: Group, self: ent) =
   #   for i in size..<sizenew:
   #     gr.indices[i] = ent.nil.id
   
-  gr.indices[self.id] = right
+  gr.indices[self.int] = right
 
-template remove*(gr: Group, self: ent) =
+template remove*(gr: Group, self: eid) =
   let meta = self.meta
-  let index = binarysearch(addr gr.entities, self.id)
+  let index = binarysearch(addr gr.entities, self.int)
   gr.entities.delete(index)
-  gr.indices[self.id] = ent.nil.id
+  gr.indices[self.int] = ent.nil.id
  # let gid_index = meta.signature_groups.find(gr.id)
 
   meta.signature_groups.delete(meta.signature_groups.find(gr.id))
 
-proc empty*(self: ent) =
-  let meta = self.meta
-  let ecs = meta.layer.ecs
+template empty(meta: ptr EntityMeta, ecs: SystemEcs, self: eid) {.used.} =
+  #let ecs = meta.layer.ecs
   for gid in meta.signature_groups:
     let group = ecs.groups[gid]
     group.remove(self)
-
-  ents_free.add(self)
+  
+  for cid in meta.signature:
+    storages[cid.int][ecs.layer.int].actions.destroy(self)
+    #ecs.storages[cid][ecs.layer.int].cleanup()
+  
+  system.swap(entities[self.int],entities[ENTS_MAX_SIZE-available])
+  entities[self.int].age.incAge()
+  meta.signature.setLen(0) 
   meta.signature_groups.setLen(0)
-  meta.parent = (0,0)
+  meta.parent = ent.nil.id.eid
   meta.childs.setLen(0)
-  meta.alive = false
+  available += 1
+
+  #self.free()
+ # ents_free.add(self)
+ # meta.signature_groups.setLen(0)
+ # meta.parent = (0,0)
+ # meta.childs.setLen(0)
+#  meta.alive = false
 
 proc emptyOnLayerKill(id: int) {.used.} =
   let meta = metas[id].addr
-  ents_free.add((id,meta.age))
+  available += 1
+  system.swap(entities[id],entities[entities.len-available])
+  entities[id].age.incAge()
+  meta.signature.setLen(0) 
   meta.signature_groups.setLen(0)
-  meta.parent = (0,0)
+  meta.parent = ent.nil.id.eid
   meta.childs.setLen(0)
-  meta.alive = false
+  # ents_free.add((id,meta.age))
+  # meta.signature_groups.setLen(0)
+  # meta.parent = (0,0)
+  # meta.childs.setLen(0)
+#  meta.alive = false
 
-template changeEntity*(self: ent, cid: uint16) =
+template changeEntity*(self: eid, cid: uint16) =
   let groups = storages[cid][self.meta.layer.int].groups   
   for group in groups:
     let grouped = self.partof(group)
@@ -113,16 +126,18 @@ proc execute*(ecs: SystemEcs) {.inline.} =
   for i in 0..operations[].high:
      let op = addr operations[][i]
      let meta = op.entity.meta
+     #let meta = op.entity.meta
      while true:
        case op.kind:
           of Kill:
-            op.entity.empty()
+            empty(meta,ecs,op.entity)
             break
           of Remove:
             if meta.signature.len == 0:
               for e in meta.childs:
                 e.kill()
-              op.entity.empty()
+              empty(meta,ecs,op.entity)
+              #op.entity.empty()
             else:
               changeEntity(op.entity,op.arg)
             break
@@ -140,19 +155,6 @@ proc execute*(ecs: SystemEcs) {.inline.} =
 
   operations[].setLen(0)
 
-proc execute2*(ecs: SystemEcs) {.inline.} =
-  var operations = ecs.operations
-  for i in 0..operations.high:
-     let op = addr operations[i]
-     let meta = op.entity.meta
-     #meta.dirty = false
-     for cid in meta.signature:
-       let groups = storages[cid][meta.layer.int].groups
-       for group in groups:
-         if not op.entity.partof(group) and op.entity.match(group):    
-           group.insert(op.entity)
-
-  operations.setLen(0)
 
 proc build*(self: ent) {.inline.} =
   let meta = self.meta
@@ -160,7 +162,7 @@ proc build*(self: ent) {.inline.} =
      let groups = storages[cid][meta.layer.int].groups
      for group in groups:
        if not self.partof(group) and self.match(group):    
-         group.insert(self)
+         group.insert(self.id.eid)
 
 proc kill*(ecs: SystemEcs) {.inline.} =
   let groups = ecs.groups
@@ -191,18 +193,19 @@ proc kill*(ecs: SystemEcs) {.inline.} =
   #  var storage = ecs.storages[i].
 
 
-iterator items*(range: Group): ent =
+iterator items*(range: Group): eid =
   let ecs = layers[range.layer.uint32]
   ecs.execute()
   var i = range.entities.low
   while i <= range.entities.high:
       yield range.entities[i]
       inc i
+
 iterator query_f*(E: typedesc[ent],T: typedesc): (eid, ptr T) {.inline.} =
   var st1 = T.getStorage()
   for i in 0..st1.comps.high:
     yield (st1.entities[i].id.eid,st1.comps[i].addr)
-iterator query_f*(E: typedesc[ent],T,Y: typedesc):  (ent, ptr T, ptr Y) {.inline.} = 
+iterator query_f*(E: typedesc[ent],T,Y: typedesc):  (eid, ptr T, ptr Y) {.inline.} = 
   let st1 = T.getStorage()
   let st2 = Y.getStorage()
 
@@ -224,7 +227,7 @@ iterator query_f*(E: typedesc[ent],T,Y: typedesc):  (ent, ptr T, ptr Y) {.inline
         yield (e,st1.comps[st1.indices[id]].addr,st2.comps[i].addr)
     else:
         discard
-iterator query_f*(E: typedesc[ent],T,Y,U: typedesc):  (ent, ptr T, ptr Y, ptr U) {.inline.} = 
+iterator query_f*(E: typedesc[ent],T,Y,U: typedesc):  (eid, ptr T, ptr Y, ptr U) {.inline.} = 
   let st1 = T.getStorage()
   let st2 = Y.getStorage()
   let st3 = U.getStorage()
@@ -253,7 +256,7 @@ iterator query_f*(E: typedesc[ent],T,Y,U: typedesc):  (ent, ptr T, ptr Y, ptr U)
         yield (e,st1.comps[st1.indices[id]].addr,st2.comps[st2.indices[id]].addr,st3.comps[i].addr)
     else:
         discard
-iterator query_f*(E: typedesc[ent],T,Y,U,I: typedesc):  (ent, ptr T, ptr Y, ptr U, ptr I) {.inline.} = 
+iterator query_f*(E: typedesc[ent],T,Y,U,I: typedesc):  (eid, ptr T, ptr Y, ptr U, ptr I) {.inline.} = 
   let st1 = T.getStorage()
   let st2 = Y.getStorage()
   let st3 = U.getStorage()
@@ -290,12 +293,13 @@ iterator query_f*(E: typedesc[ent],T,Y,U,I: typedesc):  (ent, ptr T, ptr Y, ptr 
         yield (e, st1.comps[st1.indices[id]].addr,st2.comps[st2.indices[id]].addr,st3.comps[st3.indices[id]].addr, st4.comps[i].addr)
     else:
         discard
-iterator query_f*(E: typedesc[ent],T,Y,U,I,O: typedesc):  (ent, ptr T, ptr Y, ptr U, ptr I, ptr O) {.inline.} =
+iterator query_f*(E: typedesc[ent],T,Y,U,I,O: typedesc):  (eid, ptr T, ptr Y, ptr U, ptr I, ptr O) {.inline.} =
   let st1 = T.getStorage()
   let st2 = Y.getStorage()
   let st3 = U.getStorage()
   let st4 = I.getStorage()
   let st5 = O.getStorage()
+  
   var smallest : CompStorageBase = st1; smallest.filterid = 0
   if st2.entities.len < smallest.entities.len: smallest = st2; smallest.filterid = 1
   if st3.entities.len < smallest.entities.len: smallest = st3; smallest.filterid = 2
@@ -459,7 +463,6 @@ iterator query_f*(T,Y,U,I,O: typedesc):  (ptr T, ptr Y, ptr U, ptr I, ptr O) {.i
     else:
         discard
 iterator query*(T: typedesc): ptr T {.inline.} =
-
   block iteration:
     for ii in excluded_storages:
       if ii.entities.len > 0: break iteration
@@ -471,6 +474,7 @@ iterator query*(T: typedesc): ptr T {.inline.} =
       yield st1.comps[i].addr
 
   excluded_storages.setLen(0)
+
 iterator query*(T,Y: typedesc): (ptr T, ptr Y) {.inline.} =
   
   block iteration:
@@ -619,7 +623,7 @@ iterator query*(E: typedesc[ent],T: typedesc): (eid, ptr T) {.inline.} =
     for i in 0..max:
       yield (st1.entities[i].id.eid,st1.comps[i].addr)
   excluded_storages.setLen(0)
-iterator query*(E: typedesc[ent],T,Y: typedesc):  (ent, ptr T, ptr Y) {.inline.} = 
+iterator query*(E: typedesc[ent],T,Y: typedesc):  (eid, ptr T, ptr Y) {.inline.} = 
   block iteration:
     for ii in excluded_storages:
       if ii.entities.len > 0: break iteration
@@ -645,7 +649,7 @@ iterator query*(E: typedesc[ent],T,Y: typedesc):  (ent, ptr T, ptr Y) {.inline.}
       else:
           discard
   excluded_storages.setLen(0)
-iterator query*(E: typedesc[ent],T,Y,U: typedesc):  (ent, ptr T, ptr Y, ptr U) {.inline.} = 
+iterator query*(E: typedesc[ent],T,Y,U: typedesc):  (eid, ptr T, ptr Y, ptr U) {.inline.} = 
   block iteration:
     for ii in excluded_storages:
       if ii.entities.len > 0: break iteration
@@ -678,7 +682,7 @@ iterator query*(E: typedesc[ent],T,Y,U: typedesc):  (ent, ptr T, ptr Y, ptr U) {
       else:
           discard
   excluded_storages.setLen(0)
-iterator query*(E: typedesc[ent],T,Y,U,I: typedesc):  (ent, ptr T, ptr Y, ptr U, ptr I) {.inline.} = 
+iterator query*(E: typedesc[ent],T,Y,U,I: typedesc):  (eid, ptr T, ptr Y, ptr U, ptr I) {.inline.} = 
   block iteration:
     for ii in excluded_storages:
       if ii.entities.len > 0: break iteration
@@ -719,7 +723,7 @@ iterator query*(E: typedesc[ent],T,Y,U,I: typedesc):  (ent, ptr T, ptr Y, ptr U,
       else:
           discard
   excluded_storages.setLen(0)
-iterator query*(E: typedesc[ent],T,Y,U,I,O: typedesc):  (ent, ptr T, ptr Y, ptr U, ptr I, ptr O) {.inline.} =
+iterator query*(E: typedesc[ent],T,Y,U,I,O: typedesc):  (eid, ptr T, ptr Y, ptr U, ptr I, ptr O) {.inline.} =
   block iteration:
     for ii in excluded_storages:
       if ii.entities.len > 0: break iteration

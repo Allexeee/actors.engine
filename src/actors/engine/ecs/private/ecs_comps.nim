@@ -26,6 +26,7 @@ template impl_storage(T: typedesc) {.used.} =
     addr storage.comps[storage.indices[self.int]]
   proc layerChanged(_:typedesc[T], layerID: LayerID) =
     storage = cast[CompStorage[T]](storages_local[layerID.int])
+  
   proc cleanup(_:typedesc[T], straw: CompStorageBase) =
     let st = cast[CompStorage[T]](straw)
     st.entities.setLen(0); st.comps.setLen(0)
@@ -42,15 +43,15 @@ template impl_storage(T: typedesc) {.used.} =
   proc getStorage*(_: typedesc[T]): CompStorage[T] {.inline.} =
     storage
   
+  proc `set`*(self: ent, _: typedesc[T]): ptr T {.inline, discardable.} = 
+    storage.indices[self.id] = storage.entities.len
+    storage.entities.add(self)
+
+    #self.meta.signature.add(storage.id)
+    storage.comps.push_addr() 
+
   proc get*(self: ent, _: typedesc[T]): ptr T {.inline, discardable.} = 
   
-    # if self.id >= storage.indices.len:
-    #   let oldsize = storage.indices.len
-    #   let newSize = self.id + GROW_SIZE
-    #   storage.indices.setLen(newSize)
-    #   for i in oldsize..<newsize:
-    #     storage.indices[i] = ent.nil.id
-   
     if has(_, self):
       return addr storage.comps[storage.indices[self.id]]
     
@@ -61,37 +62,17 @@ template impl_storage(T: typedesc) {.used.} =
     storage.indices[self.id] = storage.entities.len
     storage.entities.add(self)
 
-    #let comp = storage.comps.push_addr()
 
-    meta.signature.add(cid)
+    #meta.signature.add(cid)
     
-
     if not meta.dirty:
       let op = meta.layer.ecs.operations.push_addr()
-      op.entity = self
+      op.entity = self.id.eid
       op.kind = OpKind.Add
       op.arg  = cid
     
     storage.comps.push_addr() 
-  
-  proc sett*(self: ent, _: typedesc[T]): ptr T {.inline, discardable.} = 
-    
-      # if self.id >= storage.indices.len:
-      #   let oldsize = storage.indices.len
-      #   let newSize = self.id + GROW_SIZE
-      #   storage.indices.setLen(newSize)
-      #   for i in oldsize..<newsize:
-      #     storage.indices[i] = ent.nil.id
-    
 
-     # let meta = self.meta
-      
-      storage.indices[self.id] = storage.entities.len
-      storage.entities.add(self)
-
-      self.meta.signature.add(storage.id)
-      
-      storage.comps.push_addr()
 
   proc remove*(self: ent, _: typedesc[T]) {.inline.} = 
     checkErrorRemoveComponent(self, T)
@@ -108,16 +89,24 @@ template impl_storage(T: typedesc) {.used.} =
     op.kind = OpKind.Remove
     self.meta.signature.excl(op.arg)
   
+  proc removefast(_: typedesc[T], self: eid) {.inline.} = 
+    var last = storage.indices[storage.entities[storage.entities.high].id]
+    var index = storage.indices[self.int]
+    storage.entities.del(index)
+    storage.comps.del(index)
+    swap(storage.indices[index],storage.indices[last])
   #init 
   proc init_storage(_: typedesc[T]): CompStorage[T] =
     result = CompStorage[T]()
     result.id = id_next_component
     result.compType = $T
-    result.comps = newSeqOfCap[T](ENTS_INIT_SIZE)
-    result.entities = newSeqOfCap[ent](ENTS_INIT_SIZE)
+    result.comps = newSeqOfCap[T](ENTS_MAX_SIZE)
+    result.entities = newSeqOfCap[ent](ENTS_MAX_SIZE)
     genIndices(result.indices)
-    result.actions = IStorage(cleanup: proc(st: CompStorageBase)=cleanup(T,st))
+    result.actions = IStorage(cleanup: proc(st: CompStorageBase)=cleanup(T,st), destroy: proc(self: eid)=removefast(T, self))
+    
 
+#destroy
   storage = init_storage(T)
   storages_local[0] = storage
   
