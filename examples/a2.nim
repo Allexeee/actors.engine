@@ -1,7 +1,5 @@
 import actors
 
-import tables
-import hashes
 
 # var st1 = {0,1}
 # var st2 : set[uint16]
@@ -26,37 +24,43 @@ type CompF {.final.} = object
 
 var game  = app.addLayer(); game.use()
 
+
 app.add CompA
 app.add CompB
 app.add CompC
 app.add CompD
 app.add SegA
 
-var v  = game.group(CompA)
+var players = game.group(CompA)
 
-var v2 = game.group(CompA,!CompC)
+var en = game.entity:
+  let ca = e.get CompA
+  let cb = e.get CompB
 
-echo v2.signature_excl
+en.kill()
+#en.kill()
 
-for x in 0..<5000:
-  discard game.entity:
-    let ca = e.get CompA
-    let cc = e.get CompC
-
-echo v2 == v
-
-for x in 0..<(60*3600):
-  profile.start "cached group":
-    for e in v:
-      let ca = e.compA
-      ca.arg += 1
-  # profile.start "dynamic group":
-  #   for e in game.group(CompA):
-  #     let ca = e.compA
-  #     ca.arg += 1
-  profile.start "query":
-    for ca in query(CompA):
-      ca.arg += 1
+# for x in 0..<5000:
+#   discard game.entity:
+#     let ca = e.get CompA
 
 
-profile.log
+# var i = 0;
+# for x in 0..<(60*3600):
+#   profile.start "cached":
+#     for e in players:
+#       let ca = e.compA
+#       ca.arg += 1
+
+#   profile.start "'dynamic'":
+#     for e in game.group(CompA,!CompC):
+#       i+=1 
+#       let ca = e.compA
+#       ca.arg += 1
+      
+#   profile.start "query":
+#     for ca in query(CompA):
+#       ca.arg += 1
+
+# log i
+# profile.log

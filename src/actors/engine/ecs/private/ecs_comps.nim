@@ -52,7 +52,7 @@ template impl_storage(T: typedesc) {.used.} =
   proc getStorage*(_: typedesc[T]): CompStorage[T] {.inline.} =
     storage
   
-  proc get*(self: ent|eid, _: typedesc[T]): ptr T {.inline, discardable.} = 
+  proc get*(self: ent|eid, _: typedesc[T]): ptr T {.discardable.} = 
   
     if has(_, self):
       return addr storage.comps[storage.indices[self.id]]
@@ -67,12 +67,11 @@ template impl_storage(T: typedesc) {.used.} =
     
     if not meta.dirty:
       changeEntity(self,cid)
-
-    storage.comps.push_addr() 
+    
+    storage.comps.push_addr()
   
   proc remove*(self: ent|eid, _: typedesc[T]) {.inline.} = 
-    #checkErrorRemoveComponent(self, T)
-    
+ 
     var last = storage.indices[storage.entities[storage.entities.high].int]
     var index = storage.indices[self.id]
 

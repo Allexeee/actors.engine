@@ -4,7 +4,7 @@
 import strformat
 import macros
 import sets
-import hashes
+import algorithm
 import tables
 
 
@@ -12,28 +12,12 @@ import ../../../actors_h
 import ../../../actors_tools
 import ../actors_ecs_h
 import ecs_utils
-
-import tables
-import hashes
+import ecs_ops
 
 var id_next_group : cid = 0
 
 var mask_exclude* : set[cid]
 var mask_include* : set[cid]
-var hash_excl : int
-var hash_incl : int
-#var megroups* = newTable[int,Group]()
-
-dumpTree:
-  hash_excl = mask_exclude.hash
-
-macro gg(tt: varargs[untyped]) =
-   for x in tt.children:
-     echo x
-
-
-
-
 
 macro gengroup*(layer: LayerId, t: varargs[untyped]) =
   var n = newNimNode(nnkStmtList)
@@ -53,27 +37,26 @@ macro gengroup*(layer: LayerId, t: varargs[untyped]) =
   n.insert(i,newDotExpr(ident($layer), bindSym("makeGroup",brForceOpen)))
   result = n
 
+
+func sortStorages(x,y: CompStorageBase): int =
+  let cx = x.entities
+  let cy = y.entities
+  if cx.len <= cy.len: -1
+  else: 1
+
+
 proc makeGroup(layer: LayerID) : Group {.inline, used, discardable.} =
+  
   let ecs = layers[layer.int]
   let groups = addr ecs.groups
   var group_next : Group = nil
-  #group_next = megroups.getOrDefault(hash_incl,nil)
-
   for i in 0..groups[].high:
     let gr = groups[][i]
-    var isvalid = true
-    for i in gr.signature:
-      if not mask_include.contains(i):
-        isvalid = false; break
-    for i in gr.signature_excl:
-      if not mask_exclude.contains(i):
-        isvalid = false; break
-
-    if isvalid:
-      group_next = gr
-
+    if gr.signature_m == mask_include and
+      gr.signature_m_excl == mask_exclude:
+        group_next = gr; break
+   
   if group_next.isNil:
-    #hash_include =  
     group_next = groups[].getref()
     group_next.id = id_next_group
     group_next.ecs = ecs
@@ -86,13 +69,20 @@ proc makeGroup(layer: LayerID) : Group {.inline, used, discardable.} =
     group_next.indices.gen_indices()
     group_next.layer = layer
     
+    var storages_included = newSeq[CompStorageBase]()
+
     for id in mask_include:
       storages[id][layer.int].groups.add(group_next)
+      storages_included.add(storages[id][layer.int])
+      group_next.signature_m.incl(id)
     for id in mask_exclude:
       storages[id][layer.int].groups.add(group_next)
+      group_next.signature_m_excl.incl(id)
+    
+    storages_included.sort(sortStorages)
+    tryinsert(group_next,storages_included[0].entities)
 
-    #megroups.add(mask_include.hash,group_next)
-    #hash_incl = mask_include.hash
+
     id_next_group += 1
   
   mask_include = {}
@@ -107,10 +97,9 @@ template `[]`*(self: Group, key: int): ent =
   self.entities[key]
 
 
-template group*(layer: LayerId, t: varargs[untyped]): untyped =
-  var grouper {.global.} : Group
-  if grouper.isNil:
-   grouper = gengroup(layer,t)
-  grouper
-
+template group*(layer: LayerId, t: varargs[untyped]): Group =
+  var group_cached {.global.} : Group
+  if group_cached.isNil:
+    group_cached = gengroup(layer,t)
+  group_cached
 

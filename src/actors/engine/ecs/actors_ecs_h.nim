@@ -29,6 +29,8 @@ type
     ecs*              : SystemEcs
     signature*        : seq[cid]
     signature_excl*   : seq[cid]
+    signature_m*        : set[cid]
+    signature_m_excl*   : set[cid]
     indices*          : seq[int]
     entities*         : seq[eid]
  

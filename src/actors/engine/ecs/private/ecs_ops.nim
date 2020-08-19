@@ -1,12 +1,12 @@
 import strutils
 import macros
-import strformat
+#import strformat
 import sets
 import tables
 
 import ../../../actors_h
 import ../actors_ecs_h
-import ecs_groups
+#import ecs_groups
 import ecs_utils
 import ecs_debug
 
@@ -14,17 +14,32 @@ template partof*(self: ent, group: Group): bool =
   if group.id in self.meta.signature_groups:
     true
   else: false
+
 template match*(self: ent, group: Group):  bool  =
-   var result = true
-   for i in group.signature:
-     let indices = storages[i.int][self.meta.layer.int].indices.addr
-     if indices[].high<self.id or indices[][self.id] == ent.nil.id:
-       result = false; break
-   for i in group.signature_excl:
-     let indices = storages[i.int][self.meta.layer.int].indices.addr
-     if indices[].high<self.id or indices[][self.id] != ent.nil.id:
-       result = false; break
-   result
+  var result = true
+  for i in group.signature:
+    let indices = storages[i.int][self.meta.layer.int].indices.addr
+    if indices[].high<self.id or indices[][self.id] == ent.nil.id:
+      result = false; break
+  for i in group.signature_excl:
+    let indices = storages[i.int][self.meta.layer.int].indices.addr
+    if indices[].high<self.id or indices[][self.id] != ent.nil.id:
+      result = false; break
+  result
+
+template match*(self: eid, group: Group): bool  =
+  var result = true
+  for i in group.signature:
+    let indices = storages[i.int][self.meta.layer.int].indices.addr
+    if indices[].high<self.id or indices[][self.id] == ent.nil.id:
+      result = false; break
+  for i in group.signature_excl:
+    let indices = storages[i.int][self.meta.layer.int].indices.addr
+    if indices[].high<self.id or indices[][self.id] != ent.nil.id:
+      result = false; break
+  result
+
+
 
 template insert*(gr: Group, self: eid) = 
   var len = gr.entities.len
@@ -55,6 +70,12 @@ template insert*(gr: Group, self: eid) =
 
   gr.indices[self.int] = right
 
+template tryinsert*(gr: Group, eids: var seq[eid]) =
+  for i in eids:
+    let matched = ecs_ops.match(i,gr)
+    if matched:
+      gr.insert(i)
+
 template remove*(gr: Group, self: eid) =
   let meta = self.meta
   let index = binarysearch(addr gr.entities, self.int)
@@ -74,12 +95,13 @@ template changeEntity*(self: eid, cid: uint16) =
 
 template empty*(meta: ptr EntityMeta, ecs: SystemEcs, self: eid) {.used.} =
   available += 1
-
-  for gid in meta.signature_groups:
-    ecs.groups[gid].remove(self)
   
-  for cid in meta.signature:
-    storages[cid.int][ecs.layer.int].actions.remove(self)
+  
+  for i in countdown(meta.signature_groups.high,0):
+    ecs.groups[meta.signature_groups[i]].remove(self)
+
+  for i in countdown(meta.signature.high,0):
+    storages[meta.signature[i].int][ecs.layer.int].actions.remove(self)
 
   entities[self.int].age.incAge()
   system.swap(entities[self.int],entities[ENTS_MAX_SIZE-available])
@@ -93,8 +115,10 @@ proc kill*(self: ent|eid) {.inline.} =
   check_error_release_empty(self)
   let meta = self.meta
   let ecs = self.layer.ecs
-  for e in meta.childs:
-    kill(e)
+  for i in countdown(meta.childs.high,0):
+    kill(meta.childs[i])
+  #for e in meta.childs:
+  #  kill(e)
   empty(meta,ecs,self)
 
 proc kill*(ecs: SystemEcs) {.inline.} =
@@ -201,39 +225,39 @@ template has*(self:ent, t,y,u,i,o,p: typedesc): bool =
  o.has(self) and
  p.has(self)
 
-macro get*(this: ent, args: varargs[untyped]): untyped =
-  var command = nnkCommand.newTree(
-                  nnkDotExpr.newTree(
-                      ident($this),
-                      ident("has")))
-  var code = args[args.len-1]
-  for i in 0..args.len-2:
-    var elem = args[i]
-    command.add(ident($elem))
-    var elem_name = $elem
-    formatComponentAlias(elem_name) 
-    var elem_var = toLowerAscii(elem_name[0]) & substr(elem_name, 1)
-    formatComponent(elem_var)
-    var n = nnkLetSection.newTree(
-        nnkIdentDefs.newTree(
-            newIdentNode(elem_var),
-            newEmptyNode(),
-            nnkDotExpr.newTree(
-                newIdentNode($this),
-                newIdentNode(elem_var)
-            ),
-        )
-    )
-    code.insert(0,n)
+# macro get*(this: ent, args: varargs[untyped]): untyped =
+#   var command = nnkCommand.newTree(
+#                   nnkDotExpr.newTree(
+#                       ident($this),
+#                       ident("has")))
+#   var code = args[args.len-1]
+#   for i in 0..args.len-2:
+#     var elem = args[i]
+#     command.add(ident($elem))
+#     var elem_name = $elem
+#     formatComponentAlias(elem_name) 
+#     var elem_var = toLowerAscii(elem_name[0]) & substr(elem_name, 1)
+#     formatComponent(elem_var)
+#     var n = nnkLetSection.newTree(
+#         nnkIdentDefs.newTree(
+#             newIdentNode(elem_var),
+#             newEmptyNode(),
+#             nnkDotExpr.newTree(
+#                 newIdentNode($this),
+#                 newIdentNode(elem_var)
+#             ),
+#         )
+#     )
+#     code.insert(0,n)
   
-  var node_head = nnkStmtList.newTree(
-      nnkIfStmt.newTree(
-          nnkElifBranch.newTree(
-              command,
-               nnkStmtList.newTree(
-                   code
-               )
-          )
-      )
-  )
-  result = node_head
+#   var node_head = nnkStmtList.newTree(
+#       nnkIfStmt.newTree(
+#           nnkElifBranch.newTree(
+#               command,
+#                nnkStmtList.newTree(
+#                    code
+#                )
+#           )
+#       )
+#   )
+#   result = node_head
