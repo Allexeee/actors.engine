@@ -2,7 +2,7 @@ import strutils
 import macros
 import strformat
 import ../actors_ecs_h
-import hashes
+#import hashes
 
 func binarysearch*(this: ptr seq[eid], value: int): int {.discardable, used, inline.} =
   var m : int = -1

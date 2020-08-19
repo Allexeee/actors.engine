@@ -1,11 +1,6 @@
-import tables
 import ../../actors_h
 
-
-
 const ENTS_MAX_SIZE* = 1_000_000
-#const ENTS_MAX_SIZE* = ENTS_INIT_SIZE - 1
-#const GROW_SIZE* = 256
 
 type
   ent* = tuple[id: int, age: int]
@@ -26,7 +21,6 @@ type
  
   SystemEcs* = ref object
     groups*        : seq[Group]
-    operations*    : seq[Operation]
     layer*         : LayerId
   
   Group* = ref object of RootObj
@@ -39,7 +33,7 @@ type
     entities*         : seq[eid]
  
   IStorage* = object
-    destroy*: proc (self: eid)
+    remove*: proc (self: eid)
     cleanup*: proc (st: CompStorageBase)
  
   CompStorageBase* = ref object of RootObj
@@ -53,17 +47,8 @@ type
  
   CompStorage*[T] = ref object of CompStorageBase
      comps*      : seq[T]
- 
-  OpKind* = enum
-    Init,
-    Add,
-    Remove,
-    Kill
-  
-  Operation* {.packed.} = object
-    kind*  : OpKind
-    entity*: eid 
-    arg*   : uint16
+
+
 
 var metas*      = newSeq[EntityMeta](ENTS_MAX_SIZE)
 
@@ -72,10 +57,6 @@ var available*  = ENTS_MAX_SIZE
 var layers*     = newSeq[SystemEcs](12)
 var storages*   = newSeq[ptr seq[CompStorageBase]]()
 var allgroups*  = newSeq[Group]()
-
-var groups_table* = newTable[int,Group]()
-var groups_table_exclude* = newTable[int,Group]()
-var groups_table_with_exclude* = newTable[int,TableRef[int,Group]]()
 
 converter toEnt*(x: eid): ent =
   (x.int,entities[x.int].age)
@@ -103,12 +84,13 @@ proc addEcs*(layerID: LayerID) =
   ecs[] = SystemEcs()
   ecs.layer = layerID
   ecs.groups = newSeq[Group]()
-  ecs.operations = newSeqOfCap[Operation](ENTS_MAX_SIZE)
+  #ecs.operations = newSeqOfCap[Operation](ENTS_MAX_SIZE)
 
 
 for i in 0..<ENTS_MAX_SIZE:
   entities[i].id = i
   entities[i].age = 1
+  metas[i].layer = byte.high.LayerId
   metas[i].signature        = newSeqOfCap[cid](8)
   metas[i].signature_groups = newSeqOfCap[cid](4)
   metas[i].dirty = true

@@ -13,14 +13,29 @@ import ../../../actors_tools
 import ../actors_ecs_h
 import ecs_utils
 
+import tables
+import hashes
+
 var id_next_group : cid = 0
-var storageCache {.used.} = newSeq[CompStorageBase](256)
 
 var mask_exclude* : set[cid]
 var mask_include* : set[cid]
+var hash_excl : int
+var hash_incl : int
+#var megroups* = newTable[int,Group]()
+
+dumpTree:
+  hash_excl = mask_exclude.hash
+
+macro gg(tt: varargs[untyped]) =
+   for x in tt.children:
+     echo x
 
 
-macro group*(layer: LayerId, t: varargs[untyped]) =
+
+
+
+macro gengroup*(layer: LayerId, t: varargs[untyped]) =
   var n = newNimNode(nnkStmtList)
   template genMask(arg: untyped): NimNode =
     var n = newNimNode(nnkCall)
@@ -42,6 +57,8 @@ proc makeGroup(layer: LayerID) : Group {.inline, used, discardable.} =
   let ecs = layers[layer.int]
   let groups = addr ecs.groups
   var group_next : Group = nil
+  #group_next = megroups.getOrDefault(hash_incl,nil)
+
   for i in 0..groups[].high:
     let gr = groups[][i]
     var isvalid = true
@@ -56,7 +73,7 @@ proc makeGroup(layer: LayerID) : Group {.inline, used, discardable.} =
       group_next = gr
 
   if group_next.isNil:
-    
+    #hash_include =  
     group_next = groups[].getref()
     group_next.id = id_next_group
     group_next.ecs = ecs
@@ -73,14 +90,9 @@ proc makeGroup(layer: LayerID) : Group {.inline, used, discardable.} =
       storages[id][layer.int].groups.add(group_next)
     for id in mask_exclude:
       storages[id][layer.int].groups.add(group_next)
-    
-    groups_table.add(mask_include.hash,group_next)
-    groups_table_with_exclude.add(mask_include.hash, newTable[int,Group]())
-  #  groups_table_exclude.add(mask_exclude.hash,group_next)
-    var t = groups_table_with_exclude[mask_include.hash].addr
-    t[].add(mask_exclude.hash,group_next)
-    #groups_table_with_exclude.add(mask_include.hash,add(mask_exclude,group_next))
-    
+
+    #megroups.add(mask_include.hash,group_next)
+    #hash_incl = mask_include.hash
     id_next_group += 1
   
   mask_include = {}
@@ -93,4 +105,12 @@ template high*(self: Group): int =
   self.entities.high
 template `[]`*(self: Group, key: int): ent =
   self.entities[key]
+
+
+template group*(layer: LayerId, t: varargs[untyped]): untyped =
+  var grouper {.global.} : Group
+  if grouper.isNil:
+   grouper = gengroup(layer,t)
+  grouper
+
 

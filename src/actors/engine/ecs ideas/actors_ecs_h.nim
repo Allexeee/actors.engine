@@ -47,14 +47,7 @@ type
   
   CompStorage*[T] = ref object of CompStorageBase
      comps*      : seq[T]
-  
-  OpKind* = enum
-    Init
-    
-  Operation* {.packed.} = object
-    kind*  : OpKind
-    entity*: ent 
-    arg*   : uint16
+
 
 template none*(T: typedesc[ent]): ent =
   (int.high,0)
