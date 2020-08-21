@@ -6,26 +6,27 @@ import strutils
 import macros
 import sets
 
-import ../../../actors_tools
 import ../../../actors_h
-import ../actors_ecs_h
+import ../pixeye_ecs_h
 import ecs_utils
-import ecs_debug
+
 
 var id_next_component : cid = 0
 
 template impl_storage(T: typedesc) {.used.} =
   
   var storage* =  CompStorage[T]()
-  var storages_local* = newSeq[CompStorageBase](highest_layer_id)
-  
+  var storageid* : cid
+  var storages_local_t* = newSeq[CompStorage[T]](highest_layer_id)
   #private
   proc impl_get(self: ent, _: typedesc[T]): ptr T {.inline, discardable, used.} =
     addr storage.comps[storage.indices[self.id]] 
+  
   proc impl_get(self: eid, _: typedesc[T]): ptr T {.inline, discardable, used.} =
     addr storage.comps[storage.indices[self.int]]
+  
   proc layerChanged(_:typedesc[T], layerID: LayerID) =
-    storage = cast[CompStorage[T]](storages_local[layerID.int])
+    storage = storages_local_t[layerID.int] #cast[CompStorage[T]](storages_local[layerID.int])
   
   proc cleanup(_:typedesc[T], straw: CompStorageBase) =
     let st = cast[CompStorage[T]](straw)
@@ -46,29 +47,34 @@ template impl_storage(T: typedesc) {.used.} =
   proc has*(_:typedesc[T], self: ent): bool {.inline,discardable.} =
     storage.indices[self.id] != ent.nil.id and storage.indices[self.id] < storage.entities.len
   
-  proc id*(_: typedesc[T]): cid {.inline.} =
+  proc getstorageid*(_: typedesc[T]): cid {.inline.} =
     storage.id 
-  
   proc getStorage*(_: typedesc[T]): CompStorage[T] {.inline.} =
     storage
-  
-  proc get*(self: ent|eid, _: typedesc[T]): ptr T {.discardable.} = 
+   
+  # proc getStorage*(_: typedesc[T], layer: LayerId): CompStorage[T] {.inline.} =
+  #   storages_local_t[ecs.int]
+ 
+  proc get*(self: ent|eid, _: typedesc[T]): ptr T {.inline,discardable.} = 
   
     if has(_, self):
       return addr storage.comps[storage.indices[self.id]]
-
-    let cid = storage.id
-    let meta = self.meta
     
-    storage.indices[self.id] = storage.entities.len
-    storage.entities.add(self)
+    let cid = storageid
+    let st = cast[CompStorage[T]](self.ecs.storages[storageid])
 
-    meta.signature.add(cid)
+    st.indices[self.id] = st.entities.len 
+    st.entities.add(self)
+
+
+    self.meta.signature.add(cid)
     
-    if not meta.dirty:
+    if not dirty:
       changeEntity(self,cid)
     
-    storage.comps.push_addr()
+    st.comps.add(T())
+    st.comps[st.comps.high].addr
+    
   
   proc remove*(self: ent|eid, _: typedesc[T]) {.inline.} = 
  
@@ -96,16 +102,17 @@ template impl_storage(T: typedesc) {.used.} =
     result.entities = newSeqOfCap[eid](ENTS_MAX_SIZE)
     genIndices(result.indices)
     result.actions = IStorage(cleanup: proc(st: CompStorageBase)=cleanup(T,st), remove: proc(self: eid)=removeById(T, self))
-
+    storageid = result.id
   #init
 
   storage = init_storage(T)
-  storages_local[0] = storage
+  storages_local_t[0] = storage
+  for i in 1..storages_local_t.high:
+    let st = init_storage(T)
+    storages_local_t[i] = st
   
-  for i in 1..storages_local.high:
-    storages_local[i] = init_storage(T)
-  
-  storages.add(storages_local.addr)
+  for ecs in ecslayers:
+    ecs.storages.add(storage)
   
   a_layer_changed.add(ILayer(Change: proc (self: LayerId) = layerChanged(T,self)))
 

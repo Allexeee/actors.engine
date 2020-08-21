@@ -7,30 +7,30 @@ type
   
   eid* = distinct int
   
-  Ent* = ent
- 
   cid*   = uint16
+ 
+  Ent* = ent
    
   EntityMeta* = object
-    dirty*            : bool
-    layer*            : LayerID
+    ecs*              : LayerEcs
     childs*           : seq[eid]
     signature*        : seq[cid]
     signature_groups* : seq[cid] # what groups are already used
     parent*           : eid
  
-  SystemEcs* = ref object
-    groups*        : seq[Group]
+  LayerEcs* = ref object
     layer*         : LayerId
+    groups*        : seq[Group]
+    storages*      : seq[CompStorageBase]
   
   Group* = ref object of RootObj
     id*               : cid
     layer*            : LayerID
-    ecs*              : SystemEcs
-    signature*        : seq[cid]
-    signature_excl*   : seq[cid]
-    signature_m*        : set[cid]
-    signature_m_excl*   : set[cid]
+    ecs*              : LayerEcs
+    signature_mask*        : set[cid]
+    signature_excl_mask*   : set[cid]
+    signature*       : seq[cid]
+    signature_excl*  : seq[cid]
     indices*          : seq[int]
     entities*         : seq[eid]
  
@@ -51,17 +51,20 @@ type
      comps*      : seq[T]
 
 
+var dirty*      = false
 
 var metas*      = newSeq[EntityMeta](ENTS_MAX_SIZE)
-
 var entities*   = newSeq[ent](ENTS_MAX_SIZE)
 var available*  = ENTS_MAX_SIZE
-var layers*     = newSeq[SystemEcs](12)
-var storages*   = newSeq[ptr seq[CompStorageBase]]()
+var ecslayers*  = newSeqOfCap[LayerEcs](6)
+#var storages*  = newSeq[ptr seq[CompStorageBase]]()
 var allgroups*  = newSeq[Group]()
+var  sssignature*        = newSeq[cid](24)
+var slen* = 0
 
 converter toEnt*(x: eid): ent =
   (x.int,entities[x.int].age)
+
 converter toEid*(x: ent): eid =
   x.id.eid
 
@@ -71,32 +74,33 @@ template id*(self: eid): int =
 template `nil`*(T: typedesc[ent]): ent =
   (int.high,0)
 
-template ecs*(lid: LayerId): SystemEcs =
-  layers[lid.int]
+template ecs*(lid: LayerId): LayerEcs =
+  ecslayers[lid.int]
+template ecs*(self: ent|eid): LayerEcs =
+   metas[self.id].ecs
 
 proc meta*(self: ent): ptr EntityMeta {.inline.} =
   metas[self.id].addr
+
 proc meta*(self: eid): ptr EntityMeta {.inline.} =
   metas[self.int].addr
+
 proc layer*(self: ent): LayerId {.inline.} =
-  self.meta.layer
+  self.meta.ecs.layer
 
 proc addEcs*(layerID: LayerID) =
-  var ecs = layers[layerID.uint].addr
-  ecs[] = SystemEcs()
+  let ecs = LayerEcs()
+  ecslayers.add(ecs)
   ecs.layer = layerID
   ecs.groups = newSeq[Group]()
-  #ecs.operations = newSeqOfCap[Operation](ENTS_MAX_SIZE)
-
+  ecs.storages = newSeq[CompStorageBase]()
 
 for i in 0..<ENTS_MAX_SIZE:
   entities[i].id = i
   entities[i].age = 1
-  metas[i].layer = byte.high.LayerId
+  metas[i].ecs = nil
   metas[i].signature        = newSeqOfCap[cid](8)
   metas[i].signature_groups = newSeqOfCap[cid](4)
-  metas[i].dirty = true
   
-
 
 a_layer_added.add(addEcs)

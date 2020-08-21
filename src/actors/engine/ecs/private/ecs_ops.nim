@@ -1,47 +1,31 @@
 import strutils
 import macros
-#import strformat
 import sets
 import tables
 
 import ../../../actors_h
-import ../actors_ecs_h
-#import ecs_groups
+import ../pixeye_ecs_h
 import ecs_utils
 import ecs_debug
 
-template partof*(self: ent, group: Group): bool =
+template partof*(self: ent|eid, group: Group): bool =
   if group.id in self.meta.signature_groups:
     true
   else: false
 
-template match*(self: ent, group: Group):  bool  =
+template match*(self: ent|eid, group: Group):  bool =
   var result = true
   for i in group.signature:
-    let indices = storages[i.int][self.meta.layer.int].indices.addr
-    if indices[].high<self.id or indices[][self.id] == ent.nil.id:
-      result = false; break
+    let indices = group.ecs.storages[i.int].indices
+    if indices.high<self.id or indices[self.id] == ent.nil.id:
+      result = false;break
   for i in group.signature_excl:
-    let indices = storages[i.int][self.meta.layer.int].indices.addr
-    if indices[].high<self.id or indices[][self.id] != ent.nil.id:
-      result = false; break
+    let indices = group.ecs.storages[i.int].indices
+    if indices.high<self.id or indices[self.id] != ent.nil.id:
+      result = false;break
   result
 
-template match*(self: eid, group: Group): bool  =
-  var result = true
-  for i in group.signature:
-    let indices = storages[i.int][self.meta.layer.int].indices.addr
-    if indices[].high<self.id or indices[][self.id] == ent.nil.id:
-      result = false; break
-  for i in group.signature_excl:
-    let indices = storages[i.int][self.meta.layer.int].indices.addr
-    if indices[].high<self.id or indices[][self.id] != ent.nil.id:
-      result = false; break
-  result
-
-
-
-template insert*(gr: Group, self: eid) = 
+proc insert*(gr: Group, self: eid) {.inline.} = 
   var len = gr.entities.len
   var left, index = 0
   var right = len
@@ -70,21 +54,21 @@ template insert*(gr: Group, self: eid) =
 
   gr.indices[self.int] = right
 
-template tryinsert*(gr: Group, eids: var seq[eid]) =
+proc tryinsert*(gr: Group, eids: var seq[eid]) {.inline.} =
   for i in eids:
     let matched = ecs_ops.match(i,gr)
     if matched:
       gr.insert(i)
 
-template remove*(gr: Group, self: eid) =
+proc remove*(gr: Group, self: eid) {.inline.} =
   let meta = self.meta
   let index = binarysearch(addr gr.entities, self.int)
   gr.entities.delete(index)
   gr.indices[self.int] = ent.nil.id
   meta.signature_groups.delete(meta.signature_groups.find(gr.id))
 
-template changeEntity*(self: eid, cid: uint16) =
-  let groups = storages[cid][self.meta.layer.int].groups   
+proc changeEntity*(self: eid, cid: uint16) {.inline.} =
+  let groups = self.ecs.storages[cid].groups   #storages[cid][self.meta.layer.int].groups   
   for group in groups:
     let grouped = self.partof(group)
     let matched = self.match(group)
@@ -93,15 +77,15 @@ template changeEntity*(self: eid, cid: uint16) =
     elif not grouped and matched:
       group.insert(self)
 
-template empty*(meta: ptr EntityMeta, ecs: SystemEcs, self: eid) {.used.} =
+proc empty*(meta: ptr EntityMeta, ecs: LayerEcs, self: eid) {.inline,used.} =
   available += 1
-  
   
   for i in countdown(meta.signature_groups.high,0):
     ecs.groups[meta.signature_groups[i]].remove(self)
 
   for i in countdown(meta.signature.high,0):
-    storages[meta.signature[i].int][ecs.layer.int].actions.remove(self)
+    ecs.storages[meta.signature[i].int].actions.remove(self)
+
 
   entities[self.int].age.incAge()
   system.swap(entities[self.int],entities[ENTS_MAX_SIZE-available])
@@ -109,7 +93,6 @@ template empty*(meta: ptr EntityMeta, ecs: SystemEcs, self: eid) {.used.} =
   meta.signature_groups.setLen(0)
   meta.parent = ent.nil.id.eid
   meta.childs.setLen(0)
-  meta.dirty = true
 
 proc kill*(self: ent|eid) {.inline.} =
   check_error_release_empty(self)
@@ -117,12 +100,10 @@ proc kill*(self: ent|eid) {.inline.} =
   let ecs = self.layer.ecs
   for i in countdown(meta.childs.high,0):
     kill(meta.childs[i])
-  #for e in meta.childs:
-  #  kill(e)
   empty(meta,ecs,self)
 
-proc kill*(ecs: SystemEcs) {.inline.} =
-    proc emptyOnLayerKill(id: int) {.used.} =
+proc kill*(ecs: LayerEcs) {.inline.} =
+    proc emptyOnLayerKill(id: int) {.inline,used.} =
       let meta = metas[id].addr
       available += 1
       entities[id].age.incAge()
@@ -140,21 +121,26 @@ proc kill*(ecs: SystemEcs) {.inline.} =
   #find all entities on the layer and release them
     for i in 0..metas.high:
       let m = metas[i].addr
-      if m.layer.int == ecs.layer.int:
+      if m.ecs == ecs:
         emptyOnLayerKill(i)
   #clean storages
-    for st in storages:
-      let lst = st[ecs.layer.int]
-      lst.actions.cleanup(lst)
+    for st in ecs.storages:
+      #let lst = st[ecs.layer.int]
+      st.actions.cleanup(st)
 
 iterator items*(range: Group): eid =
   for i in countdown(range.entities.high,0):
     yield range.entities[i]
 
-iterator query*(E: typedesc[ent],T: typedesc): (eid, ptr T) {.inline.} =
-  var st1 = T.getStorage()
+iterator query*(ecs: LayerEcs, E: typedesc[ent],T: typedesc): (eid, ptr T) {.inline.} =
+  var st1 = cast[CompStorage[T]](ecs.storages[T.getstorageid])
   for i in countdown(st1.comps.high,0):
      yield (st1.entities[i].id.eid,st1.comps[i].addr)
+
+iterator query*(ecs: LayerEcs, T: typedesc): ptr T {.inline.} =
+  let st1 = cast[CompStorage[T]](ecs.storages[T.getstorageid])
+  for i in countdown(st1.comps.high,0):
+     yield st1.comps[i].addr
 
 iterator query*(T: typedesc): ptr T {.inline.} =
   let st1 = T.getStorage()
@@ -164,35 +150,53 @@ iterator query*(T: typedesc): ptr T {.inline.} =
 var e1 {.global.} : ptr ent
 var e2 {.global.} : ptr ent
 
-template entity*(lid: LayerId, code: untyped): ent  =
+
+proc bind_impl(self: eid) {.inline.} =
+  let meta = self.meta
+  for cid in meta.signature:
+     let groups = meta.ecs.storages[cid].groups
+     for group in groups:
+       if not self.partof(group) and self.match(group):
+         group.insert(self)
+
+template entity*(ecs: LayerEcs, code: untyped) =
+  proc `bind`(self: eid) {.inline,discardable.} =
+    bind_impl(self)
+
   e1 = entities[ENTS_MAX_SIZE-available].addr
   e2 = entities[e1.id].addr
   available -= 1
   swap(e1.age,e2.age)
-  let e {.inject.}= entities[e2.id]
-  swap(e1.id,e2.id)
-  metas[e.id].layer = lid
+ 
   block:
+    dirty = true
+    let e {.inject.} = entities[e2.id]
+    swap(e1.id,e2.id)
+    metas[e.id].ecs = ecs
     code
     e.bind()
-  e
+    dirty = false
 
-template bind_impl(self: ent) =
-  let meta = self.meta
-  meta.dirty = false
-  for cid in meta.signature:
-     let groups = storages[cid][meta.layer.int].groups
-     for group in groups:
-       if not self.partof(group) and self.match(group):
-         group.insert(self.id.eid)
+template entity*(ecs: LayerEcs, name: untyped, code: untyped): untyped =
+  
+  proc `bind`(self: eid) {.inline,discardable.} =
+    bind_impl(self)
 
-proc `bind`*(self: ent) {.inline,discardable.} =
-  bind_impl(self)
+  e1 = entities[ENTS_MAX_SIZE-available].addr
+  e2 = entities[e1.id].addr
+  available -= 1
+  swap(e1.age,e2.age)
+  let name {.inject.} = entities[e2.id]
+  swap(e1.id,e2.id)
+  metas[name.id].ecs = ecs
+  block:
+    dirty = true
+    code
+    name.bind()
+    dirty = false
 
 proc exist*(self:ent): bool =
   let cached = entities[self.id].addr
-  echo self.id, "_", cached.id
-  echo self.age, "_", cached.age
   cached.id == self.id and cached.age == self.age
 
 template has*(self:eid, t: typedesc): bool =
@@ -225,39 +229,39 @@ template has*(self:ent, t,y,u,i,o,p: typedesc): bool =
  o.has(self) and
  p.has(self)
 
-# macro get*(this: ent, args: varargs[untyped]): untyped =
-#   var command = nnkCommand.newTree(
-#                   nnkDotExpr.newTree(
-#                       ident($this),
-#                       ident("has")))
-#   var code = args[args.len-1]
-#   for i in 0..args.len-2:
-#     var elem = args[i]
-#     command.add(ident($elem))
-#     var elem_name = $elem
-#     formatComponentAlias(elem_name) 
-#     var elem_var = toLowerAscii(elem_name[0]) & substr(elem_name, 1)
-#     formatComponent(elem_var)
-#     var n = nnkLetSection.newTree(
-#         nnkIdentDefs.newTree(
-#             newIdentNode(elem_var),
-#             newEmptyNode(),
-#             nnkDotExpr.newTree(
-#                 newIdentNode($this),
-#                 newIdentNode(elem_var)
-#             ),
-#         )
-#     )
-#     code.insert(0,n)
+macro tryget*(this: ent, args: varargs[untyped]): untyped =
+  var command = nnkCommand.newTree(
+                  nnkDotExpr.newTree(
+                      ident($this),
+                      ident("has")))
+  var code = args[args.len-1]
+  for i in 0..args.len-2:
+    var elem = args[i]
+    command.add(ident($elem))
+    var elem_name = $elem
+    formatComponentAlias(elem_name) 
+    var elem_var = toLowerAscii(elem_name[0]) & substr(elem_name, 1)
+    formatComponent(elem_var)
+    var n = nnkLetSection.newTree(
+        nnkIdentDefs.newTree(
+            newIdentNode(elem_var),
+            newEmptyNode(),
+            nnkDotExpr.newTree(
+                newIdentNode($this),
+                newIdentNode(elem_var)
+            ),
+        )
+    )
+    code.insert(0,n)
   
-#   var node_head = nnkStmtList.newTree(
-#       nnkIfStmt.newTree(
-#           nnkElifBranch.newTree(
-#               command,
-#                nnkStmtList.newTree(
-#                    code
-#                )
-#           )
-#       )
-#   )
-#   result = node_head
+  var node_head = nnkStmtList.newTree(
+      nnkIfStmt.newTree(
+          nnkElifBranch.newTree(
+              command,
+               nnkStmtList.newTree(
+                   code
+               )
+          )
+      )
+  )
+  result = node_head

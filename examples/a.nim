@@ -1,11 +1,23 @@
-import sets
-import hashes
+import actors
 
-var mask = {1,2}
-var mask2 = {1,2}
+type bpp =  object
+  arg: int
 
-echo mask
-echo mask2
+var s = newSeq[bpp](20)
+for i in 0..<20:
+  s[i] = bpp()
+var b : bpp
+var vv : bpp; b =  vv
+
+var index = 12
+
+for x in 0..<100000:
+  profile.start "test":
+    var q = s[index].addr
+  profile.start "test2":
+    var q = b
+
+profile.log
 #var incl = {1}
 #var excl = {-2}
 

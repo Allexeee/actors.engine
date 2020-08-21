@@ -1,10 +1,7 @@
 import strutils
 import macros
 import strformat
-import ../actors_ecs_h
-
-
-
+import ../pixeye_ecs_h
 
 func binarysearch*(this: ptr seq[eid], value: int): int {.discardable, used, inline.} =
   var m : int = -1
@@ -19,9 +16,6 @@ func binarysearch*(this: ptr seq[eid], value: int): int {.discardable, used, inl
       else:
           right = m - 1
   return m
-# func hash*(x: set[uint16]): Hash =
-#   result = x.hash
-#   result = !$result
 func incAge*(age: var int) =
   if age == high(int):
     age = 0
@@ -117,3 +111,11 @@ macro formatComponentPrettyEid*(t: typedesc): untyped {.used.}=
         """)
 
   result = parseStmt(source)
+
+proc getref*[T](self: var seq[T]) : var T {.inline.} =
+  self.add(T())
+  self[self.high]
+
+proc getptr*[T](self: var seq[T]) : ptr T {.inline.} =
+  self.add(T())
+  self[self.high].addr
