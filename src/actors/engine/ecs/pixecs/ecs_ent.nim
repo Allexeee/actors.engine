@@ -1,3 +1,6 @@
+{.used.}
+{.experimental: "dynamicBindSym".}
+
 import strutils
 import macros
 
@@ -8,7 +11,6 @@ import ecs_group
 var e1 {.global.} : ptr ent
 var e2 {.global.} : ptr ent
 
-var batched* : seq[eid] 
 # 0,0 1,2 
 # 0,2 1,0 (swap age), inject ents[e2.id]
 # 1,2,0,0 (swap id)
@@ -18,34 +20,40 @@ func incAge*(age: var int) =
     age = 0
   else: age += 1
 
-template entity*(ecs: Ecs, code: untyped) =
-  e1 = ents[AMOUNT_ENTS-ents_free].addr
+template gen_ent(): untyped =
+  e1 = ents[AMOUNT_ENTS-FREE_ENTS].addr
   e2 = ents[e1.id].addr 
-  ents_free -= 1
+  FREE_ENTS -= 1
   swap(e1,e2)
+
+template entity*(ecs: Ecs, code: untyped) =
+  gen_ent()
   block:
     let e {.inject,used.} : ent = (e1.id,e2.age) #(e1.id,e2.age)
     ecs.dirty = true
     code
-    ecs.dirty = false
     ecs_group.bind(e.id.eid)
 
 template entity*(ecs: Ecs, name: untyped, code: untyped): untyped =
-  e1 = ents[AMOUNT_ENTS-ents_free].addr
-  e2 = ents[e1.id].addr
-  ents_free -= 1
-  swap(e1,e2)
+  gen_ent()
   let name {.inject,used.} : ent = (e1.id,e2.age) #ents[e2.id]
   block:
     ecs.dirty = true
     let e {.inject,used.} : ent = name
     code
-    ecs.dirty = false
     ecs_group.bind(name.id.eid)
+
+proc create*(ecs: Ecs): ent =
+  ##Keep in mind that you need to call ecs.bind after creating and setting up components
+  gen_ent()
+  ecs.dirty = true
+  (e1.id,e2.age)
+
 
 proc alive*(self:ent): bool =
   let cached = ents[self.id].addr
   cached.id == self.id and cached.age == self.age
+
 
 proc empty*(meta: ptr EntMeta, self: eid) {.inline,used.} =
 
@@ -55,13 +63,13 @@ proc empty*(meta: ptr EntMeta, self: eid) {.inline,used.} =
   for i in countdown(meta.sig.high,0):
     metas_storage[meta.sig[i].int].actions.remove(self)
 
+  FREE_ENTS += 1
   ents[self.int].age.incAge()
-  system.swap(ents[self.int],ents[AMOUNT_ENTS-ents_free])
+  system.swap(ents[self.int],ents[AMOUNT_ENTS-FREE_ENTS])
   meta.sig.setLen(0) 
   meta.sig_groups.setLen(0)
   meta.parent = ent.nil.id.eid
   meta.childs.setLen(0)
-  ents_free += 1
 
 proc release*(self: ent|eid) {.inline.} =
   # Release is called via kill, don't use manually
@@ -76,9 +84,9 @@ proc kill*(self: ent|eid) {.inline.} =
 
 proc kill*(ecs: Ecs) =
   template empty(meta: ptr EntMeta, id: int)=
-      ents_free += 1
+      FREE_ENTS += 1
       ents[id].age.incAge()
-      system.swap(ents[id],ents[AMOUNT_ENTS-ents_free])
+      system.swap(ents[id],ents[AMOUNT_ENTS-FREE_ENTS])
       meta.sig.setLen(0)
       meta.sig_groups.setLen(0)
       meta.parent = ent.nil.eid

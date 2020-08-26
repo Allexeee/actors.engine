@@ -1,7 +1,7 @@
 import strutils
-import macros
 
 var AMOUNT_ENTS*  = 0
+var FREE_ENTS*    = 0
 
 type #@atomic 
   
@@ -27,6 +27,7 @@ type #@ecs
  
   EcsGroup* = ref object
     id*        : cid
+    indices*   : seq[int]
     ents*      : seq[eid]
     incl_hash* : int      # include 
     incl_sig*  : seq[cid]
@@ -46,7 +47,6 @@ type #@ecs
 var  #@variables
   metas*         : seq[EntMeta]
   ents*          : seq[ent]
-  ents_free*     : int
   ecs*           : Ecs
   groups*        : seq[EcsGroup]
   metas_storage* : seq[CompStorageMeta]
@@ -63,13 +63,15 @@ converter toEid*(x: ent): eid =
 template id*(self: eid): int =
   self.int
 
+
+
 proc meta*(self: ent): ptr EntMeta {.inline.} =
   metas[self.id].addr
 
 proc meta*(self: eid): ptr EntMeta {.inline.} =
   metas[self.int].addr
 
-template init_indices*(self: var seq[int]) {.used.} =
+proc init_indices*(self: var seq[int]) {.used.} =
   self = newSeq[int](AMOUNT_ENTS)
   for i in 0..self.high:
     self[i] = ent.nil.id

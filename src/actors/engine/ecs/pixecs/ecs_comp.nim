@@ -8,6 +8,7 @@ import ecs_h
 
 var next_storage_id = 0
 
+
 template impl_storage*(T: typedesc) {.used.} =
   var st_id   : int
   var st_indices : seq[int]
@@ -17,19 +18,19 @@ template impl_storage*(T: typedesc) {.used.} =
  #private
   proc cleanup(_:typedesc[T]) = 
     st_ents.setLen(0); st_comps.setLen(0)
-
+  
   proc removeOnRelease(_:typedesc[T],self: eid) =
-    var last = st_indices[st_ents[st_ents.high].int]
-    var index = st_indices[self.id]
-
+    let last = st_indices[st_ents[st_ents.high].int]
+    let index = st_indices[self.int]
     st_ents.del(index)
     st_comps.del(index)
     swap(st_indices[index],st_indices[last])
-  
+    st_indices[index] = int.high
+
   proc init(_:typedesc[T]) =
     st_id = next_storage_id;next_storage_id+=1
-    st_ents    =  newSeqOfCap[eid]((AMOUNT_ENTS).int)
-    st_comps   =  newSeqOfCap[T]((AMOUNT_ENTS).int)
+    st_ents    =  newSeqOfCap[eid]((AMOUNT_ENTS/2).int)
+    st_comps   =  newSeqOfCap[T]((AMOUNT_ENTS/2).int)
     init_indices(st_indices)
     metas_storage.add(CompStorageMeta())
    
@@ -38,30 +39,29 @@ template impl_storage*(T: typedesc) {.used.} =
     m_st[].indices = st_indices.addr
     m_st[].groups  = newSeq[EcsGroup]()
     m_st[].actions = IStorage(cleanup: proc()=cleanup(T),remove: proc(self:eid)=removeOnRelease(T, self))
-
-
   proc impl_get(self: ent|eid, _: typedesc[T]): ptr T {.inline, discardable, used.} =
     addr st_comps[st_indices[self.id]] 
   
  #api
 
-  iterator query*(ecs:Ecs, E: typedesc[Ent], _: typedesc[T]): (eid, ptr T) {.inline.} =
+  iterator query*(ecs:Ecs, E: typedesc[Ent], _: typedesc[T]): (eid, ptr T) =
     for i in countdown(st_comps.high,0):
       yield (st_ents[i], st_comps[i].addr)
- 
-  iterator query*(ecs:Ecs, _: typedesc[T]): ptr T  {.inline.}=
+  iterator quere*(ecs:Ecs, _: typedesc[T]): eid =
+    for i in countdown(st_comps.high,0):
+      yield st_ents[i]
+  iterator query*(ecs:Ecs, _: typedesc[T]): ptr T =
     for i in countdown(st_comps.high,0):
        yield st_comps[i].addr
  
   proc getId*(_:typedesc[T]): cid = st_id.cid
   
-  proc getComps*(_:typedesc[T]): ptr seq[T] {.inline.} =
+  proc getComps*(_:typedesc[T]): ptr seq[T] =
     st_comps.addr
   
   proc has*(_:typedesc[T], self: eid): bool {.inline,discardable.} =
-    st_indices[self.int] != ent.nil.id and st_indices[self.int] < st_ents.len
+    st_indices[self.int] < st_ents.len
   
-
   proc get*(self: ent|eid, _:typedesc[T]): ptr T =
     if has(_,self):
       return st_comps[st_indices[self.id]].addr
@@ -79,13 +79,13 @@ template impl_storage*(T: typedesc) {.used.} =
     st_comps[len].addr
   
   proc remove*(self: ent|eid, _: typedesc[T]) =
-    var last = st_indices[st_ents[st_ents.high].int]
-    var index = st_indices[self.id]
+    let last = st_indices[st_ents[st_ents.high].int]
+    let index = st_indices[self.id]
 
     st_ents.del(index)
     st_comps.del(index)
     swap(st_indices[index],st_indices[last])
-
+    
     let meta = self.meta
     meta.sig.del(meta.sig.find(st_id.cid))
     if meta.sig.len == 0:
@@ -105,12 +105,12 @@ template impl_storage_tag*(T: typedesc) {.used.} =
   var st_comps   : seq[T]
 
  #private
-  proc cleanup(_:typedesc[T]) = 
+  proc cleanup(_:typedesc[T]) {.inline.} = 
     st_ents.setLen(0); st_comps.setLen(0)
 
   proc removeOnRelease(_:typedesc[T],self: eid) =
-    var last = st_indices[st_ents[st_ents.high].int]
-    var index = st_indices[self.id]
+    let last = st_indices[st_ents[st_ents.high].int]
+    let index = st_indices[self.id]
 
     st_ents.del(index)
     st_comps.del(index)
@@ -118,8 +118,8 @@ template impl_storage_tag*(T: typedesc) {.used.} =
   
   proc init(_:typedesc[T]) =
     st_id = next_storage_id;next_storage_id+=1
-    st_ents    =  newSeqOfCap[eid]((AMOUNT_ENTS).int)
-    st_comps   =  newSeqOfCap[T]((AMOUNT_ENTS).int)
+    st_ents    =  newSeqOfCap[eid]((AMOUNT_ENTS/2).int)
+    st_comps   =  newSeqOfCap[T]((AMOUNT_ENTS/2).int)
     init_indices(st_indices)
     metas_storage.add(CompStorageMeta())
    
@@ -135,11 +135,13 @@ template impl_storage_tag*(T: typedesc) {.used.} =
   
  #api
 
-  iterator query*(E: typedesc[Ent], _: typedesc[T]): (eid, ptr T) {.inline.} =
+  iterator query*(ecs:Ecs, E: typedesc[Ent], _: typedesc[T]): (eid, ptr T) =
     for i in countdown(st_comps.high,0):
       yield (st_ents[i], st_comps[i].addr)
- 
-  iterator query*(_: typedesc[T]): ptr T  {.inline.}=
+  iterator quere*(ecs:Ecs, _: typedesc[T]): eid =
+    for i in countdown(st_comps.high,0):
+      yield st_ents[i]
+  iterator query*(ecs:Ecs, _: typedesc[T]): ptr T =
     for i in countdown(st_comps.high,0):
        yield st_comps[i].addr
  
@@ -149,11 +151,11 @@ template impl_storage_tag*(T: typedesc) {.used.} =
     st_comps.addr
   
   proc has*(_:typedesc[T], self: eid): bool {.inline,discardable.} =
-    st_indices[self.int] != ent.nil.id and st_indices[self.int] < st_ents.len
+    st_indices[self.int] < st_ents.len
   
   proc remove*(self: ent|eid, _: typedesc[T]) =
-    var last = st_indices[st_ents[st_ents.high].int]
-    var index = st_indices[self.id]
+    let last = st_indices[st_ents[st_ents.high].int]
+    let index = st_indices[self.id]
 
     st_ents.del(index)
     st_comps.del(index)
@@ -188,9 +190,8 @@ template impl_storage_tag*(T: typedesc) {.used.} =
 
     let temp =  st_comps[st_indices[self.id]].int - arg
     
-    
     if temp <= 0:
-      release(self)
+      remove(self, T)
     else:
       st_comps[st_indices[self.id]] = temp.T
 
@@ -198,10 +199,7 @@ template impl_storage_tag*(T: typedesc) {.used.} =
 
   formatTagPrettyAndLong(T)
 
-
-
 macro add*(ecs: Ecs, component: untyped, mode: static[CompType] = CompType.AsComp): untyped =
-  
   let node_storage = nnkCommand.newTree()
 
   if mode == CompType.AsComp:
@@ -228,7 +226,6 @@ macro add*(ecs: Ecs, component: untyped, mode: static[CompType] = CompType.AsCom
       newIdentNode($component)
       ))
       result.add(node)
-
 
 macro formatTagPrettyAndLong*(T: typedesc): untyped {.used.}=
   let tName = strVal(T)

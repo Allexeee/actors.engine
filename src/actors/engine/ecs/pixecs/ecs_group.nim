@@ -10,6 +10,7 @@ import ecs_h
 var incl_sig  : set[cid]
 var excl_sig  : set[cid]
 
+
 func sort_storages(x,y: CompStorageMeta): int =
   let cx = x.ents
   let cy = y.ents
@@ -47,57 +48,76 @@ macro init_group*(t: varargs[untyped]) =
   n.insert(i,newDotExpr(ident("ecs"),bindSym("make_group",brForceOpen)))
   result = n
 
+
 proc partof*(self: ent|eid, group: EcsGroup): bool =
-  if group.id in self.meta.sig_groups:
-    true
-  else: false
+  group.indices[self.id] < group.ents.len
+
+# proc partof*(self: ent|eid, group: EcsGroup): bool =
+#   if group.id in self.meta.sig_groups:
+#     true
+#   else: false
 
 proc match*(self: ent|eid, group: EcsGroup):  bool =
-  let meta = metas[self.id]
   for i in group.incl_sig:
-    if not i in meta.sig:
+    let m_st = metas_storage[i]
+    if m_st.indices[][self.id] > m_st.ents[].high: # if has no comp
       return false
   for i in group.excl_sig:
-    if i in meta.sig:
+    let m_st = metas_storage[i]
+    if m_st.indices[][self.id] < m_st.ents[].len: # if has comp
       return false
   true
-
 proc insert*(gr: EcsGroup, self: eid) {.inline.} = 
-  var len = gr.ents.len
-  var left, index = 0
-  var right = len
-  len+=1
-  var conditionSort = right - 1
-  if conditionSort > -1 and self.int < gr.ents[conditionSort].int:
-      while right > left:
-          var midIndex = (right+left) div 2
-          if gr.ents[midIndex].int == self.int:
-              index = midIndex
-              break
-          if gr.ents[midIndex].int < self.int:
-              left = midIndex+1
-          else:
-              right = midIndex
-          index = left
-      gr.ents.insert(self, index)
-  else:
-      if right == 0 or right >= gr.ents.high:
-          gr.ents.add self
-      else:
-          gr.ents[right] = self
+  let len = gr.ents.len
+  gr.indices[self.id] = len
+  gr.ents.add(self)
+  metas[self.int].sig_groups.add(gr.id)
 
-  self.meta.sig_groups.add(gr.id)
+# proc insert*(gr: EcsGroup, self: eid) {.inline.} = 
+#   var len = gr.ents.len
+#   var left, index = 0
+#   var right = len
+#   len+=1
+#   var conditionSort = right - 1
+#   if conditionSort > -1 and self.int < gr.ents[conditionSort].int:
+#       while right > left:
+#           var midIndex = (right+left) div 2
+#           if gr.ents[midIndex].int == self.int:
+#               index = midIndex
+#               break
+#           if gr.ents[midIndex].int < self.int:
+#               left = midIndex+1
+#           else:
+#               right = midIndex
+#           index = left
+#       gr.ents.insert(self, index)
+#   else:
+#       if right == 0 or right >= gr.ents.high:
+#           gr.ents.add self
+#       else:
+#           gr.ents[right] = self
+
+#   metas[self.int].sig_groups.add(gr.id)
 
 proc remove*(gr: EcsGroup, self: eid) {.inline.} =
-  let meta = self.meta
-  let index = binarysearch(addr gr.ents, self.int)
-  gr.ents.delete(index)
+  let meta = metas[self.int].addr
+  let last = gr.indices[gr.ents[gr.ents.high].int]
+  let index = gr.indices[self.id]
+  gr.ents.del(index)
+  swap(gr.indices[index],gr.indices[last])
   meta.sig_groups.del(meta.sig_groups.find(gr.id))
+
+# proc remove*(gr: EcsGroup, self: eid) {.inline.} =
+#   let meta = metas[self.int].addr
+#   let index = binarysearch(addr gr.ents, self.int)
+#   gr.ents.delete(index)
+#   meta.sig_groups.del(meta.sig_groups.find(gr.id))
+
+
 
 proc tryinsert*(gr: EcsGroup, eids: ptr seq[eid]) {.inline.} =
   for i in eids[]:
-    let matched = match(i,gr)
-    if matched:
+    if match(i,gr):
       gr.insert(i)
 
 proc make_group(ecs: Ecs) : EcsGroup {.inline, used, discardable.} =
@@ -123,7 +143,7 @@ proc make_group(ecs: Ecs) : EcsGroup {.inline, used, discardable.} =
     group_next.ents = newSeqOfCap[eid]((AMOUNT_ENTS/2).int)
     group_next.incl_hash = incl_hash
     group_next.excl_hash = excl_hash
-    
+    init_indices(group_next.indices)
     var storage_owner = newSeq[CompStorageMeta]()
     
     for id in incl_sig:
@@ -133,7 +153,7 @@ proc make_group(ecs: Ecs) : EcsGroup {.inline, used, discardable.} =
     for id in excl_sig:
       group_next.excl_sig.add(id)
       metas_storage[id].groups.add(group_next)
-
+   
     storage_owner.sort(sortStorages)
     tryinsert(group_next,storage_owner[0][].ents)
 
@@ -172,8 +192,9 @@ template high*(self: EcsGroup): int =
 template `[]`*(self: EcsGroup, key: int): ent =
   self.ents[key]
 
-proc `bind`*(self: eid) {.inline.} =
-  let meta = metas[self.int]
+proc `bind`*(self: ent|eid) {.inline.} =
+  ecs.dirty = false
+  let meta = metas[self.id]
   for cid in meta.sig:
     let groups = metas_storage[cid].groups
     for group in groups:
