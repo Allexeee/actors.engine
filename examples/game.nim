@@ -1,20 +1,29 @@
 import actors
 
-type CompA = object
-  arg: int
-
 logAdd stdout
 
 
-#log "test"
-#ecsInit(1_000_000)
-# ecs.init 1_000_000
+proc init =
+  discard
+proc update =
+  discard
+proc draw =
+  discard
 
-# ecs.add CompA
 
+app.run(init,update,draw)
 
-# var g = ecs.group(CompA)
+# proc init*() =
+#   makeUIDebug().add()
+#   discard
 
-# for e in g:
-#   let ca = e.compa
-  
+# proc update*() =
+#   if input.down Key.Esc:
+#     app.quit()
+
+# proc draw*() =
+#   for ui in uis:
+#     ui.draw()
+#   discard
+
+# app.run(init,update,draw)

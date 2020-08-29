@@ -39,10 +39,9 @@ proc bootstrap*(app: App): GLFWWindow {.inline.}=
   #assert gladLoadGL(glfwGetProcAddress)
 
   getOpenglVersion()
-  echo "poo"
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-  echo window[]
+
   window
 
 proc kill*() =

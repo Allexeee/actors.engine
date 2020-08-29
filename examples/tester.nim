@@ -1,2 +1,0 @@
-proc testA*() =
-  echo "testme"
