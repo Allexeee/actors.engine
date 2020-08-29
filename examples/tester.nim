@@ -1,0 +1,2 @@
+proc testA*() =
+  echo "testme"

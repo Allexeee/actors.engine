@@ -34,7 +34,7 @@ template checkErrorShaderCompile(obj: uint32, errType: ShaderCompileType): untyp
                     var message {.inject.}= ""
                     if len!=0:
                         message = toString(messageBuffer,len)
-                    log fatal, &"Type: {error}", &"Message: {message}"
+                    logError &"Type: {error}", &"Message: {message}"
                     raise newException(ShaderCompileError, &"Type: {error}")
             else:
                 glGetShaderiv(obj, GL_COMPILE_STATUS, success.addr);
@@ -43,7 +43,7 @@ template checkErrorShaderCompile(obj: uint32, errType: ShaderCompileType): untyp
                     var message {.inject.}= ""
                     if len!=0:
                         message = toString(messageBuffer,len)
-                    log fatal, &"Type: {error}", &"Message: {message}"
+                    logError &"Type: {error}", &"Message: {message}"
                     raise newException(ShaderCompileError, &"Type: {error}")
 
 proc shader*(app: App, shader_path: string): ShaderIndex =    
@@ -56,13 +56,13 @@ proc shader*(app: App, shader_path: string): ShaderIndex =
     ##vertex
     path = app.settings.path_shaders & shader_path & ".vert"
     if not fileExists(path):
-        log warn, &"The path {path} for vertex shader doesn't exist", "Adding a default shader"
+        logWarn &"The path {path} for vertex shader doesn't exist", "Adding a default shader"
     else:
         vertCode = readFile(path)
     ##fragment
     path = app.settings.path_shaders & shader_path & ".frag"
     if not fileExists(path):
-        log warn, &"The path {path} for fragment shader doesn't exist", "Adding a default shader"
+        logWarn &"The path {path} for fragment shader doesn't exist", "Adding a default shader"
     else:
         fragCode = readFile(path)
     ##geometry

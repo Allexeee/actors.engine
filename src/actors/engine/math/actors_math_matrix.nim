@@ -1,4 +1,4 @@
-import actors_math_header
+import actors_math_h
 import actors_math_vec
 
 #@ahead
@@ -14,7 +14,7 @@ proc identity*(mx: var Matrix) {.inline.} =
     mx.e31 = 0; mx.e32 = 0; mx.e33 = 1; mx.e34 = 0;
     mx.e41 = 0; mx.e42 = 0; mx.e43 = 0; mx.e44 = 1
 
-proc normalize(x,y,z : var float32) {.inline.} =
+proc normalize*(x,y,z : var float32) {.inline.} =
     let d = sqrt(x*x + y*y + z*z)
     x /= d; y /= d; z /= d
 

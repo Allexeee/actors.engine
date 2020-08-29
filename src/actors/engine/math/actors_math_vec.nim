@@ -1,20 +1,21 @@
-import actors_math_header
+import actors_math_h
+
+
+
+# proc toarray*(self: var Vec2): array[2,float32] =
+#   [self.x,self.y]
+# proc tovec*(self: array[2,float32]): Vec2 =
+#   (self[0],self[1])
+
+proc xy*(self: var Vec): Vec2 =
+  (self.x,self.y)
+
+proc xyz*(self: var Vec): Vec3 =
+  result = (self.x,self.y,self.z)
 
 proc xy*(self: var Vec, x,y: float32) =
   self.x = x
   self.y = y
-
-proc toarray*(self: var Vec2): array[2,float32] =
-  [self.x,self.y]
-proc tovec*(self: array[2,float32]): Vec2 =
-  (self[0],self[1])
-
-template xy*(self: var Vec): Vec =
-  (self.x,self.y, 0f, 0f)
-
-template xyz*(self: var Vec): Vec =
-  (self.x,self.y,self.z, 0)
-
 
 #@constructors
 proc vec2*(x,y: float32 = 0): Vec2 {.inline.} =

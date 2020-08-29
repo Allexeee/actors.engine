@@ -11,7 +11,7 @@ proc getOpenglVersion() =
   var glGetString = cast[proc (name: GLenum): ptr GLubyte {.stdcall.}](glGetProc("glGetString"))
   if glGetString == nil: return
   var glVersion = cast[cstring](glGetString(GL_VERSION))
-  log info, &"OpenGL {glVersion}"
+  logInfo &"OpenGL {glVersion}"
 
 # var glGetString = cast[proc (name: GLenum): ptr GLubyte {.stdcall.}](glGetProc("glGetString"))
 #   if glGetString == nil: return
