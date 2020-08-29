@@ -3,9 +3,7 @@ import ../../../actors_tools
 import ../../actors_math
 
 when defined(renderer_opengl):
-  include actors_opengl_header
-
-
+  include actors_opengl_h
 
 type ShaderIndex* = distinct uint32
 type ShaderCompileType*   = enum

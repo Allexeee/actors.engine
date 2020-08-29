@@ -12,9 +12,14 @@ type
   AppStats* = object
     updates* : int
     frames*  : int
+  
+  AppMeta* = object
+    screen_size* : tuple[width: int, height: int]
+    name*        : string
+    assets_path* : string
 
   AppSettings* = object
-    display_size* : tuple[width: int, height: int]
+    #display_size* : tuple[width: int, height: int]
     screen_size*  : tuple[width: int, height: int]
     path_shaders* : string
     path_assets*  : string
@@ -32,6 +37,7 @@ type
     counter*        : FpsCounter
 
   App* = ref object
+    meta*     : AppMeta
     settings* : AppSettings
     time*     : AppTime
   

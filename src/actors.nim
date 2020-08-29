@@ -6,7 +6,6 @@ import actors/actors_plugins as plugins
 import actors/actors_h       as header
 import actors/actors_tools   as tools
 import actors/actors_engine  as engine
-import actors/private/actors_engine as in_engine
 
 export tools
 export engine
@@ -32,19 +31,18 @@ proc use*(self: LayerID) =
 
 
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
-  var w = in_engine.target.bootstrap(app)
+  var w = engine.target.bootstrap(app)
   let context {.used.} = igCreateContext()
   assert igGlfwInitForOpenGL(w, true)
   assert igOpenGL3Init()
   igStyleColorsCherry()
 
-
   init()
   
-  while not in_engine.target.shouldQuit():
+  while not engine.target.shouldQuit():
     
-    in_engine.count_metrics_begin()
-    in_engine.target.pollEvents()
+    count_metrics_begin()
+    engine.target.pollEvents()
 
     igOpenGL3NewFrame()
     igGlfwNewFrame()
@@ -53,7 +51,7 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
     update()
     
 
-    in_engine.target.render_begin()
+    engine.target.render_begin()
     #plugins.render_begin()
     
     draw()
@@ -61,12 +59,12 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
 
     #plugins.flush()
     igOpenGL3RenderDrawData(igGetDrawData())
-    in_engine.target.render_end()
+    engine.target.render_end()
 
-    in_engine.count_metrics_end()
+    count_metrics_end()
   
   #plugins.kill()
-  in_engine.target.kill()
+  engine.target.kill()
     
 #plugins.imgui.kill()
 #in_engine.target.kill()

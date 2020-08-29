@@ -2,7 +2,7 @@
 {.experimental: "codeReordering".}
 
 include actors_input_h
-import ../private/actors_platform as platform
+import ../actors_platform as platform
 
 var inputs = newSeq[Input](0)
 

@@ -1,6 +1,6 @@
 {.used.}
 
-include actors_renderer_header
+include actors_renderer_h
 
 proc addTexture*(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: ARenum): TextureIndex =
   var w,h,bits : cint
@@ -54,19 +54,19 @@ proc shader*(app: App, shader_path: string): ShaderIndex =
     var id : uint32 = 0
     ##read
     ##vertex
-    path = app.settings.path_shaders & shader_path & ".vert"
+    path = app.meta.assets_path & "shaders/" & shader_path & ".vert"
     if not fileExists(path):
-        logWarn &"The path {path} for vertex shader doesn't exist", "Adding a default shader"
+        logWarn &"The path {path} for vertex shader doesn't exist, adding a default shader"
     else:
         vertCode = readFile(path)
     ##fragment
-    path = app.settings.path_shaders & shader_path & ".frag"
+    path = app.meta.assets_path & "shaders/" & shader_path & ".frag"
     if not fileExists(path):
-        logWarn &"The path {path} for fragment shader doesn't exist", "Adding a default shader"
+        logWarn &"The path {path} for fragment shader doesn't exist, adding a default shader"
     else:
         fragCode = readFile(path)
     ##geometry
-    path = app.settings.path_shaders & shader_path & ".geom"
+    path = app.meta.assets_path & "shaders/" & shader_path & ".geom"
     if fileExists(path):
         geomCode = readFile(path)
 
