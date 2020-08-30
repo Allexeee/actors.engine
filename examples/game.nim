@@ -13,15 +13,15 @@ var uiDebugGame : UIDebugGame
 
 var uis* = newSeq[UI]()
 
-proc init =
+proc init() =
   shader_basic = app.shader("basic")
   uiDebugGame  = newUIDebug(uis)
 
-proc update =
+proc update(time: AppTime) =
   if input.down Key.Esc:
     app.quit()
 
-proc draw =
+proc draw() =
   for ui in uis:
     ui.draw()
 

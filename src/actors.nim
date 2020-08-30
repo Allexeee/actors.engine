@@ -6,35 +6,33 @@
 {.experimental: "codeReordering".}
 
 import actors/actors_plugins as plugins
-import actors/actors_h       as core
+import actors/actors_h       
 import actors/actors_tools   as tools
 import actors/actors_engine  as engine
 
 export tools
 export engine
 export plugins
-export core.LayerId
+export actors_h.LayerId
+export actors_h.AppTime
 
-let app* = core.app
+let app* = actors_h.app
 
-template updateClamp*(code: untyped): untyped =
-  let ms_per_update = MS_PER_UPDATE()
-  let timer = app.time #ref
-  let timeCurrent = engine.getTime()
-  let tdelta = timeCurrent - timer.last
-  timer.last = timeCurrent
-  timer.lag += tdelta
-  while timer.lag >= ms_per_update:
-    code
-    timer.lag -= ms_per_update
-    timer.counter.updates += 1
+proc quit*(self: App) =
+  engine.target.release()
 
-proc metrics_begin()=
+proc sleep*(app: App, t: float) =
+  var timeCurrent = engine.getTime()
+  while timeCurrent - app.time.last < t:
+    sleep(0)
+    timeCurrent = engine.getTime()
+
+proc metricsBegin()=
   let timer = app.time #ref
   timer.counter.frames += 1
   timer.frames += 1
 
-proc metrics_end()=
+proc metricsEnd()=
   let timer = app.time #ref
   let counter = app.time.counter.addr #pointer
   if engine.getTime() - timer.seconds > 1.0:
@@ -44,17 +42,25 @@ proc metrics_end()=
     counter.updates = 0
     counter.frames  = 0
 
-proc sleep*(app: App, t: float) =
-  var timeCurrent = engine.getTime()
-  while timeCurrent - app.time.last < t:
-    sleep(0)
-    timeCurrent = engine.getTime()
-
-proc renderer_end() =
-  engine.target.render_end()
+proc renderBegin()=
+  engine.target.renderBegin()
+proc renderEnd() =
+  engine.target.renderEnd()
   if app.meta.vsync == 0:
     app.sleep(1/app.meta.fps)
 
+template fixedUpdate(code: untyped): untyped =
+    let ms_per_update = MS_PER_UPDATE()
+    let timer = app.time #ref
+    let timeCurrent = engine.getTime()
+    let tdelta = timeCurrent - timer.last
+    timer.dt = tdelta
+    timer.last = timeCurrent
+    timer.lag += tdelta
+    while timer.lag >= ms_per_update:
+      code
+      timer.lag -= ms_per_update
+      timer.counter.updates += 1
 
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   var w = engine.target.bootstrap(app)
@@ -67,16 +73,16 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   
   while not engine.target.shouldQuit():
     
-    metrics_begin()
+    metricsBegin()
     engine.target.pollEvents()
 
     igOpenGL3NewFrame()
     igGlfwNewFrame()
     igNewFrame()
-    updateClamp:
+    fixedUpdate:
       update()
 
-    engine.target.render_begin()
+    renderBegin()
     #plugins.render_begin()
     
     draw()
@@ -84,11 +90,10 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
 
     #plugins.flush()
     igOpenGL3RenderDrawData(igGetDrawData())
-    renderer_end()
+    renderEnd()
     #engine.target.render_end()
     
-    metrics_end()
-    echo app.time.counter.frames
+    metricsEnd()
   #plugins.kill()
   engine.target.kill()
     

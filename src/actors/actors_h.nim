@@ -15,22 +15,14 @@ type
     ups*         : float32
     vsync*       : int32
 
-  # AppSettings* = object
-  #   screen_size*  : tuple[width: int, height: int]
-  #   path_shaders* : string
-  #   path_assets*  : string
-  #   fps*       : float32
-  #   ups*       : float32
-  #   name*      : string
-  #   vsync*     : int32
-  
   FpsCounter* = object
-    updates* : float
+    updates*      : float
     updates_last* : float
-    frames*  : float
-    frames_last* : float
+    frames*       : float
+    frames_last*  : float
 
   AppTime* = ref object
+    dt*             : float
     seconds*        : float
     frames*         : float
     lag*            : float
@@ -39,16 +31,15 @@ type
 
   App* = ref object
     meta*     : AppMeta
-    #settings* : AppSettings
     time*     : AppTime
-  
+ 
   ActionOnLayer* = proc(layer: LayerId)
-  
+
   ILayer* = object
     Change*: proc (self: LayerId)
 
 
-
+#Time
 let app* = App()
 var stats* = AppStats()
 var a_layer_added* = newSeq[ActionOnLayer]()

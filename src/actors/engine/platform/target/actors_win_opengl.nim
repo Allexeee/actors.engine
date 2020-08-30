@@ -50,11 +50,11 @@ proc kill*() =
   window = nil
   glfwTerminate()
 
-proc render_begin*() {.inline.} =
+proc renderBegin*() {.inline.} =
   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f)
 
-proc render_end*() {.inline.} =
+proc renderEnd*() {.inline.} =
   window.swapBuffers()
   glFlush()
 
@@ -92,5 +92,5 @@ proc vsync*(app: App, arg:int32) =
   glfwSwapInterval(arg);
   window.makeContextCurrent()
 
-proc current*(app: AppTime): float =
+proc current*(time: AppTime): float =
   glfwGetTime()
