@@ -4,6 +4,8 @@ logAdd stdout
 
 app.meta.name = "Pixeye Game"
 app.meta.screen_size = (1920,1080)
+app.meta.fps = 60
+app.meta.ups = 50
 app.meta.assets_path = "assets/"
 
 var shader_basic : ShaderIndex

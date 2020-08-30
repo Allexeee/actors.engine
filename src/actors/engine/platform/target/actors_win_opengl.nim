@@ -87,8 +87,8 @@ proc getMousePositionImpl*(): tuple[x: cfloat,y: cfloat] {.inline.} =
 
 
 proc vsync*(app: App, arg:int32) =
-  if arg != app.settings.vsync:
-    app.settings.vsync = arg
+  if arg != app.meta.vsync:
+    app.meta.vsync = arg
   glfwSwapInterval(arg);
   window.makeContextCurrent()
 
