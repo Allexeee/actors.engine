@@ -19,9 +19,9 @@ export actors_h.AppTime
 let app* = actors_h.app
 
 proc quit*(self: App) =
-  engine.target.release()
+  engine.target.quit()
 
-proc sleep*(app: App, t: float) =
+proc appSleep(t: float) =
   var timeCurrent = engine.getTime()
   while timeCurrent - app.time.last < t:
     sleep(0)
@@ -44,10 +44,11 @@ proc metricsEnd()=
 
 proc renderBegin()=
   engine.target.renderBegin()
+
 proc renderEnd() =
   engine.target.renderEnd()
   if app.meta.vsync == 0:
-    app.sleep(1/app.meta.fps)
+    appSleep(1/app.meta.fps)
 
 template fixedUpdate(code: untyped): untyped =
     let ms_per_update = MS_PER_UPDATE()
@@ -76,11 +77,12 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
     metricsBegin()
     engine.target.pollEvents()
 
+    fixedUpdate:
+      update()
+
     igOpenGL3NewFrame()
     igGlfwNewFrame()
     igNewFrame()
-    fixedUpdate:
-      update()
 
     renderBegin()
     #plugins.render_begin()
@@ -91,11 +93,11 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
     #plugins.flush()
     igOpenGL3RenderDrawData(igGetDrawData())
     renderEnd()
-    #engine.target.render_end()
-    
     metricsEnd()
   #plugins.kill()
-  engine.target.kill()
+
+  engine.target.release()
+  #plugins.imgui.kill()
     
 #plugins.imgui.kill()
 #in_engine.target.kill()

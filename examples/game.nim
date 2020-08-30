@@ -17,7 +17,7 @@ proc init() =
   shader_basic = app.shader("basic")
   uiDebugGame  = newUIDebug(uis)
 
-proc update(time: AppTime) =
+proc update() =
   if input.down Key.Esc:
     app.quit()
 

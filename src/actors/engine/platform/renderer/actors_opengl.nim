@@ -1,3 +1,12 @@
+## Created by Pixeye | dev@pixeye.com
+##
+## Opengl implementation.   
+## Submodules:   
+## * ```shaders```
+
+
+
+
 {.used.}
 
 include actors_renderer_h
@@ -19,6 +28,10 @@ proc addTexture*(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap:
 
 template `$`*(this: ShaderIndex): uint32 =
   this.uint32
+
+##=====================================================
+##@shaders
+##=====================================================
 
 template checkErrorShaderCompile(obj: uint32, errType: ShaderCompileType): untyped =
   block:
