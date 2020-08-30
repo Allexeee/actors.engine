@@ -6,31 +6,31 @@
 {.experimental: "codeReordering".}
 
 import actors/actors_plugins as plugins
-import actors/actors_h       as header
+import actors/actors_h       as core
 import actors/actors_tools   as tools
 import actors/actors_engine  as engine
 
 export tools
 export engine
 export plugins
-export header.LayerId
+export core.LayerId
 
-let app* = header.app
+let app* = core.app
 
 
-proc layer*(self: App): LayerId {.discardable.} =
-  header.layer
+# proc layer*(self: App): LayerId {.discardable.} =
+#   core.layer
 
-proc addLayer*(app: App): LayerId =
-  result = highest_layer_id.LayerId; highest_layer_id += 1
-  for a in a_layer_added:
-    a(result)
+# proc addLayer*(app: App): LayerId =
+#   result = highest_layer_id.LayerId; highest_layer_id += 1
+#   for a in a_layer_added:
+#     a(result)
 
-proc use*(self: LayerID) =
-  layer_current = self.int
-  header.layer = self
-  for a in a_layer_changed:
-    a.Change(self)
+# proc use*(self: LayerID) =
+#   layer_current = self.int
+#   core.layer = self
+#   for a in a_layer_changed:
+#     a.Change(self)
 
 
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =

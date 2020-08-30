@@ -17,6 +17,9 @@ type
     screen_size* : tuple[width: int, height: int]
     name*        : string
     assets_path* : string
+    fps*         : float
+    ups*         : float
+    vsync*       : int
 
   AppSettings* = object
     #display_size* : tuple[width: int, height: int]

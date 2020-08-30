@@ -35,8 +35,6 @@ template checkErrorShaderCompile(obj: uint32, errType: ShaderCompileType): untyp
                  message = toString(messageBuffer,len)
              logError &"Type: {error} Message: {message}"
              quit()
-             #raise newException
-             #raise newException(ShaderCompileError, &"Type: {error} Message: {message}")
      else:
          glGetShaderiv(obj, GL_COMPILE_STATUS, success.addr);
          if success != GL_TRUE.ord:
@@ -46,7 +44,6 @@ template checkErrorShaderCompile(obj: uint32, errType: ShaderCompileType): untyp
                  message = toString(messageBuffer,len)
              logError &"Type: {error} Message: {message}"
              quit()
-             #raise newException(ShaderCompileError, &"Type: {error}")
 
 proc shader*(app: App, shader_path: string): ShaderIndex =    
     var path: string
@@ -56,8 +53,7 @@ proc shader*(app: App, shader_path: string): ShaderIndex =
     var id : uint32 = 0
    
     path = app.meta.assets_path & "shaders/" & shader_path & ".vert"
-    logInfo fileExists(path)
-    logInfo absolutePath(path)
+
     if not fileExists(path):
         logWarn &"The path {path} for vertex shader doesn't exist, adding a default shader"
     else:
