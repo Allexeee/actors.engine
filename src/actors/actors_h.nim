@@ -2,12 +2,6 @@
 
 type
   LayerId* = distinct byte
-
-  FpsCounter* = object
-    updates* : float
-    updates_last* : float
-    frames*  : float
-    frames_last* : float
   
   AppStats* = object
     updates* : int
@@ -21,27 +15,31 @@ type
     ups*         : float32
     vsync*       : int32
 
-  AppSettings* = object
-    #display_size* : tuple[width: int, height: int]
-    screen_size*  : tuple[width: int, height: int]
-    path_shaders* : string
-    path_assets*  : string
-    fps*       : float32
-    ups*       : float32
-    name*      : string
-    vsync*     : int32
+  # AppSettings* = object
+  #   screen_size*  : tuple[width: int, height: int]
+  #   path_shaders* : string
+  #   path_assets*  : string
+  #   fps*       : float32
+  #   ups*       : float32
+  #   name*      : string
+  #   vsync*     : int32
   
+  FpsCounter* = object
+    updates* : float
+    updates_last* : float
+    frames*  : float
+    frames_last* : float
+
   AppTime* = ref object
     seconds*        : float
     frames*         : float
-    updates*        : float
     lag*            : float
     last*           : float
     counter*        : FpsCounter
 
   App* = ref object
     meta*     : AppMeta
-    settings* : AppSettings
+    #settings* : AppSettings
     time*     : AppTime
   
   ActionOnLayer* = proc(layer: LayerId)
@@ -59,8 +57,8 @@ var highest_layer_id*  = 0
 var layer_current* = 0
 var layer* = 0.LayerId
 
-
-
-app.settings = AppSettings()
+#app.settings = AppSettings()
 app.time = AppTime()
 
+template MS_PER_UPDATE*():float =
+  1/app.meta.ups

@@ -17,20 +17,43 @@ export core.LayerId
 
 let app* = core.app
 
+template updateClamp*(code: untyped): untyped =
+  let ms_per_update = MS_PER_UPDATE()
+  let timer = app.time #ref
+  let timeCurrent = engine.getTime()
+  let tdelta = timeCurrent - timer.last
+  timer.last = timeCurrent
+  timer.lag += tdelta
+  while timer.lag >= ms_per_update:
+    code
+    timer.lag -= ms_per_update
+    timer.counter.updates += 1
 
-# proc layer*(self: App): LayerId {.discardable.} =
-#   core.layer
+proc metrics_begin()=
+  let timer = app.time #ref
+  timer.counter.frames += 1
+  timer.frames += 1
 
-# proc addLayer*(app: App): LayerId =
-#   result = highest_layer_id.LayerId; highest_layer_id += 1
-#   for a in a_layer_added:
-#     a(result)
+proc metrics_end()=
+  let timer = app.time #ref
+  let counter = app.time.counter.addr #pointer
+  if engine.getTime() - timer.seconds > 1.0:
+    timer.seconds += 1
+    counter.updates_last = counter.updates
+    counter.frames_last = counter.frames
+    counter.updates = 0
+    counter.frames  = 0
 
-# proc use*(self: LayerID) =
-#   layer_current = self.int
-#   core.layer = self
-#   for a in a_layer_changed:
-#     a.Change(self)
+proc sleep*(app: App, t: float) =
+  var timeCurrent = engine.getTime()
+  while timeCurrent - app.time.last < t:
+    sleep(0)
+    timeCurrent = engine.getTime()
+
+proc renderer_end() =
+  engine.target.render_end()
+  if app.meta.vsync == 0:
+    app.sleep(1/app.meta.fps)
 
 
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
@@ -44,15 +67,14 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   
   while not engine.target.shouldQuit():
     
-    count_metrics_begin()
+    metrics_begin()
     engine.target.pollEvents()
 
     igOpenGL3NewFrame()
     igGlfwNewFrame()
     igNewFrame()
-    
-    update()
-    
+    updateClamp:
+      update()
 
     engine.target.render_begin()
     #plugins.render_begin()
@@ -62,10 +84,11 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
 
     #plugins.flush()
     igOpenGL3RenderDrawData(igGetDrawData())
-    engine.target.render_end()
-
-    count_metrics_end()
-  
+    renderer_end()
+    #engine.target.render_end()
+    
+    metrics_end()
+    echo app.time.counter.frames
   #plugins.kill()
   engine.target.kill()
     

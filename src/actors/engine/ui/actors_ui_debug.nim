@@ -44,7 +44,7 @@ method draw*(self: UIDebugGame) {.locks: "unknown".}=
       igText("off")
 
   igSameLine(130)
-  igText("fps/ups = %.1f/%.1f | %.3f ms ", self.framerate, self.ups, 1000.0f / (float)self.framerate)
+  igText("fps/ups = %.1f/%.1f | %.3f ms ", app.time.counter.frames_last, app.time.counter.updates_last, 1000.0f / (float)app.time.counter.frames_last)
   igText("")
   igSameLine(130)
   igText("draw calls: %.i ", self.drawcalls)

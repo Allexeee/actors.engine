@@ -6,7 +6,7 @@ proc addTexture*(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap:
   var w,h,bits : cint
   var textureID : GLuint
   stbi_set_flip_vertically_on_load(true.ord)
-  var data = stbi_load(app.settings.path_assets & path, w, h, bits, 0)
+  var data = stbi_load(app.meta.assets_path & path, w, h, bits, 0)
   glCreateTextures(GL_TEXTURE_2D, 1, textureID.addr)
   glBindTexture(GL_TEXTURE_2D, textureID)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mode_filter.Glint)
@@ -379,4 +379,5 @@ proc flusher*() =
   shaderBatch.setMatrix("mx_model",model)
   glDrawElements(GL_TRIANGLES, indCount.GlSizei, GL_UNSIGNED_INT, nil)
 
-#
+template getTime*(): float64 =
+  glfwGetTime()
