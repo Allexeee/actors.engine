@@ -133,8 +133,8 @@ proc px_log_execute() {.thread.} =
       var text_trace = ""
  
       if (msg.t_lvl == lv_trace or msg.t_lvl == lv_error):
-        text_log = &"{time_str} {names[msg.t_lvl]} {msg.t_txt}\n"
-        text_log_std = &"{names_std[msg.t_lvl]} {msg.t_txt}\n"
+        text_log = &"{time_str} {names[msg.t_lvl]} {msg.t_txt}"
+        text_log_std = &"{names_std[msg.t_lvl]} {msg.t_txt}"
         var sym = "⯆"
         for i in 0..msg.t_stack.high-1:
           var n  =  msg.t_stack[i]
@@ -145,8 +145,8 @@ proc px_log_execute() {.thread.} =
         text_log.add(text_trace)
         text_log_std.add(text_trace)
       else:
-        text_log = &"{time_str} {names[msg.t_lvl]} {msg.t_txt} "
-        text_log_std = &"{names_std[msg.t_lvl]} {msg.t_txt} "
+        text_log = &"{time_str} {names[msg.t_lvl]} {msg.t_txt}\n"
+        text_log_std = &"{names_std[msg.t_lvl]} {msg.t_txt}\n"
         var n  =  msg.t_stack[0]
         text_trace.add(&"⯈ {n.filename} ({n.line}) {n.procname}\n")
 

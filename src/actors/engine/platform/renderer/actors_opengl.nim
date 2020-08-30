@@ -21,30 +21,32 @@ template `$`*(this: ShaderIndex): uint32 =
   this.uint32
 
 template checkErrorShaderCompile(obj: uint32, errType: ShaderCompileType): untyped =
-    when defined(debug):
-        block:
-            let error {.inject.} = $errType
-            var success {.inject.}: Glint
-            var messageBuffer {.inject.} = newSeq[cchar](1024)
-            var len {.inject.} : int32 = 0
-            if errType == PROGRAM_INFO:
-                glGetProgramiv(obj, GL_LINK_STATUS, success.addr)
-                if success != GL_TRUE.ord:
-                    glGetProgramInfoLog(obj, 1024, len.addr, messageBuffer[0].addr)
-                    var message {.inject.}= ""
-                    if len!=0:
-                        message = toString(messageBuffer,len)
-                    logError &"Type: {error}", &"Message: {message}"
-                    raise newException(ShaderCompileError, &"Type: {error}")
-            else:
-                glGetShaderiv(obj, GL_COMPILE_STATUS, success.addr);
-                if success != GL_TRUE.ord:
-                    glGetShaderInfoLog(obj, 1024, len.addr, messageBuffer[0].addr)
-                    var message {.inject.}= ""
-                    if len!=0:
-                        message = toString(messageBuffer,len)
-                    logError &"Type: {error}", &"Message: {message}"
-                    raise newException(ShaderCompileError, &"Type: {error}")
+  block:
+     let error {.inject.} = $errType
+     var success {.inject.}: Glint
+     var messageBuffer {.inject.} = newSeq[cchar](1024)
+     var len {.inject.} : int32 = 0
+     if errType == PROGRAM_INFO:
+         glGetProgramiv(obj, GL_LINK_STATUS, success.addr)
+         if success != GL_TRUE.ord:
+             glGetProgramInfoLog(obj, 1024, len.addr, messageBuffer[0].addr)
+             var message {.inject.}= ""
+             if len!=0:
+                 message = toString(messageBuffer,len)
+             logError &"Type: {error} Message: {message}"
+             quit()
+             #raise newException
+             #raise newException(ShaderCompileError, &"Type: {error} Message: {message}")
+     else:
+         glGetShaderiv(obj, GL_COMPILE_STATUS, success.addr);
+         if success != GL_TRUE.ord:
+             glGetShaderInfoLog(obj, 1024, len.addr, messageBuffer[0].addr)
+             var message {.inject.}= ""
+             if len!=0:
+                 message = toString(messageBuffer,len)
+             logError &"Type: {error} Message: {message}"
+             quit()
+             #raise newException(ShaderCompileError, &"Type: {error}")
 
 proc shader*(app: App, shader_path: string): ShaderIndex =    
     var path: string
@@ -52,9 +54,10 @@ proc shader*(app: App, shader_path: string): ShaderIndex =
     var fragCode = fragDefault
     var geomCode = default(cstring)
     var id : uint32 = 0
-    ##read
-    ##vertex
+   
     path = app.meta.assets_path & "shaders/" & shader_path & ".vert"
+    logInfo fileExists(path)
+    logInfo absolutePath(path)
     if not fileExists(path):
         logWarn &"The path {path} for vertex shader doesn't exist, adding a default shader"
     else:

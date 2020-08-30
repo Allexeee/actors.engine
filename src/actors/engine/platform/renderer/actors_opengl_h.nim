@@ -1,8 +1,6 @@
 {.used.}
 
-
 import ../../../actors_plugins
-
 
 type ARenum* = GLenum
 
@@ -15,7 +13,6 @@ const
   MODE_REPEAT_MIRRORED* : ARenum = GL_MIRRORED_REPEAT
   MODE_RGB*             : ARenum = GL_RGB8
   MODE_RGBA*            : ARenum = GL_RGBA
-
 
 const vert_default: cstring = """
     #version 330 core
