@@ -14,4 +14,8 @@ export actors_math
 export actors_platform
 export actors_time
 export actors_ui
-export actors_interfaces 
+export actors_interfaces
+
+
+proc release*()=
+  actors_platform.target.releaseImpl()

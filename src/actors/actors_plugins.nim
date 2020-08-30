@@ -9,10 +9,15 @@ export
 
 import
   plugins/actors_stb_image,
-  plugins/actors_imgui as imgui
+  plugins/actors_imgui as imgui_impl
 
 export
   actors_stb_image,
-  imgui
+  imgui_impl
 
+
+
+proc release*() =
+  imgui_impl.releaseImpl()
+  #imgui.release()
 #when defined(renderer_opengl):

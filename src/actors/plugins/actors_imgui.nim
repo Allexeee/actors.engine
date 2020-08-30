@@ -5,6 +5,17 @@ import dear_imgui/imgui/[impl_opengl, impl_glfw]
 export imgui, impl_opengl, impl_glfw
 
 
+proc releaseImpl*()=
+  impl_opengl.igOpenGL3Shutdown()
+  impl_glfw.igGlfwShutdown()
+
+proc renderBegin*()=
+  igOpenGL3NewFrame()
+  igGlfwNewFrame()
+  igNewFrame()
+proc renderEnd*()=
+  igRender()
+  igOpenGL3RenderDrawData(igGetDrawData())
 # import dear_imgui/impl_actors_imgui
 # export impl_actors_imgui
 # import dear_imgui/src/imgui

@@ -5,8 +5,8 @@
 {.used.}
 {.experimental: "codeReordering".}
 
-import actors/actors_plugins as plugins
 import actors/actors_h       
+import actors/actors_plugins as plugins
 import actors/actors_tools   as tools
 import actors/actors_engine  as engine
 
@@ -43,9 +43,11 @@ proc metricsEnd()=
     counter.frames  = 0
 
 proc renderBegin()=
+  plugins.imgui_impl.renderBegin()
   engine.target.renderBegin()
 
 proc renderEnd() =
+  plugins.imgui_impl.renderEnd()
   engine.target.renderEnd()
   if app.meta.vsync == 0:
     appSleep(1/app.meta.fps)
@@ -55,9 +57,13 @@ template fixedUpdate(code: untyped): untyped =
     let timer = app.time #ref
     let timeCurrent = engine.getTime()
     let tdelta = timeCurrent - timer.last
+    
     timer.dt = tdelta
     timer.last = timeCurrent
     timer.lag += tdelta
+    
+    engine.target.pollEvents()
+    
     while timer.lag >= ms_per_update:
       code
       timer.lag -= ms_per_update
@@ -73,34 +79,19 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   init()
   
   while not engine.target.shouldQuit():
-    
     metricsBegin()
-    engine.target.pollEvents()
 
     fixedUpdate:
       update()
 
-    igOpenGL3NewFrame()
-    igGlfwNewFrame()
-    igNewFrame()
-
     renderBegin()
-    #plugins.render_begin()
-    
     draw()
-    igRender()
-
-    #plugins.flush()
-    igOpenGL3RenderDrawData(igGetDrawData())
     renderEnd()
     metricsEnd()
-  #plugins.kill()
 
-  engine.target.release()
-  #plugins.imgui.kill()
-    
-#plugins.imgui.kill()
-#in_engine.target.kill()
+  engine.release()
+  plugins.release()
+
 
 #var frame* : int
 
@@ -147,16 +138,3 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
 
 
 
-# proc quit*(this: App) =
-#   engine.target.release()
-
-# proc sleep*(app: App, t: float) =
-#   var time_current = app.getTime()
-#   while time_current - app.time.last < t:
-#     sleep(0)
-#     time_current = app.getTime()
-
-# template renderer_end(): untyped =
-#   engine.target.render_end(app.settings.vsync)
-#   if app.settings.vsync == 0:
-#     app.sleep(1/app.settings.fps)

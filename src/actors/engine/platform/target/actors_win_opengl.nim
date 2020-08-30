@@ -50,10 +50,7 @@ proc vsync*(app: App, arg:int32) =
   glfwSwapInterval(arg);
   window.makeContextCurrent()
 
-proc current*(time: AppTime): float =
-  glfwGetTime()
-
-proc release*() =
+proc releaseImpl*() =
   window.destroyWindow()
   window = nil
   glfwTerminate()
