@@ -20,7 +20,4 @@ proc draw =
   discard
 
 
-
-#var shader_basic = app.shader("basic")
-
 app.run(init,update,draw)

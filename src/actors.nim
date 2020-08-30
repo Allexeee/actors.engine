@@ -1,4 +1,7 @@
-## closure ienumerators
+## Created by Pixeye | dev@pixeye.com
+##
+## The game engine.
+
 {.used.}
 {.experimental: "codeReordering".}
 
