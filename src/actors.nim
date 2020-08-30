@@ -70,25 +70,25 @@ template fixedUpdate(code: untyped): untyped =
       timer.counter.updates += 1
 
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
-  var w = engine.target.bootstrap(app)
-  let context {.used.} = igCreateContext()
-  assert igGlfwInitForOpenGL(w, true)
-  assert igOpenGL3Init()
-  igStyleColorsCherry()
-
+  engine.target.bootstrap(app)
+  plugins.imgui_impl.bootstrap(window)
+  
+ 
   init()
   
   while not engine.target.shouldQuit():
     metricsBegin()
-
+    #logic
     fixedUpdate:
       update()
-
+    #draw & ui
     renderBegin()
     draw()
     renderEnd()
+ 
     metricsEnd()
-
+  
+  #release
   engine.release()
   plugins.release()
 

@@ -8,12 +8,13 @@ type Window* = GLFWWindow
 var window* : GLFWWindow
 
 
-proc bootstrap*(app: App): GLFWWindow {.inline.}= 
+proc bootstrap*(app: App) = 
   proc getOpenglVersion() =
     var glGetString = cast[proc (name: GLenum): ptr GLubyte {.stdcall.}](glGetProc("glGetString"))
     if glGetString == nil: return
     var glVersion = cast[cstring](glGetString(GL_VERSION))
     logInfo &"OpenGL {glVersion}"
+  
   assert glfwInit()
 
   glfwWindowHint(GLFWContextVersionMajor, 4)
@@ -21,7 +22,7 @@ proc bootstrap*(app: App): GLFWWindow {.inline.}=
   glfwWindowHint(GLFWOpenglForwardCompat, GLFW_TRUE)
   glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
   glfwWindowHint(GLFWResizable, GLFW_FALSE)
- # glfwWindowHint(GLFWDoubleBuffer, 0)
+
   let screen = app.meta.screen_size
   let name = app.meta.name
   window = glfwCreateWindow((cint)screen.width, (cint)screen.height, name, nil, nil)
@@ -32,13 +33,11 @@ proc bootstrap*(app: App): GLFWWindow {.inline.}=
   window.makeContextCurrent()
   
   assert glInit()
-  #assert gladLoadGL(glfwGetProcAddress)
 
   getOpenglVersion()
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-  window
 
 proc quit*() = window.setWindowShouldClose(true)
 
