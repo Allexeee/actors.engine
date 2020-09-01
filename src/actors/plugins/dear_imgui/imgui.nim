@@ -24,8 +24,6 @@ import strutils
 proc currentSourceDir(): string {.compileTime.} =
   result = currentSourcePath().replace("\\", "/")
   result = result[0 ..< result.rfind("/")]
-  echo "ppooook,  ", result
-
 {.passC: "-I" & currentSourceDir() & "/imgui/private/cimgui" & " -DIMGUI_DISABLE_OBSOLETE_FUNCTIONS=1".}
 when defined(linux):
   {.passL: "-Xlinker -rpath .".}

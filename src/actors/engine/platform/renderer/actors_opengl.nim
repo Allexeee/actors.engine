@@ -16,7 +16,9 @@ proc addTexture*(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap:
   var textureID : GLuint
   stbi_set_flip_vertically_on_load(true.ord)
   var data = stbi_load(app.meta.assets_path & path, w, h, bits, 0)
+  echo w, "_", h
   glCreateTextures(GL_TEXTURE_2D, 1, textureID.addr)
+  #echo textureID
   glBindTexture(GL_TEXTURE_2D, textureID)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mode_filter.Glint)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mode_filter.Glint)
@@ -231,8 +233,6 @@ proc addSprite*(texture: TextureIndex, shader: ShaderIndex) : Sprite =
   result.quad = quad(0.0f,0.0f,vec(1,1,1,1),texture.cfloat)
   shader.use()
 
-
-
   var vbo : uint32
   var ebo : uint32
   glGenVertexArrays(1, result.quad.vao.addr)
@@ -267,7 +267,7 @@ proc addSprite*(texture: TextureIndex, shader: ShaderIndex) : Sprite =
 
  
 proc addSprite*(filename: string, shader: ShaderIndex) : Sprite =
-  addSprite(addTexture(filename,MODE_RGBA, MODE_NEAREST, MODE_REPEAT),shader)
+  addSprite(addTexture(filename,MODE_RGBA, MODE_NEAREST, MODE_REPEAT), shader)
 
 
 var vboBatch : uint32
@@ -324,7 +324,6 @@ proc prepareBatch*(shader: ShaderIndex) =
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size, indices[0].addr, GL_STATIC_DRAW);
 
   
-
 
 proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   self.shader.use()

@@ -15,10 +15,10 @@ proc bootstrap*(app: App) =
     var glVersion = cast[cstring](glGetString(GL_VERSION))
     logInfo &"OpenGL {glVersion}"
   
-  assert glfwInit()
-
+  assert glfwInit()==1
+ 
   glfwWindowHint(GLFWContextVersionMajor, 4)
-  glfwWindowHint(GLFWContextVersionMinor, 1)
+  glfwWindowHint(GLFWContextVersionMinor, 5)
   glfwWindowHint(GLFWOpenglForwardCompat, GLFW_TRUE)
   glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
   glfwWindowHint(GLFWResizable, GLFW_FALSE)
@@ -38,10 +38,9 @@ proc bootstrap*(app: App) =
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
+proc quit*() = window.setWindowShouldClose(1)
 
-proc quit*() = window.setWindowShouldClose(true)
-
-proc shouldQuit*():bool {.inline.} = window.windowShouldClose
+proc shouldQuit*():bool {.inline.} = (bool)window.windowShouldClose
 
 proc vsync*(app: App, arg:int32) =
   if arg != app.meta.vsync:

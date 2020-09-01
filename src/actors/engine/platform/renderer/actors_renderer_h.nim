@@ -6,13 +6,16 @@ when defined(renderer_opengl):
   include actors_opengl_h
 
 type ShaderIndex* = distinct uint32
+
 type ShaderCompileType*   = enum
   VERTEX_INFO = 0,
   FRAGMENT_INFO,
   GEOMETRY_INFO,
   PROGRAM_INFO
 type ShaderLoadError*     = object of ValueError
+
 type ShaderCompileError*  = object of ValueError
+
 type TextureIndex* = distinct uint32
 
 type Vertex* = object
@@ -30,3 +33,4 @@ type Sprite* = ref object
   x,y* : float32
   shader*  : ShaderIndex
   texID*    : uint32
+

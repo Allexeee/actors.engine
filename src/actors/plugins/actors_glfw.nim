@@ -1322,7 +1322,7 @@ when defined(glfwDLL):
 else:
   {.push cdecl.}
 
-proc glfwInit*(): bool {.importc: "glfwInit".}
+proc glfwInit*(): cint {.importc: "glfwInit".}
   ## @brief Initializes the GLFW library.
   ##
   ## This function initializes the GLFW library.  Before most GLFW functions can
@@ -2226,7 +2226,7 @@ proc destroyWindow*(window: GLFWWindow): void {.importc: "glfwDestroyWindow".}
   ## @since Added in version 3.0.  Replaces `glfwCloseWindow`.
   ##
   ## @ingroup window
-proc windowShouldClose*(window: GLFWWindow): bool {.importc: "glfwWindowShouldClose".}
+proc windowShouldClose*(window: GLFWWindow): cint {.importc: "glfwWindowShouldClose".}
   ## @brief Checks the close flag of the specified window.
   ##
   ## This function returns the value of the close flag of the specified window.
@@ -2244,7 +2244,7 @@ proc windowShouldClose*(window: GLFWWindow): bool {.importc: "glfwWindowShouldCl
   ## @since Added in version 3.0.
   ##
   ## @ingroup window
-proc setWindowShouldClose*(window: GLFWWindow, value: bool): void {.importc: "glfwSetWindowShouldClose".}
+proc setWindowShouldClose*(window: GLFWWindow, value: cint): void {.importc: "glfwSetWindowShouldClose".}
   ## @brief Sets the close flag of the specified window.
   ##
   ## This function sets the value of the close flag of the specified window.

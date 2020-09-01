@@ -1,7 +1,6 @@
 {.pragma: stbcall, cdecl.}
 {.compile: "stb_image/stb_image.c".}
 
-
 type STBIException* = object of ValueError
 
 const
@@ -17,7 +16,7 @@ const
   RGB* = 3              # (used by all)
   RGBA* = 4             # (used by all)
 
-proc stbi_load*(filename: cstring, x,y, comp: var cint, req_comp: int):
+proc stbi_load*(filename: cstring, x,y, comp: var cint, req_comp: cint):
   ptr cuchar {.importc: "stbi_load".}
 
 proc stbi_image_free*(data: ptr cchar) 
