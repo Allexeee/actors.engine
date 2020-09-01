@@ -25,17 +25,6 @@ proc init() =
   shader1.setMatrix("mx_projection", mx_ortho)
   sprite1 = addSprite("tex_larva_idle_01.png", shader1)
   prepareBatch(shader1)
-  #var i = addTexture("tex_larva_idle_01.png",MODE_RGBA, MODE_NEAREST, MODE_REPEAT)
-  # sprite1 = addSprite("tex_checkerboard.png", shader1)
-  # prepareBatch(shader1)
-#   prepareBatch(shader1)
-#   var samplers = [0'u32,1'u32]
-#   mx_ortho.ortho(-view_size * aspect_ratio, view_size * aspect_ratio, -view_size, view_size ,-100, 1000)
-#   shader1 = app.shader("basic")
-#   shader1.use()
-#   shader1.setMatrix("mx_projection", mx_ortho)
-#   shader2 = app.shader("sprite")
-#   shader2.use()
 
 
 proc update() =
