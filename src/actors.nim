@@ -21,7 +21,7 @@ let app* = actors_h.app
 proc quit*(self: App) =
   engine.target.quit()
 
-proc appSleep(t: float) =
+proc appSleep(t: float32) =
   var timeCurrent = engine.getTime()
   while timeCurrent - app.time.last < t:
     sleep(0)
@@ -39,6 +39,7 @@ proc metricsEnd()=
     timer.seconds += 1
     counter.updates_last = counter.updates
     counter.frames_last = counter.frames
+    echo counter.frames_last
     counter.updates = 0
     counter.frames  = 0
 
@@ -50,7 +51,7 @@ proc renderEnd() =
   plugins.imgui_impl.renderEnd()
   engine.target.renderEnd()
   if app.meta.vsync == 0:
-    appSleep(1/app.meta.fps)
+    appSleep(1f/app.meta.fps)
 
 template fixedUpdate(code: untyped): untyped =
     let ms_per_update = MS_PER_UPDATE()
@@ -81,6 +82,7 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
     #logic
     fixedUpdate:
       update()
+    #echo app.time.counter.frames_last
     #draw & ui
     renderBegin()
     draw()

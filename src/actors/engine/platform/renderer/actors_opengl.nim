@@ -349,15 +349,10 @@ var indCount* : int = 0
 
 
 proc drawBatched*(self: Sprite, pos: Vec2, size: Vec2) =
-  #var q = self.quad
   self.quad.updatePos(pos.x,pos.y,size.x,size.y)
-  #copyMem(verts[nextQuadID].addr,self.quad.verts[0].addr,4*Vertex.sizeof)
   nextQuadID += 4
   indCount+=6
 
-  #batchExtended[nextBatchID] = self.quad[0].addr
-  #batch[nextBatchID].quad.quadUpdatePos(pos.x,pos.y,size)
-  #nextBatchID += 1
  
 var verts : array[maxQuadCount*4,Vertex]
 

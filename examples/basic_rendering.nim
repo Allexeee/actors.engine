@@ -25,18 +25,22 @@ proc init() =
   shader1.setMatrix("mx_projection", mx_ortho)
   sprite1 = addSprite("tex_larva_idle_01.png", shader1)
   prepareBatch(shader1)
+  glBIndTextureUnit(1, sprite1.texID)
 
 
 proc update() =
   if input.down Key.Esc:
     app.quit()
 
+var p = vec(0,0,0,0)
+var s = vec(1,1,1,1)
 proc draw() =
   
-  glBIndTextureUnit(1, sprite1.texID)
-  sprite1.drawBatched((0f,0f),(1f,1f))
+  #glBIndTextureUnit(1, sprite1.texID)
+  sprite1.draw(p,s,0)
+  #sprite1.draw((0f,0.0f),(1f,1.0f),0.0f)
 
-  flush()
+  #flusher()
   for ui in uis:
     ui.draw()
 
