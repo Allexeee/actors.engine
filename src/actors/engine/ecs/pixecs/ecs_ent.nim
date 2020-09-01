@@ -5,6 +5,7 @@ import macros
 import strutils
 
 import ecs_h
+import ecs_debug
 import ecs_group
 
 var e1 {.global.} : ptr ent

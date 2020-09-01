@@ -197,8 +197,11 @@ template logInfo*(args: varargs[string, `$`]) =
 template logWarn*(args: varargs[string, `$`]) =
     px_log_send(lv_warn, args)
 
-template logError*( args: varargs[string, `$`]) =
+template logError*(args: varargs[string, `$`]) =
+  when not defined(release) and not defined(danger):
     px_trace_send(lv_error, args)
+  else:
+    px_log_send(lv_error, args)
 
 open channel
 createThread thread, px_log_execute
