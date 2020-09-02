@@ -9,7 +9,7 @@ import ecs_debug
 var next_storage_id = 0
 
 template px_ecs_storage(T: typedesc) {.used.} =
-  var st_id   : int
+  var st_id      : int
   var st_indices : seq[int]
   var st_ents    : seq[eid]
   var st_comps   : seq[T]

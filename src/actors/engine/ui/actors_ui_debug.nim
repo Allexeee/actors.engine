@@ -13,13 +13,13 @@ type UIDebugGame* = ref object of UI
   ups:       int
   drawcalls: int
 
-func newUIDebug*(): UIDebugGame {.discardable.} =
+func getUIDebug*(): UIDebugGame {.discardable.} =
   result = UIDebugGame()
   result.base = result
-func newUIDebug*(uis: var seq[UI]): UIDebugGame {.discardable.} =
+func getUIDebug*(uiStorage: var seq[UI]): UIDebugGame {.discardable.} =
   result = UIDebugGame()
   result.base = result
-  uis.add result
+  uiStorage.add result
 
 method draw*(self: UIDebugGame) {.locks: "unknown".}=
   #просто для теста показываем/скрываем интерфейс по кнопке space

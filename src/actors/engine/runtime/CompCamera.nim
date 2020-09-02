@@ -11,8 +11,8 @@ type CompCamera* = object
 
 ecsAdd CompCamera
 
-proc newCamera*(): Camera =
-  ecsEntity:
+proc getCamera*(): Camera =
+  entity:
     let ccamera = e.get CCamera
     let ctr = e.get CTransform
     ccamera.main = true

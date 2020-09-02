@@ -2,10 +2,10 @@ import macros
 import strutils
 import strformat
 
-const AMOUNT_ENTS*             = 75000
+const ENTITY_BATCH* {.intdefine.}: int = 0
 
-var PX_ECS_DEFAULT_GROUP_SIZE* = 0
-var FREE_ENTS*                 = 0
+var PX_ECS_DEFAULT_GROUP_SIZE*  = 0
+var ENTITY_FREE*                  = 0
 
 #----------------------------------------
 #@types
@@ -83,7 +83,7 @@ proc meta*(self: eid): ptr EntMeta {.inline.} =
   px_ecs_meta[self.int].addr
 
 proc px_ecs_genIndices*(self: var seq[int]) {.used.} =
-  self = newSeq[int](AMOUNT_ENTS)
+  self = newSeq[int](ENTITY_BATCH)
   for i in 0..self.high:
     self[i] = ent.nil.id
 

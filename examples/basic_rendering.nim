@@ -18,12 +18,12 @@ var uis* = newSeq[UI]()
 
 var cam : Camera # ent
 proc init() =
-  ui_debug  = newUIDebug(uis)
-  cam = newCamera(); cam.ortho(16,9,0.1,1000)
-  shader1 = app.shader("basic")
-  sprite1 = addSprite("tex_larva_idle_01.png", shader1)
-  sprite2 = addSprite("tex_hero3_idle_01.png", shader1)
-
+  ui_debug  = getUIDebug(uis)
+  cam = getCamera(); cam.ortho(16,9,0.1,1000)
+  shader1 = getShader("basic")
+  sprite1 = getSprite("tex_larva_idle_01.png", shader1)
+  sprite2 = getSprite("tex_hero3_idle_01.png", shader1)
+  
 
 var p = vec(0,0)
 var p2 = vec(0.4,0)

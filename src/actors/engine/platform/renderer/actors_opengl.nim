@@ -11,7 +11,7 @@
 
 include actors_renderer_h
 
-proc addTexture*(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: ARenum): TextureIndex =
+proc getTexture*(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: ARenum): TextureIndex =
   var w,h,bits : cint
   var textureID : GLuint
   stbi_set_flip_vertically_on_load(true.ord)
@@ -60,7 +60,7 @@ template checkErrorShaderCompile(obj: uint32, errType: ShaderCompileType): untyp
              logError &"Type: {error} Message: {message}"
              quit()
 
-proc shader*(app: App, shader_path: string): ShaderIndex =    
+proc getShader*(shader_path: string): ShaderIndex =    
     var path: string
     var vertCode = vertDefault
     var fragCode = fragDefault
@@ -227,7 +227,7 @@ proc updatePos(self: var Quad, x,y: cfloat, sx,sy: cfloat) {.inline.} =
   copyMem(verts[nextQuadID].addr,self.verts[0].addr,4*Vertex.sizeof)
 
 
-proc addSprite*(texture: TextureIndex, shader: ShaderIndex) : Sprite =
+proc getSprite*(texture: TextureIndex, shader: ShaderIndex) : Sprite =
   result = Sprite()
   result.texID = texture.uint32
   result.shader = shader
@@ -268,8 +268,8 @@ proc addSprite*(texture: TextureIndex, shader: ShaderIndex) : Sprite =
   #glBindVertexArray(0)
 
  
-proc addSprite*(filename: string, shader: ShaderIndex) : Sprite =
-  addSprite(addTexture(filename,MODE_RGBA, MODE_NEAREST, MODE_REPEAT), shader)
+proc getSprite*(filename: string, shader: ShaderIndex) : Sprite =
+  getSprite(getTexture(filename,MODE_RGBA, MODE_NEAREST, MODE_REPEAT), shader)
 
 
 var vboBatch : uint32

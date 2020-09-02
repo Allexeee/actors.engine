@@ -20,13 +20,13 @@ export ecs_h except
   meta
 
 proc ecsInit*()  =
-  FREE_ENTS     = AMOUNT_ENTS
-  PX_ECS_DEFAULT_GROUP_SIZE = (AMOUNT_ENTS/2).int
+  ENTITY_FREE     = ENTITY_BATCH
+  PX_ECS_DEFAULT_GROUP_SIZE = (ENTITY_BATCH/2).int
   px_ecs_groups        = newSeq[EcsGroup]()
-  px_ecs_meta          = newSeq[EntMeta](AMOUNT_ENTS)
+  px_ecs_meta          = newSeq[EntMeta](ENTITY_BATCH)
   px_ecs_meta_comp     = newSeq[CompStorageMeta](0)
-  px_ecs_ents          = newSeq[ent](AMOUNT_ENTS)
-  for i in 0..<AMOUNT_ENTS:
+  px_ecs_ents          = newSeq[ent](ENTITY_BATCH)
+  for i in 0..<ENTITY_BATCH:
     px_ecs_ents[i] = (i,1)
     px_ecs_meta[i].sig        = newSeqOfCap[cid](3)
     px_ecs_meta[i].sig_groups = newSeqOfCap[cid](1)
