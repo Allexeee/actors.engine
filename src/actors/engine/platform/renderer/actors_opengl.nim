@@ -16,9 +16,7 @@ proc addTexture*(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap:
   var textureID : GLuint
   stbi_set_flip_vertically_on_load(true.ord)
   var data = stbi_load(app.meta.assets_path & path, w, h, bits, 0)
-  echo w, "_", h
   glCreateTextures(GL_TEXTURE_2D, 1, textureID.addr)
-  #echo textureID
   glBindTexture(GL_TEXTURE_2D, textureID)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mode_filter.Glint)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mode_filter.Glint)
@@ -34,6 +32,8 @@ template `$`*(this: ShaderIndex): uint32 =
 ##=====================================================
 ##@shaders
 ##=====================================================
+
+var shaders* = newSeq[ShaderIndex]()
 
 template checkErrorShaderCompile(obj: uint32, errType: ShaderCompileType): untyped =
   block:
@@ -66,7 +66,7 @@ proc shader*(app: App, shader_path: string): ShaderIndex =
     var fragCode = fragDefault
     var geomCode = default(cstring)
     var id : uint32 = 0
-   
+
     path = app.meta.assets_path & "shaders/" & shader_path & ".vert"
 
     if not fileExists(path):
@@ -114,6 +114,7 @@ proc shader*(app: App, shader_path: string): ShaderIndex =
     checkErrorShaderCompile(id, PROGRAM_INFO)
     glDeleteShader(vertex)
     glDeleteShader(fragment)
+    shaders.add(id.ShaderIndex)
     result = id.ShaderIndex
 
 proc use*(this: ShaderIndex) {.inline.} =
@@ -261,7 +262,8 @@ proc addSprite*(texture: TextureIndex, shader: ShaderIndex) : Sprite =
   glGenBuffers(1, ebo.addr)
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size, indices[0].addr, GL_STATIC_DRAW);
-
+  glBindTextureUnit(1, result.texID)
+  #glBIndTextureUnit(1, sprite2.texID)
   #glBindBuffer(GL_ARRAY_BUFFER, 0)
   #glBindVertexArray(0)
 
@@ -335,7 +337,11 @@ proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   model.translate(vec(pos.x,pos.y,0,1)) 
 
   self.shader.setMatrix("mx_model",model)
-  
+  #self.shader.setFloat("")
+  #log self.texID
+  #glBindTextureUnit(0, self.texID);
+  #glActiveTexture(GL_TEXTURE2)
+  glBindTexture(GL_TEXTURE_2D,self.texID)
   glBindVertexArray(self.quad.vao)
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
 

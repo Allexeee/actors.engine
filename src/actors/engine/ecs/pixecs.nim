@@ -19,11 +19,8 @@ export ecs_h except
   EntMeta,
   meta
 
-
-
-proc ecsInit*(ent_amount: int)  =
-  AMOUNT_ENTS   = ent_amount
-  FREE_ENTS     = ent_amount
+proc ecsInit*()  =
+  FREE_ENTS     = AMOUNT_ENTS
   PX_ECS_DEFAULT_GROUP_SIZE = (AMOUNT_ENTS/2).int
   px_ecs_groups        = newSeq[EcsGroup]()
   px_ecs_meta          = newSeq[EntMeta](AMOUNT_ENTS)

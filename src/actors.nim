@@ -39,7 +39,6 @@ proc metricsEnd()=
     timer.seconds += 1
     counter.updates_last = counter.updates
     counter.frames_last = counter.frames
-    echo counter.frames_last
     counter.updates = 0
     counter.frames  = 0
 
@@ -82,11 +81,25 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
     #logic
     fixedUpdate:
       update()
-    #echo app.time.counter.frames_last
+
     #draw & ui
-    renderBegin()
-    draw()
-    renderEnd()
+    var cam : Camera
+    for e, cCamera in ecsQuery(Ent,CompCamera):
+      if cCamera.main == true:
+        cam = e
+    
+    if cam != ent.default:
+      var mm =  cam.cTransform.model; 
+      mm.scale(1,1,1)
+      mm.rotate(0, vec_forward)
+      mm.translate(vec(cam.cTransform.pos.x,cam.cTransform.pos.y,0,1)) 
+      mm.invert()
+      var m = cam.cCamera.projection * mm
+      shaders[0].use()
+      shaders[0].setMatrix("mx_projection",m)
+      renderBegin()
+      draw()
+      renderEnd()
  
     metricsEnd()
   

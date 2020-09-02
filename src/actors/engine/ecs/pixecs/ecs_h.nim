@@ -2,9 +2,10 @@ import macros
 import strutils
 import strformat
 
+const AMOUNT_ENTS*             = 75000
+
 var PX_ECS_DEFAULT_GROUP_SIZE* = 0
-var AMOUNT_ENTS*  = 0
-var FREE_ENTS*    = 0
+var FREE_ENTS*                 = 0
 
 #----------------------------------------
 #@types

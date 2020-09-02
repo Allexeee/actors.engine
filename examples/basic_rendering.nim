@@ -10,37 +10,48 @@ app.meta.assets_path = "assets/"
 
 
 var sprite1 : Sprite
+var sprite2 : Sprite
 var shader1 : ShaderIndex
 var ui_debug : UIDebugGame
-var mx_ortho : Matrix
 var uis* = newSeq[UI]()
 
 
+var cam : Camera
 proc init() =
   ui_debug  = newUIDebug(uis)
+  cam = newCamera(); cam.ortho(16,9,0.1,1000)
   shader1 = app.shader("basic")
-  var aspect_ratio = app.meta.screen_size.width/app.meta.screen_size.height
-  mx_ortho.ortho(-4f * aspect_ratio, 4f * aspect_ratio, -4f, 4f ,-100, 1000)
-  shader1.use()
-  shader1.setMatrix("mx_projection", mx_ortho)
   sprite1 = addSprite("tex_larva_idle_01.png", shader1)
-  prepareBatch(shader1)
-  glBIndTextureUnit(1, sprite1.texID)
+  sprite2 = addSprite("tex_hero3_idle_01.png", shader1)
 
+
+var p = vec(0,0)
+var p2 = vec(0.4,0)
 
 proc update() =
   if input.down Key.Esc:
     app.quit()
+  if input.down Key.Left:
+    cam.x -= 0.01
+  if input.down Key.Right:
+    cam.x += 0.01
+  if input.down Key.Up:
+    cam.y += 0.01
+  if input.down Key.Down:
+    cam.y -= 0.01
+  if input.down Key.A:
+    p.x -= 0.02
+  if input.down Key.D:
+    p.x += 0.02
 
-var p = vec(0,0,0,0)
-var s = vec(1,1,1,1)
+
+var s = vec(1,1)
+
 proc draw() =
-  
-  #glBIndTextureUnit(1, sprite1.texID)
   sprite1.draw(p,s,0)
-  #sprite1.draw((0f,0.0f),(1f,1.0f),0.0f)
+  sprite2.draw(p2,s,0)
+  sprite2.draw(p2-p2*12,s,0)
 
-  #flusher()
   for ui in uis:
     ui.draw()
 

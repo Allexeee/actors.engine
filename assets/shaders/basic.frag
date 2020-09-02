@@ -5,7 +5,7 @@ in vec4  v_color;
 in vec2  v_texcoord;
 in float v_texindex;
 
-uniform sampler2D u_textures[2];
+uniform sampler2D u_textures[3];
 
 void main()
 {

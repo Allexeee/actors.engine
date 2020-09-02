@@ -7,6 +7,7 @@ import engine/actors_platform
 import engine/actors_time
 import engine/actors_ui
 import engine/actors_interfaces
+import engine/actors_runtime
 
 export actors_ecs
 export actors_input
@@ -15,6 +16,7 @@ export actors_platform
 export actors_time
 export actors_ui
 export actors_interfaces
+export actors_runtime
 
 
 proc release*()=

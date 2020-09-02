@@ -426,7 +426,7 @@ proc transpose*(mx: var Matrix) {.inline.} =
     tmp = mx.e24; mx.e24 = mx.e42; mx.e42 = tmp;
     tmp = mx.e34; mx.e34 = mx.e43; mx.e43 = tmp;
 
-proc invert(mx: var Matrix) {.inline.} =
+proc invert*(mx: var Matrix) {.inline.} =
 
     let e11 = mx.e11
     let e12 = mx.e12
