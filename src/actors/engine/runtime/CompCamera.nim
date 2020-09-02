@@ -11,14 +11,14 @@ type CompCamera* = object
 
 ecsAdd CompCamera
 
-
 proc newCamera*(): Camera =
-  ecsEntity ecamera:
+  ecsEntity:
     let ccamera = e.get CCamera
     let ctr = e.get CTransform
     ccamera.main = true
     ctr.model.identity()
-  ecamera
+    result = e
+
 
 proc ortho*(self: Camera, w,h,min,max: float) =
   self.ccamera.projection.ortho(-w,w,-h,h,min,max)

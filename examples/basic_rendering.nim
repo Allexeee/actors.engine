@@ -16,7 +16,7 @@ var ui_debug : UIDebugGame
 var uis* = newSeq[UI]()
 
 
-var cam : Camera
+var cam : Camera # ent
 proc init() =
   ui_debug  = newUIDebug(uis)
   cam = newCamera(); cam.ortho(16,9,0.1,1000)
@@ -45,12 +45,12 @@ proc update() =
     p.x += 0.02
 
 
-var s = vec(1,1)
+var size = vec(1,1)
 
 proc draw() =
-  sprite1.draw(p,s,0)
-  sprite2.draw(p2,s,0)
-  sprite2.draw(p2-p2*12,s,0)
+  sprite1.draw(p,size,0)
+  sprite2.draw(p2,size,0)
+  sprite2.draw(p2-p2*12,size,0)
 
   for ui in uis:
     ui.draw()
