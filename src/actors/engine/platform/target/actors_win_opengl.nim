@@ -6,7 +6,7 @@ import ../../../actors_tools
 
 type Window* = GLFWWindow
 var window* : GLFWWindow
-
+var monitor : GLFWMonitor
 
 proc bootstrap*(app: App) = 
   proc getOpenglVersion() =
@@ -23,20 +23,28 @@ proc bootstrap*(app: App) =
   glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
   glfwWindowHint(GLFWResizable, GLFW_FALSE)
 
+ # glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
+  #glfwWindowHint(GLFWResizable, GLFW_FALSE)
+
+  monitor = glfwGetPrimaryMonitor()
+
   let screen = app.meta.screen_size
   let name = app.meta.name
   if app.meta.fullscreen:
-    window = glfwCreateWindow((cint)screen.width, (cint)screen.height, name, glfwGetPrimaryMonitor(), nil)
+    window = glfwCreateWindow((cint)screen.width, (cint)screen.height, name, monitor, nil)
     
   else:
     window = glfwCreateWindow((cint)screen.width, (cint)screen.height, name, nil, nil)
   
   
+
+  #window.setW
+  #glfwSetWindowAspectRatio(window, 16, 9)
   #glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
   if window == nil:
     quit(-1)
- # var v = glfwGetInputMode()
-  window.setInputMode(GLFWCursorSpecial,GLFW_CURSOR_HIDDEN)
+
+  window.setInputMode(GLFWCursorSpecial,GLFW_CURSOR_DISABLED)
   window.makeContextCurrent()
   
   assert glInit()
@@ -44,6 +52,15 @@ proc bootstrap*(app: App) =
   getOpenglVersion()
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+proc getFullscreen*(app:App, arg:bool) =
+  let screen = app.meta.screen_size
+  if arg:
+    window.setWindowMonitor(monitor,0,0,(cint)screen.width, (cint)screen.height, 0)
+  else:
+    window.setWindowMonitor(nil,0,0,(cint)screen.width, (cint)screen.height, 0)
+# proc appGetFullScreen*(arg:bool)=discard
+
 
 proc quit*() = window.setWindowShouldClose(1)
 

@@ -3,13 +3,15 @@ import actors
 logAdd stdout
 
 app.meta.name = "Pixeye Game"
-app.meta.screen_size = (800,600)
+app.meta.screen_size = (1920,1080)
 app.meta.fullscreen = true
 app.meta.fps = 60
 app.meta.ups = 50
 app.meta.ppu = 32
 app.meta.assets_path = "assets/"
 
+
+#actors.getSprite()
 
 var sprite1 : Sprite
 var sprite2 : Sprite
@@ -53,6 +55,11 @@ proc update() =
     sizeca -= 1
   if input.press Key.E:
     sizeca += 1
+  if input.press Key.I:
+    app.getFullscreen(true)
+  if input.press Key.O:
+    app.getFullscreen(false)
+    
 
 var size = vec(546f/app.meta.ppu,500f/app.meta.ppu)
 var med_size = vec(36f/app.meta.ppu,26f/app.meta.ppu)
