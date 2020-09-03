@@ -9,6 +9,7 @@ type
   
   AppMeta* = object
     screen_size* : tuple[width: int, height: int]
+    fullscreen*  : bool
     name*        : string
     assets_path* : string
     fps*         : float32

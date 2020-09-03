@@ -25,11 +25,18 @@ proc bootstrap*(app: App) =
 
   let screen = app.meta.screen_size
   let name = app.meta.name
-  window = glfwCreateWindow((cint)screen.width, (cint)screen.height, name, nil, nil)
+  if app.meta.fullscreen:
+    window = glfwCreateWindow((cint)screen.width, (cint)screen.height, name, glfwGetPrimaryMonitor(), nil)
+    
+  else:
+    window = glfwCreateWindow((cint)screen.width, (cint)screen.height, name, nil, nil)
   
+  
+  #glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
   if window == nil:
     quit(-1)
-  
+ # var v = glfwGetInputMode()
+  window.setInputMode(GLFWCursorSpecial,GLFW_CURSOR_HIDDEN)
   window.makeContextCurrent()
   
   assert glInit()
@@ -50,7 +57,6 @@ proc vsync*(app: App, arg:int32) =
 
 proc releaseImpl*() =
   window.destroyWindow()
-  window = nil
   glfwTerminate()
 
 proc renderBegin*() {.inline.} =

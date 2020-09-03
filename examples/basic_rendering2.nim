@@ -3,7 +3,8 @@ import actors
 logAdd stdout
 
 app.meta.name = "Pixeye Game"
-app.meta.screen_size = (1920,1080)
+app.meta.screen_size = (800,600)
+app.meta.fullscreen = true
 app.meta.fps = 60
 app.meta.ups = 50
 app.meta.ppu = 32
@@ -70,7 +71,7 @@ proc draw() =
   igEnd()
 
   var h = 1*sizeca
-  var w = h * 1920f/1080f
+  var w = h * 1920/1080
   cam.ortho(w,h,0.1,1000)
   for ui in uis:
     ui.draw()
