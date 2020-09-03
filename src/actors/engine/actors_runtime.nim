@@ -1,8 +1,8 @@
 import runtime/[
-  CompCamera,
-  CompTransform
+  c_camera,
+  c_transform
 ]
 
 export 
-  CompCamera,
-  CompTransform
+  c_camera,
+  c_transform

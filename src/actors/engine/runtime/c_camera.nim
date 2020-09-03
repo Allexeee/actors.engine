@@ -1,6 +1,6 @@
 import ../actors_ecs
 import ../actors_math
-import CompTransform
+import c_transform
 
 type Camera* = ent
 
@@ -13,12 +13,11 @@ ecsAdd CompCamera
 
 proc getCamera*(): Camera =
   entity:
-    let ccamera = e.get CCamera
-    let ctr = e.get CTransform
+    let ccamera = e.get CompCamera
+    let ctr = e.get CompTransform
     ccamera.main = true
     ctr.model.identity()
     result = e
-
 
 proc ortho*(self: Camera, w,h,min,max: float) =
   self.ccamera.projection.ortho(-w,w,-h,h,min,max)

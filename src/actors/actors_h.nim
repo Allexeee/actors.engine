@@ -14,6 +14,7 @@ type
     fps*         : float32
     ups*         : float32
     vsync*       : int32
+    ppu*         : float32
 
   FpsCounter* = object
     updates*      : float

@@ -334,7 +334,7 @@ proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   model.scale(size.x,size.y,1)
   model.translate(vec(-size.x*0.5, -size.y*0.5 , 0, 1))
   model.rotate(rotate.radians, vec_forward)
-  model.translate(vec(pos.x,pos.y,0,1)) 
+  model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
 
   self.shader.setMatrix("mx_model",model)
   #self.shader.setFloat("")
