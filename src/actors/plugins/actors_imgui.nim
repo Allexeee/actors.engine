@@ -22,5 +22,4 @@ proc renderEnd*()=
 proc bootstrap*(obj: ptr object)=
   let context {.used.} = igCreateContext()
   assert igGlfwInitForOpenGL(obj, true)
-  assert igOpenGL3Init()
   igStyleColorsCherry()

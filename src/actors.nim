@@ -86,7 +86,7 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   engine.target.bootstrap(app)
   plugins.imgui_impl.bootstrap(window)
   
- 
+  
   init()
   
   while not engine.target.shouldQuit():
@@ -110,10 +110,11 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
       var m = cam.cCamera.projection * mm
       shaders[0].use()
       shaders[0].setMatrix("mx_projection",m)
+      igSetMouseCursor(ImGuiMouseCursor.None)
       renderBegin()
       draw()
       renderEnd()
- 
+    
     metricsEnd()
   
   #release

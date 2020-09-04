@@ -37,7 +37,8 @@ proc bootstrap*(app: App) =
   if window == nil:
     quit(-1)
 
-  window.setInputMode(GLFWCursorSpecial,GLFW_CURSOR_DISABLED)
+  window.setInputMode(GLFWCursorSpecial,GLFWCursorHidden)
+  
   window.makeContextCurrent()
   
   assert glInit()

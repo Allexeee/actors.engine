@@ -4,7 +4,7 @@ logAdd stdout
 
 app.meta.name = "Pixeye Game"
 app.meta.screenSize = (1920,1080)
-app.meta.fullScreen = true
+app.meta.fullScreen = false
 app.meta.showCursor = true
 app.meta.fps = 60
 app.meta.ups = 50
@@ -12,7 +12,6 @@ app.meta.ppu = 32
 app.meta.assetsPath = "assets/"
 
 
-  
 
 var sprite1 : Sprite
 var sprite2 : Sprite
@@ -28,7 +27,7 @@ proc init() =
   shader1   = db.getShader("basic")
   sprite1   = db.getSprite("tex_aidKit2.png", shader1)
   sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
-
+#op
 var p  = vec(0,-19)
 var p2 = vec(0,20)
 var p3 = vec(546,20)
@@ -72,10 +71,10 @@ proc draw() =
   sprite1.draw(p,med_size,0)
   #echo p
 
-  igBegin("Camera")
-  igPushItemWidth(320)
-  igSliderFloat(" Size", sizeca.addr, 1, 1000, "%.0f")
-  igEnd()
+  # igBegin("Camera")
+  # igPushItemWidth(320)
+  # igSliderFloat(" Size", sizeca.addr, 1, 1000, "%.0f")
+  # igEnd()
 
   var h = 1*sizeca
   var w = h * 1920/1080
