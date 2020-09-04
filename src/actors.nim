@@ -1,6 +1,12 @@
-## Created by Pixeye | dev@pixeye.com
-##
-## The game engine.
+## Created by Pixeye | dev@pixeye.com   
+##   
+## ❒ The game engine
+## * ``actors_math``    gamedev specific math api and types
+## * ``actors_ecs``     entity-component-system (ECS)
+## * ``actors_tools``   auxiliary stuff and sugar extensions
+## * ``actors_plugins`` third party libraries
+
+
 
 {.used.}
 {.experimental: "codeReordering".}
@@ -15,8 +21,11 @@ export engine
 export plugins
 export actors_h.LayerId
 export actors_h.AppTime
+export actors_h.db
+export actors_h.app
 
-let app* = actors_h.app
+
+#let app* = actors_h.app
 
 proc quit*(self: App) =
   engine.target.quit()

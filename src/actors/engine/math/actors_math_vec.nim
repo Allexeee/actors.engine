@@ -2,10 +2,7 @@ import actors_math_h
 
 
 
-# proc toarray*(self: var Vec2): array[2,float32] =
-#   [self.x,self.y]
-# proc tovec*(self: array[2,float32]): Vec2 =
-#   (self[0],self[1])
+#@constructors
 
 proc xy*(self: var Vec): Vec2 =
   (self.x,self.y)
@@ -17,7 +14,6 @@ proc xy*(self: var Vec, x,y: float32) =
   self.x = x
   self.y = y
 
-#@constructors
 proc vec2*(x,y: float32 = 0): Vec2 {.inline.} =
   (x,y)
 proc vec3*(x,y,z: float32 = 0): Vec3 {.inline.} =
@@ -81,13 +77,13 @@ const #identity
   vec_backward* = vec(0,0,-1,0)
   vec_one*      = vec(1,1,1,1)
 
-
 #@equility
 proc `==`*(a,b:var Vec):bool {.inline.} =
   a.x == b.x and
   a.y == b.y and
   a.z == b.z and
-  a.w == b.w 
+  a.w == b.w
+
 #@maths
 proc `+`*(a: Vec, b: Vec): Vec {.inline.} =
   (a.x+b.x, a.y+b.y, a.z+b.z, a.w+b.w)
@@ -182,3 +178,10 @@ proc dot*(vec1, vec2: Vec): float32 {.inline.} =
 
 proc dot4*(vec1, vec2: Vec): float32 {.inline.} =
   vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z + vec1.w * vec2.w
+
+
+#@converters
+converter toVec*(v: Vec2): Vec {.inline.} =
+  (v.x,v.y,0f,0f) 
+converter toVec*(v: Vec3): Vec {.inline.} =
+  (v.x,v.y,v.z,0f) 

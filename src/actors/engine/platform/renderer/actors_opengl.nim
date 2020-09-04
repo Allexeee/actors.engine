@@ -60,7 +60,7 @@ template checkErrorShaderCompile(obj: uint32, errType: ShaderCompileType): untyp
              logError &"Type: {error} Message: {message}"
              quit()
 
-proc getShader*(shader_path: string): ShaderIndex =    
+proc getShader*(db: DataBase, shader_path: string): ShaderIndex =    
     var path: string
     var vertCode = vertDefault
     var fragCode = fragDefault
@@ -227,7 +227,7 @@ proc updatePos(self: var Quad, x,y: cfloat, sx,sy: cfloat) {.inline.} =
   copyMem(verts[nextQuadID].addr,self.verts[0].addr,4*Vertex.sizeof)
 
 
-proc getSprite*(texture: TextureIndex, shader: ShaderIndex) : Sprite =
+proc getSprite*(db: DataBase, texture: TextureIndex, shader: ShaderIndex) : Sprite =
   result = Sprite()
   result.texID = texture.uint32
   result.shader = shader
@@ -267,10 +267,8 @@ proc getSprite*(texture: TextureIndex, shader: ShaderIndex) : Sprite =
   #glBindBuffer(GL_ARRAY_BUFFER, 0)
   #glBindVertexArray(0)
 
- 
-proc getSprite*(filename: string, shader: ShaderIndex) : Sprite =
-  getSprite(getTexture(filename,MODE_RGBA, MODE_NEAREST, MODE_REPEAT), shader)
-
+proc getSprite*(db: DataBase, filename: string, shader: ShaderIndex) : Sprite =
+  db.getSprite(getTexture(filename,MODE_RGBA, MODE_NEAREST, MODE_REPEAT), shader)
 
 var vboBatch : uint32
 var vaoBatch : uint32

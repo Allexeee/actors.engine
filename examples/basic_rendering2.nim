@@ -3,32 +3,31 @@ import actors
 logAdd stdout
 
 app.meta.name = "Pixeye Game"
-app.meta.screen_size = (1920,1080)
-app.meta.fullscreen = true
+app.meta.screenSize = (1920,1080)
+app.meta.fullScreen = true
+app.meta.showCursor = true
 app.meta.fps = 60
 app.meta.ups = 50
 app.meta.ppu = 32
-app.meta.assets_path = "assets/"
+app.meta.assetsPath = "assets/"
 
 
-#actors.getSprite()
+  
 
 var sprite1 : Sprite
 var sprite2 : Sprite
 var shader1 : ShaderIndex
-var ui_debug : UIDebugGame
-var uis* = newSeq[UI]()
+var ui_debug : UiDebugGame
+var uis* = newSeq[UiWindow]()
 var sizeca = 4f
 
 var cam : Camera # ent
 proc init() =
-  ui_debug  = getUIDebug(uis)
-  cam = getCamera();
-  shader1 = getShader("basic")
-  #sprite1 = getSprite("tex_larva_idle_01.png", shader1)
-  sprite1 = getSprite("tex_aidKit2.png", shader1)
-  sprite2 = getSprite("tex_st1_wall1_03.png", shader1)
-  
+  cam       = getCamera();
+  ui_debug  = uis.getDebugWindow()
+  shader1   = db.getShader("basic")
+  sprite1   = db.getSprite("tex_aidKit2.png", shader1)
+  sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
 
 var p  = vec(0,-19)
 var p2 = vec(0,20)
@@ -56,10 +55,11 @@ proc update() =
   if input.press Key.E:
     sizeca += 1
   if input.press Key.I:
-    app.getFullscreen(true)
+    app.getFullScreen(true)
+
   if input.press Key.O:
-    app.getFullscreen(false)
-    
+    app.getFullScreen(false)
+  
 
 var size = vec(546f/app.meta.ppu,500f/app.meta.ppu)
 var med_size = vec(36f/app.meta.ppu,26f/app.meta.ppu)
@@ -82,6 +82,6 @@ proc draw() =
   cam.ortho(w,h,0.1,1000)
   for ui in uis:
     ui.draw()
-    
+
 
 app.run(init,update,draw)

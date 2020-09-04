@@ -1,8 +1,8 @@
 {.used.}
 
-type UI* = ref object of RootObj
+type UiWindow* = ref object of RootObj
   show* : bool
-  base* : UI
+  base* : UiWindow
 
-method draw*(self: UI) {.base,  locks: "unknown".} = 
+method draw*(self: UiWindow) {.base,  locks: "unknown".} = 
   discard

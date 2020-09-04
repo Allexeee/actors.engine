@@ -7,21 +7,21 @@ import ../actors_platform
 import actors_ui_h
 
 
-type UIDebugGame* = ref object of UI
+type UiDebugGame* = ref object of UiWindow
   vsync_toggle*: bool
   framerate: int
   ups:       int
   drawcalls: int
 
-func getUIDebug*(): UIDebugGame {.discardable.} =
-  result = UIDebugGame()
+func getDebugWindow*(): UiDebugGame {.discardable.} =
+  result = UiDebugGame()
   result.base = result
-func getUIDebug*(uiStorage: var seq[UI]): UIDebugGame {.discardable.} =
-  result = UIDebugGame()
+func getDebugWindow*(uiStorage: var seq[UiWindow]): UiDebugGame {.discardable.} =
+  result = UiDebugGame()
   result.base = result
   uiStorage.add result
 
-method draw*(self: UIDebugGame) {.locks: "unknown".}=
+method draw*(self: UiDebugGame) {.locks: "unknown".}=
   #просто для теста показываем/скрываем интерфейс по кнопке space
   if input.press Key.Tilde:
     self.show = if self.show: false else: true

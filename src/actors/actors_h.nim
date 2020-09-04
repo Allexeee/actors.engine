@@ -2,20 +2,23 @@
 
 type
   LayerId* = distinct byte
-  
+
+  DataBase* = ref object
+
   AppStats* = object
     updates* : int
     frames*  : int
   
   AppMeta* = object
-    screen_size* : tuple[width: int, height: int]
-    fullscreen*  : bool
+    screenSize*  : tuple[width: int, height: int]
+    fullScreen*  : bool
+    showCursor*  : bool
     name*        : string
-    assets_path* : string
+    assetsPath*  : string
     fps*         : float32
     ups*         : float32
-    vsync*       : int32
     ppu*         : float32
+    vsync*       : int32
 
   FpsCounter* = object
     updates*      : float
@@ -43,12 +46,14 @@ type
 
 #Time
 let app* = App()
+let db*  = DataBase()
 var stats* = AppStats()
 var a_layer_added* = newSeq[ActionOnLayer]()
 var a_layer_changed* = newSeq[ILayer]()
 var highest_layer_id*  = 0
 var layer_current* = 0
 var layer* = 0.LayerId
+
 
 #app.settings = AppSettings()
 app.time = AppTime()

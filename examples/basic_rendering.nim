@@ -13,18 +13,18 @@ app.meta.assets_path = "assets/"
 var sprite1 : Sprite
 var sprite2 : Sprite
 var shader1 : ShaderIndex
-var ui_debug : UIDebugGame
-var uis* = newSeq[UI]()
+var ui_debug : UiDebugGame
+var uis* = newSeq[UiWindow]()
 var sizeca = 4f
 
 var cam : Camera # ent
 proc init() =
-  ui_debug  = getUIDebug(uis)
+  ui_debug  = uis.getDebugWindow()
   cam = getCamera();
-  shader1 = getShader("basic")
+  shader1 = db.getShader("basic")
   #sprite1 = getSprite("tex_larva_idle_01.png", shader1)
-  sprite1 = getSprite("tex_aidKit2.png", shader1)
-  sprite2 = getSprite("tex_st1_wall1_03.png", shader1)
+  sprite1 = db.getSprite("tex_aidKit2.png", shader1)
+  sprite2 = db.getSprite("tex_st1_wall1_03.png", shader1)
   
 
 var p  = vec(0,-19)

@@ -1,4 +1,5 @@
-float invSqrt( float number )
+
+float invSqrt( float number ) //easter egg XD
 {
     long i;
     float x2, y;
