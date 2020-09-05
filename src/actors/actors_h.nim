@@ -53,7 +53,7 @@ var a_layer_changed* = newSeq[ILayer]()
 var highest_layer_id*  = 0
 var layer_current* = 0
 var layer* = 0.LayerId
-
+var tildaPressed* = false
 
 #app.settings = AppSettings()
 app.time = AppTime()

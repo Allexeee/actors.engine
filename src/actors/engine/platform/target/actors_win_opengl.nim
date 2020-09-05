@@ -4,9 +4,38 @@ import ../../../plugins/actors_gl
 import ../../../plugins/actors_glfw
 import ../../../actors_tools
 
+const Tilde = 96
+
 type Window* = GLFWWindow
+
 var window* : GLFWWindow
 var monitor : GLFWMonitor
+var cursorMode : int32
+
+
+
+##=====================================================
+##@input
+##=====================================================
+proc pollEvents*() {.inline.} =
+  glfwPollEvents()
+
+proc pressKeyImpl*(keycode: cint): bool {.inline.} =
+  let state = window.getkey(keycode)
+  return state == GLFWPress 
+
+proc pressMouseImpl*(keycode: cint): bool {.inline.} =
+  let state = window.getMouseButton(keycode)
+  return state == GLFWPress 
+ 
+proc getMousePositionImpl*(): tuple[x: cfloat,y: cfloat] {.inline.} =
+  var x,y : cdouble
+  window.getCursorPos(addr x,addr y)
+  return (x.cfloat,y.cfloat)
+
+##=====================================================
+##@Setup
+##=====================================================
 
 proc bootstrap*(app: App) = 
   proc getOpenglVersion() =
@@ -37,7 +66,8 @@ proc bootstrap*(app: App) =
   if window == nil:
     quit(-1)
 
-  window.setInputMode(GLFWCursorSpecial,GLFWCursorHidden)
+  if app.meta.showCursor == false:
+    cursorMode = GLFWCursorHidden
   
   window.makeContextCurrent()
   
@@ -47,7 +77,7 @@ proc bootstrap*(app: App) =
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-proc getFullScreen*(app:App, arg:bool) =
+proc setFullScreen*(app:App, arg:bool) =
   let screen = app.meta.screen_size
   if arg:
     window.setWindowMonitor(monitor,0,0,(cint)screen.width, (cint)screen.height, 0)
@@ -69,29 +99,35 @@ proc releaseImpl*() =
   window.destroyWindow()
   glfwTerminate()
 
-proc renderBegin*() {.inline.} =
+proc pressTilda(): bool =
+  var tildaPressed {.global.} = false
+  var pressed = pressKeyImpl(Tilde)
+  if pressed and tildaPressed == false:
+    tildaPressed = true
+    return true
+  if pressed == false and tildaPressed == true:
+    tildaPressed = false
+    return false
+proc renderBegin*() =
+  
+  
+  if pressTilda():
+    tildaPressed = !tildaPressed
+
+  if tildaPressed:
+    cursorMode = GLFWCursorNormal
+  else:
+    cursorMode = if app.meta.showCursor: GLFWCursorNormal else: GLFWCursorHidden
+
+
+
   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f)
+  window.setInputMode(GLFWCursorSpecial,cursorMode)
 
-proc renderEnd*() {.inline.} =
+proc renderEnd*() =
   window.swapBuffers()
   glFlush()
 
-##=====================================================
-##@input
-##=====================================================
-proc pollEvents*() {.inline.} =
-  glfwPollEvents()
+#window.setInputMode(GLFWCursorSpecial,GLFWCursorHidden)
 
-proc pressKeyImpl*(keycode: cint): bool {.inline.} =
-  let state = window.getkey(keycode)
-  return state == GLFWPress 
-
-proc pressMouseImpl*(keycode: cint): bool {.inline.} =
-  let state = window.getMouseButton(keycode)
-  return state == GLFWPress 
- 
-proc getMousePositionImpl*(): tuple[x: cfloat,y: cfloat] {.inline.} =
-  var x,y : cdouble
-  window.getCursorPos(addr x,addr y)
-  return (x.cfloat,y.cfloat)

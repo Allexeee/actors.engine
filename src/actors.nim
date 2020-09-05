@@ -25,8 +25,6 @@ export actors_h.db
 export actors_h.app
 
 
-#let app* = actors_h.app
-
 proc quit*(self: App) =
   engine.target.quit()
 
@@ -85,7 +83,11 @@ template fixedUpdate(code: untyped): untyped =
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   engine.target.bootstrap(app)
   plugins.imgui_impl.bootstrap(window)
-  
+  #igSetMouseCursor(ImGuiMouseCursor.None)
+  # if app.meta.showCursor == false:
+  #   window.setInputMode(GLFWCursorSpecial,GLFWCursorHidden)
+  # else:
+  #   window.setInputMode(GLFWCursorSpecial,GLFWCursorNormal)
   
   init()
   
@@ -110,7 +112,6 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
       var m = cam.cCamera.projection * mm
       shaders[0].use()
       shaders[0].setMatrix("mx_projection",m)
-      igSetMouseCursor(ImGuiMouseCursor.None)
       renderBegin()
       draw()
       renderEnd()

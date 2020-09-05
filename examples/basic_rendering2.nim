@@ -5,7 +5,7 @@ logAdd stdout
 app.meta.name = "Pixeye Game"
 app.meta.screenSize = (1920,1080)
 app.meta.fullScreen = false
-app.meta.showCursor = true
+app.meta.showCursor = false
 app.meta.fps = 60
 app.meta.ups = 50
 app.meta.ppu = 32
@@ -27,6 +27,7 @@ proc init() =
   shader1   = db.getShader("basic")
   sprite1   = db.getSprite("tex_aidKit2.png", shader1)
   sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
+  
 #op
 var p  = vec(0,-19)
 var p2 = vec(0,20)
@@ -54,10 +55,10 @@ proc update() =
   if input.press Key.E:
     sizeca += 1
   if input.press Key.I:
-    app.getFullScreen(true)
+    app.setFullScreen(true)
 
   if input.press Key.O:
-    app.getFullScreen(false)
+    app.setFullScreen(false)
   
 
 var size = vec(546f/app.meta.ppu,500f/app.meta.ppu)

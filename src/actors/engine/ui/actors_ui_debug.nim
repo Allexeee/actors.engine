@@ -24,9 +24,11 @@ func getDebugWindow*(uiStorage: var seq[UiWindow]): UiDebugGame {.discardable.} 
 method draw*(self: UiDebugGame) {.locks: "unknown".}=
   #просто для теста показываем/скрываем интерфейс по кнопке space
   if input.press Key.Tilde:
-    self.show = if self.show: false else: true
+    self.show = not self.show
   # не рисуем интерфейс если не показываем
-  if not self.show: return
+  if not self.show:
+    return
+
   if app.meta.vsync == 0:
     self.vsync_toggle = false
   else: self.vsync_toggle = true
@@ -53,4 +55,6 @@ method draw*(self: UiDebugGame) {.locks: "unknown".}=
     app.vsync(1)
   else:
     app.vsync(0)
+  if self.show == false:
+    tildaPressed = false
   igEnd()

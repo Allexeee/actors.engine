@@ -6,6 +6,11 @@ import macros
 #converter float64ToInt*(f: float64): int = f.int
 #converter intToFloat*(f: int): float = f.float
 
+template `!`*(arg: bool): bool =
+  var result : bool
+  if arg == true: result = false
+  else: result = true
+  result
 
 #@collections
 proc push*[T](self: var seq[T], elem: T) {.inline.} =
