@@ -227,11 +227,11 @@ proc updatePos(self: var Quad, x,y: cfloat, sx,sy: cfloat) {.inline.} =
   copyMem(verts[nextQuadID].addr,self.verts[0].addr,4*Vertex.sizeof)
 
 
-proc getSprite*(db: DataBase, texture: TextureIndex, shader: ShaderIndex) : Sprite =
+proc getSprite*(db: DataBase, textureId: TextureIndex, shader: ShaderIndex) : Sprite =
   result = Sprite()
-  result.texID = texture.uint32
+  result.texId = textureId.uint32
   result.shader = shader
-  result.quad = quad(0.0f,0.0f,vec(1,1,1,1),texture.cfloat)
+  result.quad = quad(0.0f,0.0f,vec(1,1,1,1),textureId.cfloat)
   shader.use()
 
   var vbo : uint32

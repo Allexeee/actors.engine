@@ -30,7 +30,7 @@ type Quad* = object
 
 type Sprite* = ref object
   quad* : Quad
-  x,y* : float32
+  x*,y* : float32
   shader*  : ShaderIndex
-  texID*    : uint32
+  texId*    : uint32
 

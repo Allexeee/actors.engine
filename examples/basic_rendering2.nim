@@ -11,8 +11,7 @@ app.meta.ups = 50
 app.meta.ppu = 32
 app.meta.assetsPath = "assets/"
 
-
-
+ 
 var sprite1 : Sprite
 var sprite2 : Sprite
 var shader1 : ShaderIndex
@@ -27,7 +26,7 @@ proc init() =
   shader1   = db.getShader("basic")
   sprite1   = db.getSprite("tex_aidKit2.png", shader1)
   sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
-  
+  #echo sprite1.x, "__", sprite1.y
 #op
 var p  = vec(0,-19)
 var p2 = vec(0,20)
