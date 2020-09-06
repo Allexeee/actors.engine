@@ -1,5 +1,5 @@
 import actors_math_h
-
+import random
 
 
 #@constructors
@@ -179,7 +179,13 @@ proc dot*(vec1, vec2: Vec): float32 {.inline.} =
 proc dot4*(vec1, vec2: Vec): float32 {.inline.} =
   vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z + vec1.w * vec2.w
 
-
+proc rnd*(self: var Vec, arg: float32) =
+  self.x = rand(-arg..arg)
+  self.y = rand(-arg..arg)
+  self.z = rand(-arg..arg)
+proc rnd*(self: var Vec, x: float32, y: float32) =
+  self.x = rand(-x..x)
+  self.y = rand(-y..y)
 #@converters
 converter toVec*(v: Vec2): Vec {.inline.} =
   (v.x,v.y,0f,0f) 

@@ -72,7 +72,8 @@ var positions = newSeq[Vec](amount)
 import random
 
 for i in 0..<amount:
-  positions[i] = vec(rand(-200f..200f),rand(-100f..100f),0,0)
+  positions[i].rnd(200,100)
+  #positions[i] = vec(rand(-200f..200f),rand(-100f..100f),0,0)
 
 proc draw() =
 
