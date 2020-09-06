@@ -26,6 +26,7 @@ proc init() =
   shader1   = db.getShader("basic")
   sprite    = db.getSprite("tex_aidKit2.png", shader1)
   sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
+  shader1.prepareBatch()
   var h = sizeca
   var w = h * 1920/1080
   cam.ortho(w,h,0.1,1000)
@@ -66,20 +67,32 @@ proc update() =
  
 #var rotate = 1f
 var size = (1f,1f)
-var amount = 3000
+var amount = 100000
 var positions = newSeq[Vec](amount)
 
 import random
 
 for i in 0..<amount:
   positions[i].rnd(200,100)
-  #positions[i] = vec(rand(-200f..200f),rand(-100f..100f),0,0)
+
+
+var mode = 0
 
 proc draw() =
 
-  for i in 0..<amount:
-    draw(sprite,positions[i],size,0)
+  if input.press Key.K1:
+    mode = 0
+  if input.press Key.K2:
+    mode = 1
 
+  case mode:
+  of 0:
+    for i in 0..<amount:
+      draw(sprite,positions[i],size,0)
+  of 1:
+    for i in 0..<amount:
+      drawB(sprite,positions[i],size,0)
+  else: discard
 
   for ui in uis:
     ui.draw()

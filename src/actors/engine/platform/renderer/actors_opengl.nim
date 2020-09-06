@@ -118,8 +118,11 @@ proc getShader*(db: DataBase, shader_path: string): ShaderIndex =
     shaders.add(id.ShaderIndex)
     result = id.ShaderIndex
 
-proc use*(this: ShaderIndex) {.inline.} =
-  glUseProgram(this.GLuint) 
+proc use*(self: ShaderIndex) =
+  var inUse {.global.} : ShaderIndex
+  if self.int == inuse.int: return
+  inuse = self
+  glUseProgram(self.GLuint) 
 
 proc setSampler*(this: ShaderIndex, name: cstring, count: GLsizei, arg: ptr uint32) {.inline.} =
    glUniform1iv(glGetUniformLocation(this.GLuint,name),count, cast[ptr Glint](arg))
@@ -247,8 +250,10 @@ proc getSprite(db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], s
   result.texId = texture.id.uint32
   result.shader = shader
   result.quad = quad(0.0f,0.0f,vec(1,1,1,1),texture.id.cfloat)
-  result.w = texture.w
-  result.h = texture.h
+  result.w = texture.w.float32
+  result.h = texture.h.float32
+  result.x = result.w/app.meta.ppu
+  result.y = result.h/app.meta.ppu
   
   #res
   shader.use()
@@ -303,7 +308,7 @@ proc prepareBatch*(shader: ShaderIndex) =
   shader.use()
   shaderBatch = shader
   var samplers = [0'u32,1'u32]
-  shader.setSampler("u_textures",2,samplers[0].addr)
+  shader.setSampler("u_textures",3,samplers[0].addr)
 
   glGenVertexArrays(1, vaoBatch.addr)
   glBindVertexArray(vaoBatch)
@@ -342,8 +347,6 @@ proc prepareBatch*(shader: ShaderIndex) =
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboBatch)
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size, indices[0].addr, GL_STATIC_DRAW);
 
-  
-
 proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   self.shader.use()
   var model = matrix()
@@ -356,35 +359,37 @@ proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
 
   self.shader.setMatrix("mx_model",model)
-  #self.shader.setFloat("")
-  #log self.texID
-  #glBindTextureUnit(0, self.texID);
-  #glActiveTexture(GL_TEXTURE2)
+
   glBindTexture(GL_TEXTURE_2D,self.texID)
   glBindVertexArray(self.quad.vao)
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
+
   stats.sprites += 1
   stats.drawcalls += 1
 
-
 var batch* = newSeq[Sprite](maxQuadCount)
-#var batchExtended* = newSeq[ptr Vertex](maxQuadCount)
 var nextBatchID* : int = 0
 var nextQuadID* : int = 0
 var indCount* : int = 0
 
 
+proc drawB*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
+  if stats.drawcalls > 1000:
+    flush()
+    stats.drawcalls = 0
 
-proc drawBatched*(self: Sprite, pos: Vec2, size: Vec2) =
   self.quad.updatePos(pos.x,pos.y,size.x,size.y)
   nextQuadID += 4
   indCount+=6
+  stats.sprites += 1
+  stats.drawcalls += 1
+  
 
  
 var verts : array[maxQuadCount*4,Vertex]
 
 proc flush*() =
-  drawcalls += 1
+  #drawcalls += 1
   glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
   glBufferSubData(GL_ARRAY_BUFFER, 0, verts.size, verts[0].addr) 
   
@@ -397,8 +402,8 @@ proc flush*() =
   glDrawElements(GL_TRIANGLES, indCount.GlSizei, GL_UNSIGNED_INT, nil)
   indCount = 0
   nextQuadID = 0
-  drawcallsLast = drawcalls
-  drawcalls -= 1
+  #drawcallsLast = drawcalls
+  #drawcalls -= 1
 
 
 proc flusher*() =

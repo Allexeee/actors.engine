@@ -14,7 +14,7 @@ out float v_texindex;
 
 void main()
 {
-	v_color = a_color;
+	v_color    = a_color;
  	v_texcoord = a_texcoord;
 	v_texindex = a_texindex;
 	gl_Position = mx_projection * mx_model *  vec4(a_position,1.0);
