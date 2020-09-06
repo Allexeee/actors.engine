@@ -6,7 +6,7 @@ app.meta.name = "Pixeye Game"
 app.meta.screenSize = (1920,1080)
 app.meta.fullScreen = false
 app.meta.showCursor = false
-app.meta.fps = 60
+app.meta.fps = 1000
 app.meta.ups = 50
 app.meta.ppu = 32
 app.meta.assetsPath = "assets/"
@@ -63,15 +63,22 @@ proc update() =
     app.setFullScreen(false)
   
 
-var wallSize = vec(1,1)
-var medSize = vec(3,3)
-var rotate = 1f
+ 
+#var rotate = 1f
+var size = (1f,1f)
+var amount = 3000
+var positions = newSeq[Vec](amount)
+
+import random
+
+for i in 0..<amount:
+  positions[i] = vec(rand(-200f..200f),rand(-100f..100f),0,0)
 
 proc draw() =
-  
-  sprite.draw(pos,med_size,rotate)
 
-  rotate += 1
+  for i in 0..<amount:
+    draw(sprite,positions[i],size,0)
+
 
   for ui in uis:
     ui.draw()
