@@ -363,6 +363,8 @@ proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   glBindTexture(GL_TEXTURE_2D,self.texID)
   glBindVertexArray(self.quad.vao)
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
+  stats.sprites += 1
+  stats.drawcalls += 1
 
 
 var batch* = newSeq[Sprite](maxQuadCount)

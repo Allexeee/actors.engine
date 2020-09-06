@@ -58,7 +58,8 @@ proc renderEnd() =
  # igSetMouseCursor(ImGuiMouseCursor.None)
   plugins.imgui_impl.renderEnd()
   engine.target.renderEnd()
-  
+  stats.sprites = 0
+  stats.drawcalls = 0
   if app.meta.vsync == 0:
     appSleep(1f/app.meta.fps)
 

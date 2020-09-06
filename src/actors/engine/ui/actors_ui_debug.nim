@@ -11,7 +11,7 @@ type UiDebugGame* = ref object of UiWindow
   vsync_toggle*: bool
   framerate: int
   ups:       int
-  drawcalls: int
+  #drawcalls: int
 
 func getDebugWindow*(): UiDebugGame {.discardable.} =
   result = UiDebugGame()
@@ -49,7 +49,10 @@ method draw*(self: UiDebugGame) {.locks: "unknown".}=
   igText("fps/ups = %.1f/%.1f | %.3f ms ", app.time.counter.frames_last, app.time.counter.updates_last, 1000.0f / (float)app.time.counter.frames_last)
   igText("")
   igSameLine(130)
-  igText("draw calls: %.i ", self.drawcalls)
+  igText("draw calls: %.i", stats.drawcalls)
+  igText("")
+  igSameLine(130)
+  igText("   sprites: %.i", stats.sprites)
   
   if self.vsync_toggle: 
     app.vsync(1)

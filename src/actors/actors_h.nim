@@ -6,8 +6,8 @@ type
   DataBase* = ref object
 
   AppStats* = object
-    updates* : int
-    frames*  : int
+    sprites*    : int
+    drawcalls*  : int
   
   AppMeta* = object
     screenSize*  : tuple[width: int, height: int]

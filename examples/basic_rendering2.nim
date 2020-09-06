@@ -12,7 +12,7 @@ app.meta.ppu = 32
 app.meta.assetsPath = "assets/"
 
  
-var sprite1 : Sprite
+var sprite : Sprite
 var sprite2 : Sprite
 var shader1 : ShaderIndex
 var ui_debug : UiDebugGame
@@ -24,7 +24,7 @@ proc init() =
   cam       = getCamera();
   ui_debug  = uis.getDebugWindow()
   shader1   = db.getShader("basic")
-  sprite1   = db.getSprite("tex_aidKit2.png", shader1)
+  sprite    = db.getSprite("tex_aidKit2.png", shader1)
   sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
   var h = sizeca
   var w = h * 1920/1080
@@ -69,7 +69,7 @@ var rotate = 1f
 
 proc draw() =
   
-  sprite1.draw(pos,med_size,rotate)
+  sprite.draw(pos,med_size,rotate)
 
   rotate += 1
 
