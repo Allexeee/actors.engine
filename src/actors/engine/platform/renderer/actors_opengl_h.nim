@@ -2,7 +2,7 @@
 
 import ../../../actors_plugins
 
-type ARenum* = GLenum
+type ARenum* = GLenum # ActorsRender
 
 const
   MODE_LINEAR*          : ARenum = GL_LINEAR

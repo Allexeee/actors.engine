@@ -10,6 +10,12 @@ proc releaseImpl*()=
   impl_opengl.igOpenGL3Shutdown()
   impl_glfw.igGlfwShutdown()
 
+proc igHandleCursor*(mode: int) =
+  if mode == 0x00034001:
+    igSetMouseCursor(ImGuiMouseCursor.Arrow)
+  else:
+    igSetMouseCursor(ImGuiMouseCursor.None)
+
 proc renderBegin*()=
   igOpenGL3NewFrame()
   igGlfwNewFrame()

@@ -3,6 +3,8 @@ import ../../../actors_h
 import ../../../plugins/actors_gl
 import ../../../plugins/actors_glfw
 import ../../../actors_tools
+import ../../../actors_plugins
+
 
 const Tilde = 96
 
@@ -108,22 +110,25 @@ proc pressTilda(): bool =
   if pressed == false and tildaPressed == true:
     tildaPressed = false
     return false
-proc renderBegin*() =
-  
-  
+
+
+proc handleCursor() =
   if pressTilda():
     tildaPressed = !tildaPressed
 
   if tildaPressed:
-    cursorMode = GLFWCursorNormal
+    cursorMode = GLFWCursorNormal;
   else:
     cursorMode = if app.meta.showCursor: GLFWCursorNormal else: GLFWCursorHidden
+  
+  igHandleCursor(cursorMode)
+  window.setInputMode(GLFWCursorSpecial,cursorMode)
+  
 
-
-
+proc renderBegin*() =
+  handleCursor()
   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f)
-  window.setInputMode(GLFWCursorSpecial,cursorMode)
 
 proc renderEnd*() =
   window.swapBuffers()

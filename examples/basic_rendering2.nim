@@ -26,14 +26,17 @@ proc init() =
   shader1   = db.getShader("basic")
   sprite1   = db.getSprite("tex_aidKit2.png", shader1)
   sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
+  var h = sizeca
+  var w = h * 1920/1080
+  cam.ortho(w,h,0.1,1000)
   #echo sprite1.x, "__", sprite1.y
 #op
-var p  = vec(0,-19)
-var p2 = vec(0,20)
-var p3 = vec(546,20)
-var p4 = vec(-546,20)
-var p5 = vec(-546*2,20)
-var p6 = vec(546*2,20)
+var pos  = vec(0,-19)
+var pos2 = vec(0,20)
+var pos3 = vec(546,20)
+var pos4 = vec(-546,20)
+var pos5 = vec(-546*2,20)
+var pos6 = vec(546*2,20)
 proc update() =
   if input.down Key.Esc:
     app.quit()
@@ -46,9 +49,9 @@ proc update() =
   if input.down Key.Down:
     cam.y -= 0.01
   if input.down Key.A:
-    p.x -= 1
+    pos.x -= 1
   if input.down Key.D:
-    p.x += 1
+    pos.x += 1
   if input.press Key.Q:
     sizeca -= 1
   if input.press Key.E:
@@ -60,25 +63,16 @@ proc update() =
     app.setFullScreen(false)
   
 
-var size = vec(546f/app.meta.ppu,500f/app.meta.ppu)
-var med_size = vec(36f/app.meta.ppu,26f/app.meta.ppu)
+var wallSize = vec(1,1)
+var medSize = vec(3,3)
+var rotate = 1f
+
 proc draw() =
-  sprite2.draw(p2,size,0)
-  sprite2.draw(p3,size,0)
-  sprite2.draw(p4,size,0)
-  sprite2.draw(p5,size,0)
-  sprite2.draw(p6,size,0)
-  sprite1.draw(p,med_size,0)
-  #echo p
+  
+  sprite1.draw(pos,med_size,rotate)
 
-  # igBegin("Camera")
-  # igPushItemWidth(320)
-  # igSliderFloat(" Size", sizeca.addr, 1, 1000, "%.0f")
-  # igEnd()
+  rotate += 1
 
-  var h = 1*sizeca
-  var w = h * 1920/1080
-  cam.ortho(w,h,0.1,1000)
   for ui in uis:
     ui.draw()
 

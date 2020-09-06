@@ -52,12 +52,16 @@ proc metricsEnd()=
 proc renderBegin()=
   plugins.imgui_impl.renderBegin()
   engine.target.renderBegin()
+  #igSetMouseCursor(ImGuiMouseCursor.None)
 
 proc renderEnd() =
+ # igSetMouseCursor(ImGuiMouseCursor.None)
   plugins.imgui_impl.renderEnd()
   engine.target.renderEnd()
+  
   if app.meta.vsync == 0:
     appSleep(1f/app.meta.fps)
+
 
 template fixedUpdate(code: untyped): untyped =
     let ms_per_update = MS_PER_UPDATE()
@@ -77,12 +81,13 @@ template fixedUpdate(code: untyped): untyped =
       timer.counter.updates += 1
 
 
-
-
-
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   engine.target.bootstrap(app)
   plugins.imgui_impl.bootstrap(window)
+
+  #igSetMouseCursor(ImGuiMouseCursor.None)
+  #if io.MouseDrawCursor: discard
+   #SetCursor(nil)
   #igSetMouseCursor(ImGuiMouseCursor.None)
   # if app.meta.showCursor == false:
   #   window.setInputMode(GLFWCursorSpecial,GLFWCursorHidden)

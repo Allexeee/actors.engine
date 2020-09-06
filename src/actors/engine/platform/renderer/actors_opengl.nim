@@ -11,20 +11,21 @@
 
 include actors_renderer_h
 
-proc getTexture*(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: ARenum): TextureIndex =
-  var w,h,bits : cint
-  var textureID : GLuint
-  stbi_set_flip_vertically_on_load(true.ord)
-  var data = stbi_load(app.meta.assets_path & path, w, h, bits, 0)
-  glCreateTextures(GL_TEXTURE_2D, 1, textureID.addr)
-  glBindTexture(GL_TEXTURE_2D, textureID)
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mode_filter.Glint)
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mode_filter.Glint)
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mode_wrap.Glint)
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mode_wrap.Glint)
-  glTexImage2D(GL_TEXTURE_2D, 0.Glint, mode_rgb.Glint, w, h, 0.Glint, mode_rgb.Glenum, GL_UNSIGNED_BYTE, data)
-  stbi_image_free(data)
-  textureID.TextureIndex
+# proc getTexture*(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: ARenum): TextureIndex =
+#   var w,h,bits : cint
+#   var textureID : GLuint
+#   stbi_set_flip_vertically_on_load(true.ord)
+#   var data = stbi_load(app.meta.assets_path & path, w, h, bits, 0)
+#   glCreateTextures(GL_TEXTURE_2D, 1, textureID.addr)
+#   glBindTexture(GL_TEXTURE_2D, textureID)
+#   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mode_filter.Glint)
+#   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mode_filter.Glint)
+#   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mode_wrap.Glint)
+#   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mode_wrap.Glint)
+#   glTexImage2D(GL_TEXTURE_2D, 0.Glint, mode_rgb.Glint, w, h, 0.Glint, mode_rgb.Glenum, GL_UNSIGNED_BYTE, data)
+#   stbi_image_free(data)
+#   textureID.TextureIndex
+
 
 template `$`*(this: ShaderIndex): uint32 =
   this.uint32
@@ -193,7 +194,7 @@ proc drawQuad*(x,y: cfloat, color: Vec, texID: cfloat): pointer {.discardable.} 
 
 proc quad(x,y: cfloat, color: Vec, texID: cfloat): Quad {.discardable.} =
   const size = 1.0f
-  
+
   tempQuad[0].color     = color
   tempQuad[0].position  = vec3(x,y,0f)
   tempQuad[0].texCoords = vec2(0.0f, 0.0f)
@@ -226,12 +227,30 @@ proc updatePos(self: var Quad, x,y: cfloat, sx,sy: cfloat) {.inline.} =
   self.verts[3].position = (x,y+sy,0f)
   copyMem(verts[nextQuadID].addr,self.verts[0].addr,4*Vertex.sizeof)
 
+proc getTexture(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: ARenum): tuple[id: TextureIndex, w: int, h: int] =
+  var w,h,bits : cint
+  var textureID : GLuint
+  stbi_set_flip_vertically_on_load(true.ord)
+  var data = stbi_load(app.meta.assets_path & path, w, h, bits, 0)
+  glCreateTextures(GL_TEXTURE_2D, 1, textureID.addr)
+  glBindTexture(GL_TEXTURE_2D, textureID)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mode_filter.Glint)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mode_filter.Glint)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mode_wrap.Glint)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mode_wrap.Glint)
+  glTexImage2D(GL_TEXTURE_2D, 0.Glint, mode_rgb.Glint, w, h, 0.Glint, mode_rgb.Glenum, GL_UNSIGNED_BYTE, data)
+  stbi_image_free(data)
+  (textureID.TextureIndex,w.int,h.int)
 
-proc getSprite*(db: DataBase, textureId: TextureIndex, shader: ShaderIndex) : Sprite =
+proc getSprite(db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], shader: ShaderIndex) : Sprite =
   result = Sprite()
-  result.texId = textureId.uint32
+  result.texId = texture.id.uint32
   result.shader = shader
-  result.quad = quad(0.0f,0.0f,vec(1,1,1,1),textureId.cfloat)
+  result.quad = quad(0.0f,0.0f,vec(1,1,1,1),texture.id.cfloat)
+  result.w = texture.w
+  result.h = texture.h
+  
+  #res
   shader.use()
 
   var vbo : uint32
@@ -328,9 +347,11 @@ proc prepareBatch*(shader: ShaderIndex) =
 proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   self.shader.use()
   var model = matrix()
-  
-  model.scale(size.x,size.y,1)
-  model.translate(vec(-size.x*0.5, -size.y*0.5 , 0, 1))
+  let sizex = self.w.float32/app.meta.ppu * size.x
+  let sizey = self.h.float32/app.meta.ppu * size.y
+
+  model.scale(sizex,sizey,1)
+  model.translate(vec(-sizex*0.5, -sizey*0.5 , 0, 1))
   model.rotate(rotate.radians, vec_forward)
   model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
 
