@@ -16,7 +16,7 @@ export
   imgui_impl
 
 
-proc init*(window: ptr object) =
+proc pluginsInit*(window: ptr object) =
   imgui_impl.initImpl(window)
 
 proc release*() =

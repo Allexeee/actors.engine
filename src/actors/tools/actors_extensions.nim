@@ -97,3 +97,5 @@ template to_uint32*(t: openArray[int]): seq[uint32]=
 
 template size*[T](t: openArray[T]): cint =
   cint(T.sizeof * t.len) 
+
+#template csizeOf*[T]()

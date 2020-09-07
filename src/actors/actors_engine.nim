@@ -16,7 +16,7 @@ export actors_time
 export actors_ui
 export actors_runtime
 
-proc init*() =
+proc engineInit*() =
   actors_platform.targetInit()
   actors_platform.rendererInit()
 

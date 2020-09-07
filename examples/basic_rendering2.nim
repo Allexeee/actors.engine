@@ -11,7 +11,16 @@ app.meta.ups = 50
 app.meta.ppu = 32
 app.meta.assetsPath = "assets/"
 
- 
+# var arr {.noinit.} : array[600_000,uint32]
+
+# proc test*()=
+#   var indices {.noinit,global.} : array[600_000,uint32]
+#   echo sizeof(indices), "bo"
+
+
+
+#var indices : array[600_000,uint32] #newSeq[uint32](maxIndexCount)
+#echo sizeof(indices), "bo"
 var sprite : Sprite
 var sprite2 : Sprite
 var shader1 : ShaderIndex
@@ -26,11 +35,9 @@ proc init() =
   shader1   = db.getShader("basic")
   sprite    = db.getSprite("tex_aidKit2.png", shader1)
   sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
-  shader1.prepareBatch()
   var h = sizeca
   var w = h * 1920/1080
   cam.ortho(w,h,0.1,1000)
-  #echo sprite1.x, "__", sprite1.y
 #op
 var pos  = vec(0,-19)
 var pos2 = vec(0,20)

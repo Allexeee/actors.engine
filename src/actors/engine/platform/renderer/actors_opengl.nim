@@ -4,8 +4,12 @@
 ## Submodules:   
 ## * ```shaders```
 
+## vbo: the vertex buffer object VBO is a memory buffer area opened in the graphics card storage space 
+## for storing various attribute information of the vertex: coords,color,and like
+## vao: stores all of the state needed to supply vertex data
+## ebo: a vertex buffer object, that stores indices that OpenGL uses to decide what vertices to draw
 
-
+## {.noinit.}: nim pragma that allows to use unitialized arrays
 
 {.used.}
 
@@ -278,19 +282,59 @@ proc getSprite(db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], s
 proc getSprite*(db: DataBase, filename: string, shader: ShaderIndex) : Sprite =
   db.getSprite(getTexture(filename,MODE_RGBA, MODE_NEAREST, MODE_REPEAT), shader)
 
-var vboBatch : uint32
-var vaoBatch : uint32
-var eboBatch : uint32
 
-const maxQuadCount = 110001
+const maxQuadCount = 100_000
 const maxVertexCount = maxQuadCount * 4;
 const maxIndexCount = maxQuadCount * 6;
 
 var shaderBatch: ShaderIndex
 
+var batch* = newSeq[Sprite](maxQuadCount)
+var nextBatchID* : int = 0
+var nextQuadID* : int = 0
+var indCount* : int = 0
+
+var vboBatch : uint32 # vertex buffer 
+var vaoBatch : uint32 # vertex array
+var eboBatch : uint32 # element buffer
+
+var vertBatch {.noinit.} : array[maxVertexCount,Vertex]
 
 proc rendererInit*() =
-  discard
+  glCreateVertexArrays(1,vaoBatch.addr)
+  glBindVertexArray(vaoBatch)
+
+  glCreateBuffers(1,vboBatch.addr)
+  glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertBatch), nil, GL_DYNAMIC_DRAW)
+
+  glEnableVertexAttribArray(0)
+  glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, position)))
+
+  glEnableVertexAttribArray(1)
+  glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, color)))
+  
+  glEnableVertexAttribArray(2)
+  glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texCoords)))
+  
+  glEnableVertexAttribArray(3)
+  glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texID)))
+
+  var indices {.noinit,global.} : array[maxIndexCount,uint32]
+  var offset = 0'u32
+  for i in countup(0,maxIndexCount-1,6):
+    indices[i+0] = 0 + offset
+    indices[i+1] = 1 + offset
+    indices[i+2] = 2 + offset
+
+    indices[i+3] = 2 + offset
+    indices[i+4] = 3 + offset
+    indices[i+5] = 0 + offset
+    offset += 4
+
+  glGenBuffers(1, eboBatch.addr)
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboBatch)
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices[0].addr, GL_STATIC_DRAW);
 
 proc rendererRelease*() = discard
 
@@ -356,12 +400,6 @@ proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
 
   stats.sprites += 1
   stats.drawcalls += 1
-
-var batch* = newSeq[Sprite](maxQuadCount)
-var nextBatchID* : int = 0
-var nextQuadID* : int = 0
-var indCount* : int = 0
-
 
 proc drawB*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   if stats.drawcalls > 1000:
