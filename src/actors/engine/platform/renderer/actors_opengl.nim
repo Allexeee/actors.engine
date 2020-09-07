@@ -289,8 +289,10 @@ const maxIndexCount = maxQuadCount * 6;
 var shaderBatch: ShaderIndex
 
 
-proc initImpl*() =
+proc rendererInit*() =
   discard
+
+proc rendererRelease*() = discard
 
 proc prepareBatch*(shader: ShaderIndex) =
   shader.use()

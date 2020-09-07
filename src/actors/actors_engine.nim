@@ -17,7 +17,9 @@ export actors_ui
 export actors_runtime
 
 proc init*() =
-  actors_platform.target.initImpl()
+  actors_platform.targetInit()
+  actors_platform.rendererInit()
 
 proc release*()=
-  actors_platform.target.releaseImpl()
+  actors_platform.targetRelease()
+  actors_platform.rendererRelease()

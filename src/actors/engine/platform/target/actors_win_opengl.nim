@@ -39,7 +39,7 @@ proc getMousePositionImpl*(): tuple[x: cfloat,y: cfloat] {.inline.} =
 ##@Setup
 ##=====================================================
 
-proc initImpl*() = 
+proc targetInit*() = 
   proc getOpenglVersion() =
     var glGetString = cast[proc (name: GLenum): ptr GLubyte {.stdcall.}](glGetProc("glGetString"))
     if glGetString == nil: return
@@ -97,7 +97,7 @@ proc vsync*(app: App, arg:int32) =
   glfwSwapInterval(arg);
   window.makeContextCurrent()
 
-proc releaseImpl*() =
+proc targetRelease*() =
   window.destroyWindow()
   glfwTerminate()
 
