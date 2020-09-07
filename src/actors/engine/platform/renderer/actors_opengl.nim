@@ -211,12 +211,6 @@ proc quad(x,y: cfloat, color: Vec, texID: cfloat): Quad {.discardable.} =
   
   result.verts = tempQuad
 
-proc updatePos(self: var Quad, x,y: cfloat, sx,sy: cfloat) {.inline.} =
-  self.verts[0].position = (x,y,0f)  
-  self.verts[1].position = (x+sx,y,0f)
-  self.verts[2].position = (x+sx,y+sy,0f)
-  self.verts[3].position = (x,y+sy,0f)
-  copyMem(verts[nextQuadID].addr,self.verts[0].addr,4*Vertex.sizeof)
 
 proc getTexture(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: ARenum): tuple[id: TextureIndex, w: int, h: int] =
   var w,h,bits : cint
@@ -229,7 +223,7 @@ proc getTexture(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mode_filter.Glint)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mode_wrap.Glint)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mode_wrap.Glint)
-  glTexImage2D(GL_TEXTURE_2D, 0.Glint, mode_rgb.Glint, w, h, 0.Glint, mode_rgb.Glenum, GL_UNSIGNED_BYTE, data)
+  glTexImage2D(GL_TEXTURE_2D, 0, mode_rgb.Glint, w, h, 0, mode_rgb.Glenum, GL_UNSIGNED_BYTE, data)
   stbi_image_free(data)
   (textureID.TextureIndex,w.int,h.int)
 
@@ -294,11 +288,24 @@ var nextBatchID* : int = 0
 var nextQuadID* : int = 0
 var indCount* : int = 0
 
+var whiteTexture   : Gluint
+var whiteTextureId : Gluint
+
 var vboBatch : uint32 # vertex buffer 
 var vaoBatch : uint32 # vertex array
 var eboBatch : uint32 # element buffer
 
 var vertBatch {.noinit.} : array[maxVertexCount,Vertex]
+var textures {.noinit.}  : array[32,uint32]
+var vertBatchPtr : ptr Vertex
+var verts : array[maxQuadCount*4,Vertex]
+proc updatePos(self: var Quad, x,y: cfloat, sx,sy: cfloat) {.inline.} =
+  self.verts[0].position = (x,y,0f)  
+  self.verts[1].position = (x+sx,y,0f)
+  self.verts[2].position = (x+sx,y+sy,0f)
+  self.verts[3].position = (x,y+sy,0f)
+  copyMem(verts[nextQuadID].addr,self.verts[0].addr,4*Vertex.sizeof)
+
 
 proc rendererInit*() =
   glCreateVertexArrays(1,vaoBatch.addr)
@@ -320,11 +327,10 @@ proc rendererInit*() =
   glEnableVertexAttribArray(3)
   glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texID)))
 
-
   ## indices allows to reduce number of vertices for drawing a quad
   var indices {.noinit,global.} : array[maxIndexCount,uint32]
   var offset = 0'u32
-  for i in countup(0,maxIndexCount-1,6):
+  for i in countup(0,indices.high,6):
     indices[i+0] = 0 + offset
     indices[i+1] = 1 + offset
     indices[i+2] = 2 + offset
@@ -338,50 +344,20 @@ proc rendererInit*() =
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboBatch)
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices[0].addr, GL_STATIC_DRAW);
 
+  # texture 1x1
+  glCreateTextures(GL_TEXTURE_2D, 1, whiteTexture.addr)
+  glBindBuffer(GL_TEXTURE_2D, whiteTexture)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR.Glint)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR.Glint)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE.Glint)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE.Glint)
+  var color = 0xffffff
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8.Glint,1,1,0,GL_RGBA,GL_UNSIGNED_BYTE, color.addr)
+  textures[0] = whiteTexture
+  for i in 1..<32:
+    textures[i] = i.uint32
+
 proc rendererRelease*() = discard
-
-proc prepareBatch*(shader: ShaderIndex) =
-  shader.use()
-  shaderBatch = shader
-  var samplers = [0'u32,1'u32]
-  shader.setSampler("u_textures",3,samplers[0].addr)
-
-  glGenVertexArrays(1, vaoBatch.addr)
-  glBindVertexArray(vaoBatch)
-
-  glGenBuffers(1, vboBatch.addr)
-  glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
-  glBufferData(GL_ARRAY_BUFFER, Vertex.sizeof*maxVertexCount, nil, GL_DYNAMIC_DRAW)
- 
-  glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, position)))
-  glEnableVertexAttribArray(0)
-
-  glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, color)))
-  glEnableVertexAttribArray(1)
-  
-  glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texCoords)))
-  glEnableVertexAttribArray(2)
-  
-  glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texID)))
-  glEnableVertexAttribArray(3)
-
-
-  var indices = newSeq[uint32](maxIndexCount)
-  var offset = 0'u32
-  for i in countup(0,maxIndexCount.high,6):
-    indices[i+0] = 0 + offset
-    indices[i+1] = 1 + offset
-    indices[i+2] = 2 + offset
-
-    indices[i+3] = 2 + offset
-    indices[i+4] = 3 + offset
-    indices[i+5] = 0 + offset
-
-    offset += 4
-
-  glGenBuffers(1, eboBatch.addr)
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboBatch)
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size, indices[0].addr, GL_STATIC_DRAW);
 
 proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   self.shader.use()
@@ -404,49 +380,66 @@ proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   stats.drawcalls += 1
 
 proc drawB*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
-  if stats.drawcalls > 1000:
-    flush()
-    stats.drawcalls = 0
+  discard
+  #if indexCount >= maxIndexCount
+  # if stats.drawcalls > 1000:
+  #   flush()
+  #   stats.drawcalls = 0
 
-  self.quad.updatePos(pos.x,pos.y,size.x,size.y)
-  nextQuadID += 4
-  indCount+=6
-  stats.sprites += 1
-  stats.drawcalls += 1
+  #self.quad.updatePos(pos.x,pos.y,size.x,size.y)
+  #quadIndexCount += 6
+  # nextQuadID += 4
+  # indCount+=6
+  #stats.sprites += 1
+  # stats.drawcalls += 1
   
 
- 
-var verts : array[maxQuadCount*4,Vertex]
 
-proc flush*() =
-  #drawcalls += 1
-  glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
-  glBufferSubData(GL_ARRAY_BUFFER, 0, verts.size, verts[0].addr) 
+#var verts : array[maxQuadCount*4,Vertex]
+var nextVertex = 0
+var indexCount = 0
+proc beginBatch*()=
+  indexCount = 0
+proc endBatch*() = discard
+  #var size = quadIndexCount*sizeof(Vertex)
+  #glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
+  #glBufferSubData(GL_ARRAY_BUFFER,0,size,vertBatch[0].addr)
+
+
+proc flush() = discard
+  #glDrawElements(GL_TRIANGLES, nextVertex.int32, GL_UNSIGNED_INT, cast[ptr Glvoid](0));
+  #glBindTexture(GL_TEXTURE_2D, 0);
+  #stats.drawcalls += 1
   
-  glBindVertexArray(vaoBatch)
+# proc flush*() =
+#   #drawcalls += 1
+#   glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
+#   glBufferSubData(GL_ARRAY_BUFFER, 0, verts.size, verts[0].addr) 
   
-  #var model = matrix()
-  #model.translate(vec(0,0,0,1)) 
-
-  #  shaderBatch.setMatrix("mx_model",model)
-  glDrawElements(GL_TRIANGLES, indCount.GlSizei, GL_UNSIGNED_INT, nil)
-  indCount = 0
-  nextQuadID = 0
-  #drawcallsLast = drawcalls
-  #drawcalls -= 1
-
-
-proc flusher*() =
-  glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
-  glBufferSubData(GL_ARRAY_BUFFER, 0, verts.size, verts[0].addr) 
+#   glBindVertexArray(vaoBatch)
   
-  glBindVertexArray(vaoBatch)
-  
-  var model = matrix()
-  model.translate(vec(0,0,0,1)) 
+#   #var model = matrix()
+#   #model.translate(vec(0,0,0,1)) 
 
-  shaderBatch.setMatrix("mx_model",model)
-  glDrawElements(GL_TRIANGLES, indCount.GlSizei, GL_UNSIGNED_INT, nil)
+#   #  shaderBatch.setMatrix("mx_model",model)
+#   glDrawElements(GL_TRIANGLES, indCount.GlSizei, GL_UNSIGNED_INT, nil)
+#   indCount = 0
+#   nextQuadID = 0
+#   #drawcallsLast = drawcalls
+#   #drawcalls -= 1
+
+
+# proc flusher*() =
+#   glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
+#   glBufferSubData(GL_ARRAY_BUFFER, 0, verts.size, verts[0].addr) 
+  
+#   glBindVertexArray(vaoBatch)
+  
+#   var model = matrix()
+#   model.translate(vec(0,0,0,1)) 
+
+#   shaderBatch.setMatrix("mx_model",model)
+#   glDrawElements(GL_TRIANGLES, indCount.GlSizei, GL_UNSIGNED_INT, nil)
 
 template getTime*(): float64 =
   glfwGetTime()

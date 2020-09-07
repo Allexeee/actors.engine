@@ -99,16 +99,18 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
         cam = e
     
     if cam != ent.default:
-      var mm =  cam.cTransform.model; 
-      mm.scale(1,1,1)
-      mm.rotate(0, vec_forward)
-      mm.translate(vec(cam.cTransform.pos.x,cam.cTransform.pos.y,0,1)) 
-      mm.invert()
-      var m = cam.cCamera.projection * mm
+      var сm =  cam.cTransform.model; 
+      сm.scale(1,1,1)
+      сm.rotate(0, vec_forward)
+      сm.translate(vec(cam.cTransform.pos.x,cam.cTransform.pos.y,0,1)) 
+      сm.invert()
+      var m = cam.cCamera.projection * сm
       shaders[0].use()
       shaders[0].setMatrix("mx_projection",m)
       renderBegin()
+      beginBatch()
       draw()
+      endBatch()
       renderEnd()
     
     metricsEnd()
