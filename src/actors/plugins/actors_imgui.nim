@@ -25,7 +25,7 @@ proc renderEnd*()=
   igRender()
   igOpenGL3RenderDrawData(igGetDrawData())
 
-proc bootstrap*(obj: ptr object)=
+proc initImpl*(obj: ptr object)=
   let context {.used.} = igCreateContext()
   assert igGlfwInitForOpenGL(obj, true)
   igStyleColorsCherry()

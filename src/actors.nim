@@ -52,10 +52,8 @@ proc metricsEnd()=
 proc renderBegin()=
   plugins.imgui_impl.renderBegin()
   engine.target.renderBegin()
-  #igSetMouseCursor(ImGuiMouseCursor.None)
 
 proc renderEnd() =
- # igSetMouseCursor(ImGuiMouseCursor.None)
   plugins.imgui_impl.renderEnd()
   engine.target.renderEnd()
   stats.sprites = 0
@@ -83,18 +81,9 @@ template fixedUpdate(code: untyped): untyped =
 
 
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
-  engine.target.bootstrap(app)
-  plugins.imgui_impl.bootstrap(window)
+  engine.init()
+  plugins.init(window)
 
-  #igSetMouseCursor(ImGuiMouseCursor.None)
-  #if io.MouseDrawCursor: discard
-   #SetCursor(nil)
-  #igSetMouseCursor(ImGuiMouseCursor.None)
-  # if app.meta.showCursor == false:
-  #   window.setInputMode(GLFWCursorSpecial,GLFWCursorHidden)
-  # else:
-  #   window.setInputMode(GLFWCursorSpecial,GLFWCursorNormal)
-  
   init()
   
   while not engine.target.shouldQuit():
@@ -127,50 +116,4 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   #release
   engine.release()
   plugins.release()
-
-
-#var frame* : int
-
-# proc run*(app: App,init: proc(), update: proc(), draw: proc()) =
-#   engine.target.start(app.settings.display_size, app.settings.name)
-#   app.time.lag  = 0
-#   app.time.last = app.time.current
-#   app.vsync(app.settings.vsync)
- 
-#   #var ms_update = 0f
-#   #var ms_render = 0f
-
-#   init()
-
-#   while not engine.target.shouldQuit():
-#     app.time.frames += 1
-#     app.time.counter.frames += 1
-#     frame += 1
-#     engine.target.pollEvents()
-    
-#     #clampUpdate():
-#     #  update()
-    
-#     #igOpenGL3NewFrame()
-#     plugins.imgui.renderer_begin()
-    
-#     glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-#     if app.settings.vsync == 1:
-#       glClearColor(0.2f, 0.3f, 0.3f, 1.0f)
-#     else:
-#       glClearColor(0.2f, 0.4f, 0.3f, 1.0f)
-
-
-#     draw()
-    
-#     plugins.imgui.flush()
-#     renderer_end()
-    
-#     # echo "msu: ", ms_update
-#     # echo "msr: ", ms_render
-  
-#   plugins.imgui.dispose()
-#   engine.target.dispose()
-
-
 

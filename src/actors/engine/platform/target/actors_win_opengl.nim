@@ -39,7 +39,7 @@ proc getMousePositionImpl*(): tuple[x: cfloat,y: cfloat] {.inline.} =
 ##@Setup
 ##=====================================================
 
-proc bootstrap*(app: App) = 
+proc initImpl*() = 
   proc getOpenglVersion() =
     var glGetString = cast[proc (name: GLenum): ptr GLubyte {.stdcall.}](glGetProc("glGetString"))
     if glGetString == nil: return

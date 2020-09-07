@@ -11,22 +11,6 @@
 
 include actors_renderer_h
 
-# proc getTexture*(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: ARenum): TextureIndex =
-#   var w,h,bits : cint
-#   var textureID : GLuint
-#   stbi_set_flip_vertically_on_load(true.ord)
-#   var data = stbi_load(app.meta.assets_path & path, w, h, bits, 0)
-#   glCreateTextures(GL_TEXTURE_2D, 1, textureID.addr)
-#   glBindTexture(GL_TEXTURE_2D, textureID)
-#   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mode_filter.Glint)
-#   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mode_filter.Glint)
-#   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mode_wrap.Glint)
-#   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mode_wrap.Glint)
-#   glTexImage2D(GL_TEXTURE_2D, 0.Glint, mode_rgb.Glint, w, h, 0.Glint, mode_rgb.Glenum, GL_UNSIGNED_BYTE, data)
-#   stbi_image_free(data)
-#   textureID.TextureIndex
-
-
 template `$`*(this: ShaderIndex): uint32 =
   this.uint32
 
@@ -303,6 +287,10 @@ const maxVertexCount = maxQuadCount * 4;
 const maxIndexCount = maxQuadCount * 6;
 
 var shaderBatch: ShaderIndex
+
+
+proc initImpl*() =
+  discard
 
 proc prepareBatch*(shader: ShaderIndex) =
   shader.use()

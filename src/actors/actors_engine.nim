@@ -16,6 +16,8 @@ export actors_time
 export actors_ui
 export actors_runtime
 
+proc init*() =
+  actors_platform.target.initImpl()
 
 proc release*()=
   actors_platform.target.releaseImpl()
