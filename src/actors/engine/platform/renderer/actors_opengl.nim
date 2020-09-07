@@ -320,6 +320,8 @@ proc rendererInit*() =
   glEnableVertexAttribArray(3)
   glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texID)))
 
+
+  ## indices allows to reduce number of vertices for drawing a quad
   var indices {.noinit,global.} : array[maxIndexCount,uint32]
   var offset = 0'u32
   for i in countup(0,maxIndexCount-1,6):
@@ -366,7 +368,7 @@ proc prepareBatch*(shader: ShaderIndex) =
 
   var indices = newSeq[uint32](maxIndexCount)
   var offset = 0'u32
-  for i in countup(0,maxIndexCount-1,6):
+  for i in countup(0,maxIndexCount.high,6):
     indices[i+0] = 0 + offset
     indices[i+1] = 1 + offset
     indices[i+2] = 2 + offset
