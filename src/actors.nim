@@ -56,6 +56,8 @@ proc renderBegin()=
 proc renderEnd() =
   plugins.imgui_impl.renderEnd()
   engine.target.renderEnd()
+  stats.sprites_prev = stats.sprites
+  stats.drawcalls_prev = stats.drawcalls
   stats.sprites = 0
   stats.drawcalls = 0
   if app.meta.vsync == 0:
@@ -111,6 +113,7 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
       beginBatch()
       draw()
       endBatch()
+      flush()
       renderEnd()
     
     metricsEnd()

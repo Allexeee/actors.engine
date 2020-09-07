@@ -49,10 +49,10 @@ method draw*(self: UiDebugGame) {.locks: "unknown".}=
   igText("fps/ups = %.1f/%.1f | %.3f ms ", app.time.counter.frames_last, app.time.counter.updates_last, 1000.0f / (float)app.time.counter.frames_last)
   igText("")
   igSameLine(130)
-  igText("draw calls: %.i", stats.drawcalls)
+  igText("draw calls: %.i", stats.drawcalls_prev)
   igText("")
   igSameLine(130)
-  igText("   sprites: %.i", stats.sprites)
+  igText("   sprites: %.i", stats.sprites_prev)
   
   if self.vsync_toggle: 
     app.vsync(1)

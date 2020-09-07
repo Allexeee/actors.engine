@@ -74,7 +74,7 @@ proc update() =
  
 #var rotate = 1f
 var size = (1f,1f)
-var amount = 30000
+var amount = 130000
 var positions = newSeq[Vec](amount)
 
 import random

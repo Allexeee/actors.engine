@@ -8,6 +8,8 @@ type
   AppStats* = object
     sprites*    : int
     drawcalls*  : int
+    sprites_prev*:int
+    drawcalls_prev*:int
   
   AppMeta* = object
     screenSize*  : tuple[width: int, height: int]
