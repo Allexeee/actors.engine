@@ -19,10 +19,10 @@ task releasecpp, "Build":
 
 
 task release, "BUILD":
-   exec "nim c -d:release --passC:-flto --passL:-s --gc:refc --out: bin/game examples/test.nim"
+   exec "nim c -d:release --gc:boehm --out: bin/game examples/basic_rendering2.nim"
 
 task debug, "DEBUG":
-   exec "nim c --debugger:gdb --d:debug --lineDir:on --passC:-flto --passL:-s --gc:refc --out: bin/game examples/test.nim"
+   exec "nim c --d:debug  --out: bin/game examples/basic_rendering2.nim"
 # task make_docs, "BUILD":
 #   exec "nim doc --project --index:on src/actors.nim"
 #   exec "nim buildIndex -o:docs/index.html htmldocs"

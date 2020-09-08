@@ -385,7 +385,7 @@ proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
 
   self.shader.setMatrix("mx_model",model)
 
-  glBindTexture(GL_TEXTURE_2D,self.texID)
+  glBindTexture(GL_TEXTURE_2D,whiteTexture)
   glBindVertexArray(self.quad.vao)
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
 
@@ -393,9 +393,7 @@ proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   stats.drawcalls += 1
 
 proc drawB*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
-  
   if indexCount >= maxIndexCount:
-    log "TEST"
     endBatch()
     flush()
     beginBatch()
@@ -403,9 +401,22 @@ proc drawB*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   let id = vertexCount
   let x = pos.x
   let y = pos.y
-  let sx = size.x
-  let sy = size.y
- 
+  let sx = self.w.float32/app.meta.ppu * size.x  #size.x
+  let sy = self.h.float32/app.meta.ppu * size.y #size.y
+  
+
+  # var model = matrix()
+  # let sizex = self.w.float32/app.meta.ppu * size.x
+  # let sizey = self.h.float32/app.meta.ppu * size.y
+
+  # model.scale(sizex,sizey,1)
+  # model.translate(vec(-sizex*0.5, -sizey*0.5 , 0, 1))
+  # model.rotate(rotate.radians, vec_forward)
+  # model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
+
+  # self.shader.setMatrix("mx_model",model)
+
+  let vb = vertBatch[id+0].addr
   vertBatch[id+0].position = (x,y,0f)
   vertBatch[id+1].position = (x+sx,y,0f)
   vertBatch[id+2].position = (x+sx,y+sy,0f)
@@ -446,7 +457,7 @@ proc flush*() =
      glBindTexture(GL_TEXTURE_2D,textures[i])
 
   glDrawElements(GL_TRIANGLES, indexCount.int32, GL_UNSIGNED_INT, cast[ptr Glvoid](0));
-  glBindTexture(GL_TEXTURE_2D, 0);
+  glBindTexture(GL_TEXTURE_2D, 1);
   stats.drawcalls += 1
   indexCount = 0
   textureId = 1

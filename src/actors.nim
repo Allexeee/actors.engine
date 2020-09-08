@@ -119,6 +119,6 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
     metricsEnd()
   
   #release
-  engine.release()
   plugins.release()
+  engine.release()
 

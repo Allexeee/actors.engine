@@ -92,6 +92,7 @@ proc draw() =
   if input.press Key.K2:
     mode = 1
 
+  sprite.shader.use()
   case mode:
   of 0:
     for i in 0..<amount:

@@ -39,6 +39,10 @@ proc getMousePositionImpl*(): tuple[x: cfloat,y: cfloat] {.inline.} =
 ##@Setup
 ##=====================================================
 
+
+proc glfwErrorCheck(error_code: int32, description: cstring):void {.cdecl.} =
+  logError description
+
 proc targetInit*() = 
   proc getOpenglVersion() =
     var glGetString = cast[proc (name: GLenum): ptr GLubyte {.stdcall.}](glGetProc("glGetString"))
@@ -46,7 +50,13 @@ proc targetInit*() =
     var glVersion = cast[cstring](glGetString(GL_VERSION))
     logInfo &"OpenGL {glVersion}"
   
-  assert glfwInit()==1
+  discard glfwSetErrorCallback(glfwErrorCheck)
+  var glfwInitState = 0
+  var glInitState = false
+  glfwInitState = glfwInit()
+  if glfwInitState == 0:
+    logError "The GLFW library is not initialized"
+    quit(-1)
  
   glfwWindowHint(GLFWContextVersionMajor, 4)
   glfwWindowHint(GLFWContextVersionMinor, 5)
@@ -54,27 +64,25 @@ proc targetInit*() =
   glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
   glfwWindowHint(GLFWResizable, GLFW_FALSE)
 
-
   monitor = glfwGetPrimaryMonitor()
-
   let screen = app.meta.screen_size
   let name = app.meta.name
 
   if app.meta.fullscreen:
-    window = glfwCreateWindow((cint)screen.width, (cint)screen.height, name, monitor, nil)
+    window = glfwCreateWindow((cint)screen.width, (cint)screen.height, name, monitor, nil,false)
   else:
-    window = glfwCreateWindow((cint)screen.width, (cint)screen.height, name, nil, nil)
-
+    window = glfwCreateWindow((cint)screen.width, (cint)screen.height, name, nil, nil,false)
   if window == nil:
+    logError "actors_win_opengl.nim [71] No Window"
     quit(-1)
-
   if app.meta.showCursor == false:
     cursorMode = GLFWCursorHidden
-  
   window.makeContextCurrent()
   
-  assert glInit()
-
+  glInitState = glInit()
+  if glInitState == false:
+    logError "Opengl is not initialized"
+    quit(-1)
   getOpenglVersion()
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
