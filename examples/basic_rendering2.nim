@@ -64,23 +64,23 @@ proc update() =
     sizeca -= 1
   if input.press Key.E:
     sizeca += 1
-  if input.press Key.I:
-    app.setFullScreen(true)
+  #if input.press Key.I:
+  #  app.setFullScreen(true)
 
-  if input.press Key.O:
-    app.setFullScreen(false)
+ # if input.press Key.O:
+ #   app.setFullScreen(false)
   
 
  
 #var rotate = 1f
 #var size = (1f,1f)
-var amount = 50000
+var amount = 400_000
 var positions = newSeq[Vec](amount)
 
 #import random
 
 for i in 0..<amount:
-  positions[i].rnd(200,100)
+  positions[i].rnd(12,6)
 
 
 var mode = 0
@@ -95,7 +95,10 @@ proc draw() =
   var s : Vec = (1f,1f)
   var r  = 0f
   for i in 0..<amount:
-    drawQuad(positions[i],s,r)
+    makeQuad(positions[i].x,positions[i].y,(1f,1f,1f,1f),0)
+    #discard
+    #drawQuad(positions[i],s,r)
+    #let x = positions[i].x
   #sprite.shader.use()
 
   # case mode:

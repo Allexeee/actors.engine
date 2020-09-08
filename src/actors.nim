@@ -101,7 +101,7 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
         cam = e
     
     if cam != ent.default:
-      var сm =  cam.cTransform.model; 
+      var сm =  cam.cTransform.model
       сm.scale(1,1,1)
       сm.rotate(0, vec_forward)
       сm.translate(vec(cam.cTransform.pos.x,cam.cTransform.pos.y,0,1)) 

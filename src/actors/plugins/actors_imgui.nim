@@ -27,5 +27,5 @@ proc renderEnd*()=
 
 proc initImpl*(obj: ptr object)=
   let context {.used.} = igCreateContext()
-  assert igGlfwInitForOpenGL(obj, true)
+  discard igGlfwInitForOpenGL(obj, true)
   igStyleColorsCherry()

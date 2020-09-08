@@ -155,33 +155,6 @@ var tempQuad : array[4,Vertex]
 var drawcalls* = 0
 var drawcallsLast* = 0
 
-# proc drawQuad*(x,y: cfloat, color: Vec, texID: cfloat): pointer {.discardable.} =
-#   const size = 1.0f
-  
-#   tempQuad[0].color     = color
-#   tempQuad[0].position  = vec3(x,y,0f)
-#   tempQuad[0].texCoords = vec2(0.0f, 0.0f)
-#   tempQuad[0].texID     = texID
-  
-
-#   tempQuad[1].color     = color
-#   tempQuad[1].position  = vec3(x+size, y, 0.0)
-#   tempQuad[1].texCoords = vec2(1.0, 0.0)
-#   tempQuad[1].texID     = texID
-
-
-#   tempQuad[2].color     = color
-#   tempQuad[2].position  = vec3(x+size, y+size, 0.0)
-#   tempQuad[2].texCoords = vec2(1.0, 1.0)
-#   tempQuad[2].texID     = texID
-
-
-#   tempQuad[3].color     = color
-#   tempQuad[3].position  = vec3(x, y+size, 0.0)
-#   tempQuad[3].texCoords = vec2(0.0, 1.0)
-#   tempQuad[3].texID     = texID
-  
-#   tempQuad[0].addr
 
 proc quad(x,y: cfloat, color: Vec, texID: cfloat): Quad {.discardable.} =
   const size = 1.0f
@@ -304,11 +277,10 @@ proc getSprite(db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], s
 proc getSprite*(db: DataBase, filename: string, shader: ShaderIndex) : Sprite =
   db.getSprite(getTexture(filename,MODE_RGBA, MODE_NEAREST, MODE_REPEAT), shader)
 
-const maxQuadCount = 100_000
+const maxQuadCount = 400_000
 const maxVertexCount = maxQuadCount * 4;
 const maxIndexCount = maxQuadCount * 6;
 
-#var shaderBatch: ShaderIndex
 
 var batch* = newSeq[Sprite](maxQuadCount)
 var nextBatchID* : int = 0
@@ -329,6 +301,50 @@ var textures {.noinit.}  : array[32,uint32]
 
 
 var cachedQuad : Quad
+
+proc rendererRelease*() = discard
+
+proc drawQuad*(pos: Vec, size: Vec, rotate: float) =
+  let shader = shaders[0]
+  shader.use()
+  let sizex = 1f/app.meta.ppu*size.x
+  let sizey = 1f/app.meta.ppu*size.y
+  var model = matrix()
+  model.scale(sizex,sizey,1)
+  model.translate(vec(-sizex*0.5, -sizey*0.5 , 0, 1))
+  model.rotate(rotate.radians, vec_forward)
+  model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
+
+  shader.setMatrix("mx_model",model)
+  
+  glBindTexture(GL_TEXTURE_2D, whiteTexture)
+  glBindVertexArray(cachedQuad.vao)
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
+
+  stats.sprites += 1
+  stats.drawcalls += 1
+
+proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
+  self.shader.use()
+ 
+  var model = matrix()
+  let sizex = self.w.float32/app.meta.ppu * size.x
+  let sizey = self.h.float32/app.meta.ppu * size.y
+
+  model.scale(sizex,sizey,1)
+  model.translate(vec(-sizex*0.5, -sizey*0.5 , 0, 1))
+  model.rotate(rotate.radians, vec_forward)
+  model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
+
+  self.shader.setMatrix("mx_model",model)
+  
+  glBindTexture(GL_TEXTURE_2D, whiteTexture)
+  glBindVertexArray(self.quad.vao)
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
+
+  stats.sprites += 1
+  stats.drawcalls += 1
+
 
 proc rendererInit*() =
   cachedQuad = getQuad()
@@ -384,50 +400,97 @@ proc rendererInit*() =
   for i in 1..<32:
     textures[i] = i.uint32
 
-proc rendererRelease*() = discard
 
-proc drawQuad*(pos: Vec, size: Vec, rotate: float) =
-  let shader = shaders[0]
-  shader.use()
-  let sizex = 1f/app.meta.ppu*size.x
-  let sizey = 1f/app.meta.ppu*size.y
-  var model = matrix()
-  model.scale(sizex,sizey,1)
-  model.translate(vec(-sizex*0.5, -sizey*0.5 , 0, 1))
-  model.rotate(rotate.radians, vec_forward)
-  model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
+var vertices : array[maxQuadCount*4,Vertex]
 
-  shader.setMatrix("mx_model",model)
+var vertId = 0
+# proc updateCol*(x,y: cfloat, texID: cfloat) {.discardable.} =
+#   const size = 0.008f
+#   vertices[0+vertId].position  = vec3(x,y,0f)
+#   vertices[0+vertId].texCoords = vec2(0.0f, 0.0f)
+#   vertices[0+vertId].texID     = texID
   
-  glBindTexture(GL_TEXTURE_2D, whiteTexture)
-  glBindVertexArray(cachedQuad.vao)
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
 
-  stats.sprites += 1
-  stats.drawcalls += 1
+#   vertices[1+vertId].position  = vec3(x+size, y, 0.0)
+#   vertices[1+vertId].texCoords = vec2(1.0, 0.0)
+#   vertices[1+vertId].texID     = texID
 
-proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
-  self.shader.use()
- 
-  var model = matrix()
-  let sizex = self.w.float32/app.meta.ppu * size.x
-  let sizey = self.h.float32/app.meta.ppu * size.y
 
-  model.scale(sizex,sizey,1)
-  model.translate(vec(-sizex*0.5, -sizey*0.5 , 0, 1))
-  model.rotate(rotate.radians, vec_forward)
-  model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
+#   vertices[2+vertId].position  = vec3(x+size, y+size, 0.0)
+#   vertices[2+vertId].texCoords = vec2(1.0, 1.0)
+#   vertices[2+vertId].texID     = texID
 
-  self.shader.setMatrix("mx_model",model)
+
+#   vertices[3+vertId].position  = vec3(x, y+size, 0.0)
+#   vertices[3+vertId].texCoords = vec2(0.0, 1.0)
+#   vertices[3+vertId].texID     = texID
+#   vertId += 4
+proc makeQuad2*(x,y: cfloat, texID: cfloat) {.discardable.} =
+  const size = 0.008f
+  vertices[0+vertId].position  = vec3(x,y,0f)
+  vertices[0+vertId].texCoords = vec2(0.0f, 0.0f)
+  vertices[0+vertId].texID     = texID
   
+
+  vertices[1+vertId].position  = vec3(x+size, y, 0.0)
+  vertices[1+vertId].texCoords = vec2(1.0, 0.0)
+  vertices[1+vertId].texID     = texID
+
+
+  vertices[2+vertId].position  = vec3(x+size, y+size, 0.0)
+  vertices[2+vertId].texCoords = vec2(1.0, 1.0)
+  vertices[2+vertId].texID     = texID
+
+
+  vertices[3+vertId].position  = vec3(x, y+size, 0.0)
+  vertices[3+vertId].texCoords = vec2(0.0, 1.0)
+  vertices[3+vertId].texID     = texID
+  vertId += 4
+
+proc makeQuad*(x,y: cfloat, color: Vec, texID: cfloat) {.discardable.} =
+  const size = 0.008f
+  var v = vertices[0+vertId].addr
+  v.color     = color
+  v.position  = vec3(x,y,0f)
+  v.texCoords = vec2(0.0f, 0.0f)
+  v.texID     = texID
+  
+  v = vertices[1+vertId].addr
+  v.color     = color
+  v.position  = vec3(x+size, y, 0.0)
+  v.texCoords = vec2(1.0, 0.0)
+  v.texID     = texID
+
+  v = vertices[2+vertId].addr
+  v.color     = color
+  v.position  = vec3(x+size, y+size, 0.0)
+  v.texCoords = vec2(1.0, 1.0)
+  v.texID     = texID
+
+  v = vertices[3+vertId].addr
+  v.color     = color
+  v.position  = vec3(x, y+size, 0.0)
+  v.texCoords = vec2(0.0, 1.0)
+  v.texID     = texID
+  vertId += 4
+  
+
+
+
+proc flush*() =
+  #makeQuad(0,0,vec(1,1,1,1),whiteTexture.cfloat)
+  #makeQuad(0,0,vec(1,1,1,1),whiteTexture.cfloat)
+  shaders[0].use()
+  var model = matrix()
+
+  shaders[0].setMatrix("mx_model",model)
+  
+  glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
+  glBufferSubData(GL_ARRAY_BUFFER,0,sizeof(vertices),vertices[0].addr)
   glBindTexture(GL_TEXTURE_2D, whiteTexture)
-  glBindVertexArray(self.quad.vao)
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
-
-  stats.sprites += 1
-  stats.drawcalls += 1
-
-proc flush*() = discard
+  glBindVertexArray(vaoBatch)
+  glDrawElements(GL_TRIANGLES, maxQuadCount*6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
+  vertId = 0
 
 
 

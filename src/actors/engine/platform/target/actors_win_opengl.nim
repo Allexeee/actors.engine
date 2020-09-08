@@ -58,7 +58,7 @@ proc targetInit*() =
     var glVersion = cast[cstring](glGetString(GL_VERSION))
     logInfo &"OpenGL {glVersion}"
   
-  discard glfwSetErrorCallback(glfwErrorCheck)
+ # discard glfwSetErrorCallback(glfwErrorCheck)
   var glfwInitState = 0
   var glInitState = false
   glfwInitState = glfwInit()
@@ -83,6 +83,7 @@ proc targetInit*() =
   if window == nil:
     logError "actors_win_opengl.nim [71] No Window"
     quit(-1)
+  
   if app.meta.showCursor == false:
     cursorMode = GLFWCursorHidden
   window.makeContextCurrent()
@@ -157,7 +158,7 @@ proc renderEnd*() =
   window.swapBuffers()
   glFlush()
 
-template getTime*(): float64 =
+proc getTime*(): float64 =
   glfwGetTime()
 #window.setInputMode(GLFWCursorSpecial,GLFWCursorHidden)
 
