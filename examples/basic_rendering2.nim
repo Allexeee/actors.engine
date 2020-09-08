@@ -8,7 +8,7 @@ app.meta.fullScreen = false
 app.meta.showCursor = false
 app.meta.fps = 1000
 app.meta.ups = 50
-app.meta.ppu = 32
+app.meta.ppu = 32 
 app.meta.assetsPath = "assets/"
 
 # var arr {.noinit.} : array[600_000,uint32]
@@ -74,7 +74,7 @@ proc update() =
  
 #var rotate = 1f
 var size = (1f,1f)
-var amount = 40000
+var amount = 50000
 var positions = newSeq[Vec](amount)
 
 import random
@@ -91,16 +91,21 @@ proc draw() =
     mode = 0
   if input.press Key.K2:
     mode = 1
+  var p : Vec = (0f,0f)
+  var s : Vec = (1f,1f)
+  var r  = 0f
+  for i in 0..<amount:
+    drawQuad(positions[i],s,r)
+  #sprite.shader.use()
 
-  sprite.shader.use()
-  case mode:
-  of 0:
-    for i in 0..<amount:
-      draw(sprite,positions[i],size,0)
-  of 1:
-    for i in 0..<amount:
-      drawB(sprite,positions[i],size,0)
-  else: discard
+  # case mode:
+  # of 0:
+  #   for i in 0..<amount:
+  #     draw(sprite,positions[i],size,0)
+  # of 1:
+  #   for i in 0..<amount:
+  #     drawB(sprite,positions[i],size,0)
+  # else: discard
 
   for ui in uis:
     ui.draw()

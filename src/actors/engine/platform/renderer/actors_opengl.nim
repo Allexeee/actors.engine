@@ -211,7 +211,6 @@ proc quad(x,y: cfloat, color: Vec, texID: cfloat): Quad {.discardable.} =
   
   result.verts = tempQuad
 
-
 proc getTexture(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: ARenum): tuple[id: TextureIndex, w: int, h: int] =
   var w,h,bits : cint
   var textureID : GLuint
@@ -226,6 +225,38 @@ proc getTexture(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: 
   glTexImage2D(GL_TEXTURE_2D, 0, mode_rgb.Glint, w, h, 0, mode_rgb.Glenum, GL_UNSIGNED_BYTE, data)
   stbi_image_free(data)
   (textureID.TextureIndex,w.int,h.int)
+
+proc getQuad() : Quad =
+  result = quad(0f,0f,vec(1,1,1,1),0)
+  var vbo : uint32
+  var ebo : uint32
+  glGenVertexArrays(1, result.vao.addr)
+  glGenBuffers(1, vbo.addr)
+    
+  glBindBuffer(GL_ARRAY_BUFFER, vbo)
+  glBufferData(GL_ARRAY_BUFFER, 4*sizeof(Vertex), result.verts[0].addr, GL_STATIC_DRAW)
+
+  glBindVertexArray(result.vao)
+  
+  glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, position)))
+  glEnableVertexAttribArray(0)
+
+  glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, color)))
+  glEnableVertexAttribArray(1)
+  
+  glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texCoords)))
+  glEnableVertexAttribArray(2)
+  
+  glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texID)))
+  glEnableVertexAttribArray(3)
+  
+  var indices = @[
+    0'u32, 1'u32, 2'u32, 2'u32, 3'u32, 0'u32
+  ]
+  glGenBuffers(1, ebo.addr)
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size, indices[0].addr, GL_STATIC_DRAW);
+  glBindTextureUnit(1, 0)
 
 proc getSprite(db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], shader: ShaderIndex) : Sprite =
   result = Sprite()
@@ -269,9 +300,6 @@ proc getSprite(db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], s
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size, indices[0].addr, GL_STATIC_DRAW);
   glBindTextureUnit(1, result.texID)
-  #glBIndTextureUnit(1, sprite2.texID)
-  #glBindBuffer(GL_ARRAY_BUFFER, 0)
-  #glBindVertexArray(0)
 
 proc getSprite*(db: DataBase, filename: string, shader: ShaderIndex) : Sprite =
   db.getSprite(getTexture(filename,MODE_RGBA, MODE_NEAREST, MODE_REPEAT), shader)
@@ -317,8 +345,11 @@ proc updatePos(self: var Quad, x,y: cfloat, sx,sy: cfloat) {.inline.} =
   # self.verts[3].position = (x,y+sy,0f)
   #copyMem(verts[nextQuadID].addr,self.verts[0].addr,4*Vertex.sizeof)
 
+var cachedQuad : Quad
 
 proc rendererInit*() =
+
+  cachedQuad = getQuad()
   glCreateVertexArrays(1,vaoBatch.addr)
   glBindVertexArray(vaoBatch)
 
@@ -371,7 +402,45 @@ proc rendererInit*() =
     textures[i] = i.uint32
 
 proc rendererRelease*() = discard
+var qsize : float
+proc drawQuad*(pos: Vec, size: Vec, rotate: float) =
+  let shader = shaders[0]
+  shader.use()
+  let sizex = 1f/app.meta.ppu*size.x
+  let sizey = 1f/app.meta.ppu*size.y
+  var model = matrix()
+  model.scale(sizex,sizey,1)
+  model.translate(vec(-sizex*0.5, -sizey*0.5 , 0, 1))
+  model.rotate(rotate.radians, vec_forward)
+  model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
 
+  shader.setMatrix("mx_model",model)
+  
+  glBindTexture(GL_TEXTURE_2D, whiteTexture)
+  glBindVertexArray(cachedQuad.vao)
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
+
+  stats.sprites += 1
+  stats.drawcalls += 1
+proc drawQuadB*(pos: Vec, size: Vec, rotate: float) =
+  let shader = shaders[0]
+  shader.use()
+  let sizex = 1f/app.meta.ppu*size.x
+  let sizey = 1f/app.meta.ppu*size.y
+  var model = matrix()
+  model.scale(sizex,sizey,1)
+  model.translate(vec(-sizex*0.5, -sizey*0.5 , 0, 1))
+  model.rotate(rotate.radians, vec_forward)
+  model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
+
+  shader.setMatrix("mx_model",model)
+  
+  glBindTexture(GL_TEXTURE_2D, whiteTexture)
+  glBindVertexArray(cachedQuad.vao)
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
+
+  stats.sprites += 1
+  stats.drawcalls += 1
 proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   self.shader.use()
  
@@ -459,7 +528,7 @@ proc flush*() =
 
   glDrawElements(GL_TRIANGLES, indexCount.int32, GL_UNSIGNED_INT, cast[ptr Glvoid](0));
   glBindTexture(GL_TEXTURE_2D, 1);
-  stats.drawcalls += 1
+  #stats.drawcalls += 1
   indexCount = 0
   textureId = 1
   
