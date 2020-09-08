@@ -290,7 +290,6 @@ var vertexCount* : int = 0
 var indexCount*  : int = 0
 
 var whiteTexture   : Gluint
-var whiteTextureId : Gluint
 
 var vboBatch : uint32 # vertex buffer 
 var vaoBatch : uint32 # vertex array
@@ -359,12 +358,16 @@ proc rendererInit*() =
   # texture 1x1
   glCreateTextures(GL_TEXTURE_2D, 1, whiteTexture.addr)
   glBindBuffer(GL_TEXTURE_2D, whiteTexture)
+  #echo whiteTexture
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR.Glint)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR.Glint)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE.Glint)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE.Glint)
   var color = 0xffffff
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8.Glint,1,1,0,GL_RGBA,GL_UNSIGNED_BYTE, color.addr)
+  #var color = @[255,255,255,255]
+  
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA.Glint,1,1,0,GL_RGBA, GL_UNSIGNED_BYTE, color.addr)
+
   textures[0] = whiteTexture
   for i in 1..<32:
     textures[i] = i.uint32
@@ -384,8 +387,8 @@ proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
 
   self.shader.setMatrix("mx_model",model)
-
-  glBindTexture(GL_TEXTURE_2D,whiteTexture)
+  
+  glBindTexture(GL_TEXTURE_2D, whiteTexture)
   glBindVertexArray(self.quad.vao)
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
 

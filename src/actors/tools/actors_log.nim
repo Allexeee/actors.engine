@@ -66,6 +66,7 @@ proc px_trace_send(lvl: uint8 = 0, args: varargs[string, `$`]) =
   t_msg.t_txt.setLen(0)
   for arg in args:
     t_msg.t_txt.add arg
+    t_msg.t_txt.add "\n"
   channel.send t_msg
 
 proc px_log_send*(lvl: uint8 = 0, args: varargs[string, `$`]) = 

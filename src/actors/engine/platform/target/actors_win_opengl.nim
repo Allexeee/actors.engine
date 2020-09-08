@@ -43,6 +43,26 @@ proc getMousePositionImpl*(): tuple[x: cfloat,y: cfloat] {.inline.} =
 proc glfwErrorCheck(error_code: int32, description: cstring):void {.cdecl.} =
   logError description
 
+  # GLdebugProc* = proc (
+  #   source: GLenum,
+  #   typ: GLenum,
+  #   id: GLuint,
+  #   severity: GLenum,
+  #   length: GLsizei,
+  #   message: ptr GLchar,
+  #   userParam: pointer) {.stdcall.}
+#var glErr : GLDebugProc 
+
+proc OpenGLMessageCallback(
+  source: GLenum,typ: GLenum,id: GLuint,severity: GLenum,
+  length: GLsizei,message: ptr GLchar,userParam: pointer) {.stdcall.} =
+  case severity:
+  of GL_DEBUG_SEVERITY_HIGH: logError message
+  of GL_DEBUG_SEVERITY_MEDIUM: logError message
+  of GL_DEBUG_SEVERITY_LOW: log message
+  of GL_DEBUG_SEVERITY_NOTIFICATION: logInfo message
+  else: discard
+  
 proc targetInit*() = 
   proc getOpenglVersion() =
     var glGetString = cast[proc (name: GLenum): ptr GLubyte {.stdcall.}](glGetProc("glGetString"))
@@ -83,9 +103,17 @@ proc targetInit*() =
   if glInitState == false:
     logError "Opengl is not initialized"
     quit(-1)
+  
   getOpenglVersion()
+  glEnable(GL_DEBUG_OUTPUT)
+  glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+  echo "p"
+  glDebugMessageCallback(OpenGLMessageCallback, cast[ptr Glvoid](0));
+  echo "pa"
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+  glEnable(GL_DEPTH_TEST)
+  echo "paaa"
 
 proc setFullScreen*(app:App, arg:bool) =
   let screen = app.meta.screen_size
