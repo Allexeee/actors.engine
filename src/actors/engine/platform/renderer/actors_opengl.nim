@@ -289,7 +289,7 @@ var quadCount*   : int = 0
 var vertexCount* : int = 0
 var indexCount*  : int = 0
 
-var whiteTexture   : Gluint
+var whiteTexture   : GLuint
 
 var vboBatch : uint32 # vertex buffer 
 var vaoBatch : uint32 # vertex array
@@ -357,14 +357,12 @@ proc rendererInit*() =
 
   # texture 1x1
   glCreateTextures(GL_TEXTURE_2D, 1, whiteTexture.addr)
-  glBindBuffer(GL_TEXTURE_2D, whiteTexture)
-  #echo whiteTexture
+  glBindTexture(GL_TEXTURE_2D, whiteTexture)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR.Glint)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR.Glint)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE.Glint)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE.Glint)
-  var color = 0xffffff
-  #var color = @[255,255,255,255]
+  var color = 0xffffffff
   
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA.Glint,1,1,0,GL_RGBA, GL_UNSIGNED_BYTE, color.addr)
 
