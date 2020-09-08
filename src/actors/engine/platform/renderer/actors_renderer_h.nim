@@ -12,6 +12,7 @@ type ShaderCompileType*   = enum
   FRAGMENT_INFO,
   GEOMETRY_INFO,
   PROGRAM_INFO
+
 type ShaderLoadError*     = object of ValueError
 
 type ShaderCompileError*  = object of ValueError

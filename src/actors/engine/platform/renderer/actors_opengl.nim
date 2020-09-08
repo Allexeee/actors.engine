@@ -155,33 +155,33 @@ var tempQuad : array[4,Vertex]
 var drawcalls* = 0
 var drawcallsLast* = 0
 
-proc drawQuad*(x,y: cfloat, color: Vec, texID: cfloat): pointer {.discardable.} =
-  const size = 1.0f
+# proc drawQuad*(x,y: cfloat, color: Vec, texID: cfloat): pointer {.discardable.} =
+#   const size = 1.0f
   
-  tempQuad[0].color     = color
-  tempQuad[0].position  = vec3(x,y,0f)
-  tempQuad[0].texCoords = vec2(0.0f, 0.0f)
-  tempQuad[0].texID     = texID
+#   tempQuad[0].color     = color
+#   tempQuad[0].position  = vec3(x,y,0f)
+#   tempQuad[0].texCoords = vec2(0.0f, 0.0f)
+#   tempQuad[0].texID     = texID
   
 
-  tempQuad[1].color     = color
-  tempQuad[1].position  = vec3(x+size, y, 0.0)
-  tempQuad[1].texCoords = vec2(1.0, 0.0)
-  tempQuad[1].texID     = texID
+#   tempQuad[1].color     = color
+#   tempQuad[1].position  = vec3(x+size, y, 0.0)
+#   tempQuad[1].texCoords = vec2(1.0, 0.0)
+#   tempQuad[1].texID     = texID
 
 
-  tempQuad[2].color     = color
-  tempQuad[2].position  = vec3(x+size, y+size, 0.0)
-  tempQuad[2].texCoords = vec2(1.0, 1.0)
-  tempQuad[2].texID     = texID
+#   tempQuad[2].color     = color
+#   tempQuad[2].position  = vec3(x+size, y+size, 0.0)
+#   tempQuad[2].texCoords = vec2(1.0, 1.0)
+#   tempQuad[2].texID     = texID
 
 
-  tempQuad[3].color     = color
-  tempQuad[3].position  = vec3(x, y+size, 0.0)
-  tempQuad[3].texCoords = vec2(0.0, 1.0)
-  tempQuad[3].texID     = texID
+#   tempQuad[3].color     = color
+#   tempQuad[3].position  = vec3(x, y+size, 0.0)
+#   tempQuad[3].texCoords = vec2(0.0, 1.0)
+#   tempQuad[3].texID     = texID
   
-  tempQuad[0].addr
+#   tempQuad[0].addr
 
 proc quad(x,y: cfloat, color: Vec, texID: cfloat): Quad {.discardable.} =
   const size = 1.0f
@@ -304,12 +304,11 @@ proc getSprite(db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], s
 proc getSprite*(db: DataBase, filename: string, shader: ShaderIndex) : Sprite =
   db.getSprite(getTexture(filename,MODE_RGBA, MODE_NEAREST, MODE_REPEAT), shader)
 
-
 const maxQuadCount = 100_000
 const maxVertexCount = maxQuadCount * 4;
 const maxIndexCount = maxQuadCount * 6;
 
-var shaderBatch: ShaderIndex
+#var shaderBatch: ShaderIndex
 
 var batch* = newSeq[Sprite](maxQuadCount)
 var nextBatchID* : int = 0
@@ -325,31 +324,15 @@ var eboBatch : uint32 # element buffer
 
 var vertBatch {.noinit.} : array[maxVertexCount,Vertex]
 var textures {.noinit.}  : array[32,uint32]
-var vertBatchPtr : ptr Vertex
-var textureId    :uint32 = 1
-#var verts : array[maxQuadCount*4,Vertex]
+#var vertBatchPtr : ptr Vertex
+#var textureId    :uint32 = 1
 
-
-
-proc updatePos(self: var Quad, x,y: cfloat, sx,sy: cfloat) {.inline.} =
-  let id = vertexCount
-  vertBatch[id+0].position = (x,y,0f)
-  vertBatch[id+1].position = (x+sx,y,0f)
-  vertBatch[id+2].position = (x+sx,y+sy,0f)
-  vertBatch[id+3].position = (x,y+sy,0f)
-  vertexCount  += 4
-  indexCount += 6
-  #self.verts[0].position = (x,y,0f)  
-  # self.verts[1].position = (x+sx,y,0f)
-  # self.verts[2].position = (x+sx,y+sy,0f)
-  # self.verts[3].position = (x,y+sy,0f)
-  #copyMem(verts[nextQuadID].addr,self.verts[0].addr,4*Vertex.sizeof)
 
 var cachedQuad : Quad
 
 proc rendererInit*() =
-
   cachedQuad = getQuad()
+ 
   glCreateVertexArrays(1,vaoBatch.addr)
   glBindVertexArray(vaoBatch)
 
@@ -382,7 +365,7 @@ proc rendererInit*() =
     indices[i+5] = 0 + offset
     offset += 4
 
-  glGenBuffers(1, eboBatch.addr)
+  glCreateBuffers(1, eboBatch.addr)
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboBatch)
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices[0].addr, GL_STATIC_DRAW);
 
@@ -402,7 +385,7 @@ proc rendererInit*() =
     textures[i] = i.uint32
 
 proc rendererRelease*() = discard
-var qsize : float
+
 proc drawQuad*(pos: Vec, size: Vec, rotate: float) =
   let shader = shaders[0]
   shader.use()
@@ -422,25 +405,7 @@ proc drawQuad*(pos: Vec, size: Vec, rotate: float) =
 
   stats.sprites += 1
   stats.drawcalls += 1
-proc drawQuadB*(pos: Vec, size: Vec, rotate: float) =
-  let shader = shaders[0]
-  shader.use()
-  let sizex = 1f/app.meta.ppu*size.x
-  let sizey = 1f/app.meta.ppu*size.y
-  var model = matrix()
-  model.scale(sizex,sizey,1)
-  model.translate(vec(-sizex*0.5, -sizey*0.5 , 0, 1))
-  model.rotate(rotate.radians, vec_forward)
-  model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
 
-  shader.setMatrix("mx_model",model)
-  
-  glBindTexture(GL_TEXTURE_2D, whiteTexture)
-  glBindVertexArray(cachedQuad.vao)
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
-
-  stats.sprites += 1
-  stats.drawcalls += 1
 proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   self.shader.use()
  
@@ -462,105 +427,35 @@ proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   stats.sprites += 1
   stats.drawcalls += 1
 
-proc drawB*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
-  if indexCount >= maxIndexCount:
-    endBatch()
-    flush()
-    beginBatch()
-
-  let id = vertexCount
-  let x = pos.x
-  let y = pos.y
-  let sx = self.w.float32/app.meta.ppu * size.x  #size.x
-  let sy = self.h.float32/app.meta.ppu * size.y #size.y
-  
-
-  # var model = matrix()
-  # let sizex = self.w.float32/app.meta.ppu * size.x
-  # let sizey = self.h.float32/app.meta.ppu * size.y
-
-  # model.scale(sizex,sizey,1)
-  # model.translate(vec(-sizex*0.5, -sizey*0.5 , 0, 1))
-  # model.rotate(rotate.radians, vec_forward)
-  # model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
-
-  # self.shader.setMatrix("mx_model",model)
-
-  let vb = vertBatch[id+0].addr
-  vertBatch[id+0].position = (x,y,0f)
-  vertBatch[id+1].position = (x+sx,y,0f)
-  vertBatch[id+2].position = (x+sx,y+sy,0f)
-  vertBatch[id+3].position = (x,y+sy,0f)
-  vertexCount  += 4
-  indexCount += 6
-  #self.quad.updatePos(pos.x,pos.y,size.x,size.y)
-  
-  #self.quad.updatePos(pos.x,pos.y,size.x,size.y)
-  #if indexCount >= maxIndexCount
-  # if stats.drawcalls > 1000:
-  #   flush()
-  #   stats.drawcalls = 0
-
-  #self.quad.updatePos(pos.x,pos.y,size.x,size.y)
-  #quadIndexCount += 6
-  # nextQuadID += 4
-  # indCount+=6
-  #stats.sprites += 1
-  # stats.drawcalls += 1
-  
+proc flush*() = discard
 
 
-#var verts : array[maxQuadCount*4,Vertex]
-#var nextVertex = 0
-#var indexCount = 0
-proc beginBatch*()=
-  vertexCount = 0
-proc endBatch*() =
-  var size = vertexCount*sizeof(Vertex)
-  glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
-  glBufferSubData(GL_ARRAY_BUFFER,0,size,vertBatch[0].addr)
 
 
-proc flush*() =
 
-  for i in 0..<textureId:
-     glBindTexture(GL_TEXTURE_2D,textures[i])
+# flush
+# for i in 0..<textureId:
+#      glBindTexture(GL_TEXTURE_2D,textures[i])
 
-  glDrawElements(GL_TRIANGLES, indexCount.int32, GL_UNSIGNED_INT, cast[ptr Glvoid](0));
-  glBindTexture(GL_TEXTURE_2D, 1);
-  #stats.drawcalls += 1
-  indexCount = 0
-  textureId = 1
-  
-# proc flush*() =
-#   #drawcalls += 1
+#   var size = vertexCount*sizeof(Vertex)
 #   glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
-#   glBufferSubData(GL_ARRAY_BUFFER, 0, verts.size, verts[0].addr) 
-  
+#   glBufferSubData(GL_ARRAY_BUFFER,0,size,vertBatch[0].addr)
+
 #   glBindVertexArray(vaoBatch)
-  
-#   #var model = matrix()
-#   #model.translate(vec(0,0,0,1)) 
+#   glDrawElements(GL_TRIANGLES, indexCount.int32, GL_UNSIGNED_INT, cast[ptr Glvoid](0));
+#   indexCount = 0
+#   textureId = 1
 
-#   #  shaderBatch.setMatrix("mx_model",model)
-#   glDrawElements(GL_TRIANGLES, indCount.GlSizei, GL_UNSIGNED_INT, nil)
-#   indCount = 0
-#   nextQuadID = 0
-#   #drawcallsLast = drawcalls
-#   #drawcalls -= 1
-
-
-# proc flusher*() =
-#   glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
-#   glBufferSubData(GL_ARRAY_BUFFER, 0, verts.size, verts[0].addr) 
-  
-#   glBindVertexArray(vaoBatch)
-  
-#   var model = matrix()
-#   model.translate(vec(0,0,0,1)) 
-
-#   shaderBatch.setMatrix("mx_model",model)
-#   glDrawElements(GL_TRIANGLES, indCount.GlSizei, GL_UNSIGNED_INT, nil)
-
-template getTime*(): float64 =
-  glfwGetTime()
+# proc updatePos(self: var Quad, x,y: cfloat, sx,sy: cfloat) {.inline.} =
+#   let id = vertexCount
+#   vertBatch[id+0].position = (x,y,0f)
+#   vertBatch[id+1].position = (x+sx,y,0f)
+#   vertBatch[id+2].position = (x+sx,y+sy,0f)
+#   vertBatch[id+3].position = (x,y+sy,0f)
+#   vertexCount  += 4
+#   indexCount += 6
+#   #self.verts[0].position = (x,y,0f)  
+#   # self.verts[1].position = (x+sx,y,0f)
+#   # self.verts[2].position = (x+sx,y+sy,0f)
+#   # self.verts[3].position = (x,y+sy,0f)
+#   #copyMem(verts[nextQuadID].addr,self.verts[0].addr,4*Vertex.sizeof)

@@ -157,5 +157,7 @@ proc renderEnd*() =
   window.swapBuffers()
   glFlush()
 
+template getTime*(): float64 =
+  glfwGetTime()
 #window.setInputMode(GLFWCursorSpecial,GLFWCursorHidden)
 

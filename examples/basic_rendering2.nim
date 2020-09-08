@@ -40,11 +40,11 @@ proc init() =
   cam.ortho(w,h,0.1,1000)
 #op
 var pos  = vec(0,-19)
-var pos2 = vec(0,20)
-var pos3 = vec(546,20)
-var pos4 = vec(-546,20)
-var pos5 = vec(-546*2,20)
-var pos6 = vec(546*2,20)
+# var pos2 = vec(0,20)
+# var pos3 = vec(546,20)
+# var pos4 = vec(-546,20)
+# var pos5 = vec(-546*2,20)
+# var pos6 = vec(546*2,20)
 proc update() =
   if input.down Key.Esc:
     app.quit()
@@ -73,11 +73,11 @@ proc update() =
 
  
 #var rotate = 1f
-var size = (1f,1f)
+#var size = (1f,1f)
 var amount = 50000
 var positions = newSeq[Vec](amount)
 
-import random
+#import random
 
 for i in 0..<amount:
   positions[i].rnd(200,100)
@@ -91,7 +91,7 @@ proc draw() =
     mode = 0
   if input.press Key.K2:
     mode = 1
-  var p : Vec = (0f,0f)
+  #var p : Vec = (0f,0f)
   var s : Vec = (1f,1f)
   var r  = 0f
   for i in 0..<amount:
