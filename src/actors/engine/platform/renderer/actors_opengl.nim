@@ -224,7 +224,7 @@ proc getQuad() : Quad =
   glEnableVertexAttribArray(3)
   
   var indices = @[
-    0'u32, 1'u32, 2'u32, 2'u32, 3'u32, 0'u32
+    0'u32, 1'u32, 2'u32, 2'u32, 1'u32, 3'u32
   ]
   glGenBuffers(1, ebo.addr)
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
@@ -267,7 +267,7 @@ proc getSprite(db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], s
   glEnableVertexAttribArray(3)
   
   var indices = @[
-    0'u32, 1'u32, 2'u32, 2'u32, 3'u32, 0'u32
+    0'u32, 1'u32, 2'u32, 2'u32, 1'u32, 3'u32
   ]
   glGenBuffers(1, ebo.addr)
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)

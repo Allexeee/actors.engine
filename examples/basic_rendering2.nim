@@ -79,27 +79,11 @@ proc update() =
 
 
 proc draw() =
-
-  
   var s : Vec = (1f,1f)
   var r  = 0f
   for i in 0..<amount:
     updatePos(positions[i].x+rand(-2f..2f),positions[i].y+rand(-2f..2f))
-    #makeQuad(positions[i].x+rand(-2f..2f),positions[i].y+rand(-2f..2f),colors[i],0)
-    #discard
-    #drawQuad(positions[i],s,r)
-    #let x = positions[i].x
-  #sprite.shader.use()
-
-  # case mode:
-  # of 0:
-  #   for i in 0..<amount:
-  #     draw(sprite,positions[i],size,0)
-  # of 1:
-  #   for i in 0..<amount:
-  #     drawB(sprite,positions[i],size,0)
-  # else: discard
-
+  
   for ui in uis:
     ui.draw()
 
