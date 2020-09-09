@@ -12,17 +12,18 @@
 ## {.noinit.}: nim pragma that allows to use unitialized arrays
 
 {.used.}
+{.experimental: "codeReordering".}
 
 include actors_renderer_h
-
-template `$`*(this: ShaderIndex): uint32 =
-  this.uint32
 
 ##=====================================================
 ##@shaders
 ##=====================================================
 
 var shaders* = newSeq[ShaderIndex]()
+
+template `$`*(this: ShaderIndex): uint32 =
+  this.uint32
 
 template checkErrorShaderCompile(obj: uint32, errType: ShaderCompileType): untyped =
   block:
@@ -143,10 +144,9 @@ proc setMatrix*(this: ShaderIndex, name: cstring, arg: var Matrix) {.inline.} =
   ## dont forget to set use before changing shader
   glUniformMatrix4fv(glGetUniformLocation(this.GLuint,name), 1, false, arg.e11.addr)
 
-
-{.used.}
-{.experimental: "codeReordering".}
-
+##=====================================================
+##@renderer
+##=====================================================
 
 let GL_FLOAT = 0x1406.GLenum
 let GL_FALSE = false
@@ -457,7 +457,7 @@ proc makeQuad*(x,y: cfloat, color: Vec, texID: cfloat) {.discardable.} =
   v.texCoords = vec2(0.0, 1.0)
   v.texID     = texID
   vertId += 4
-  
+
 
 proc batchBegin*()=
   vertId = 0
