@@ -400,64 +400,6 @@ proc rendererInit*() =
   for i in 1..<32:
     textures[i] = i.uint32
 
-# proc rendererInit*() =
-#   cachedQuad = getQuad()
-  
-#   ## indices allows to reduce number of vertices for drawing a quad
-#   var indices {.noinit,global.} : array[maxIndexCount,uint32]
-#   var offset = 0'u32
-#   for i in countup(0,indices.high,6):
-#     indices[i+0] = 0 + offset
-#     indices[i+1] = 1 + offset
-#     indices[i+2] = 2 + offset
-
-#     indices[i+3] = 2 + offset
-#     indices[i+4] = 3 + offset
-#     indices[i+5] = 0 + offset
-#     offset += 4
-
-#   var buf : GLuint
-#   glCreateBuffers(1,buf.addr)
-#   glNamedBufferStorage(buf,sizeof(indices)+sizeof(vertBatch),nil, GL_DYNAMIC_STORAGE_BIT)
-#   glNamedBufferSubData(buf,0,sizeof(indices),indices[0].addr)
-#   glNamedBufferSubData(buf,sizeof(indices),sizeof(vertBatch),vertBatch[0].addr)
-
-#   glCreateVertexArrays(1,vaoBatch.addr)
-#   glBindVertexArray(vaoBatch)
-  
-#   glVertexArrayElementBuffer(vaoBatch, buf)
-#   glVertexArrayVertexBuffer(vaoBatch, 0, buf, sizeof(indices), sizeof(Vertex).GLsizei)
-
-#   glCreateBuffers(1,vboBatch.addr)
-#   glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
-#   glBufferData(GL_ARRAY_BUFFER, sizeof(vertBatch), nil, GL_DYNAMIC_DRAW)
-
-#   glEnableVertexAttribArray(0)
-#   glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, position)))
-
-#   glEnableVertexAttribArray(1)
-#   glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, color)))
-  
-#   glEnableVertexAttribArray(2)
-#   glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texCoords)))
-  
-#   glEnableVertexAttribArray(3)
-#   glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texID)))
-
-  
-
-#   # glCreateBuffers(1, eboBatch.addr)
-#   # glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboBatch)
-#   # glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices[0].addr, GL_STATIC_DRAW);
-  
-#   # texture 1x1
-#   genWhiteTexture()
-
-#   textures[0] = whiteTexture
-#   for i in 1..<32:
-#     textures[i] = i.uint32
-
-
 var vertices : array[maxQuadCount*4,Vertex]
 
 var vertId = 0
