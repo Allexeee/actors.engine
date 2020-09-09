@@ -110,9 +110,9 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
       shaders[0].use()
       shaders[0].setMatrix("mx_projection",m)
       renderBegin()
-      #beginBatch()
+      batchBegin()
       draw()
-      #endBatch()
+      batchEnd()
       flush()
       renderEnd()
     

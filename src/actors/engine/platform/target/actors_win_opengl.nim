@@ -100,6 +100,9 @@ proc targetInit*() =
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(OpenGLMessageCallback, cast[ptr Glvoid](0));
   glEnable(GL_BLEND)
+  glEnable(GL_CULL_FACE)
+  glFrontFace(GL_CCW)
+  glCullFace(GL_FRONT)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
   glEnable(GL_DEPTH_TEST)
 
