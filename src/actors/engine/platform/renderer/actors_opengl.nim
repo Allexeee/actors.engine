@@ -224,7 +224,7 @@ proc getQuad() : Quad =
   glEnableVertexAttribArray(3)
   
   var indices = @[
-    0'u32, 1'u32, 2'u32, 2'u32, 1'u32, 3'u32
+    0'u32, 1'u32, 2'u32, 2'u32, 3'u32, 0'u32
   ]
   glGenBuffers(1, ebo.addr)
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
@@ -267,7 +267,7 @@ proc getSprite(db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], s
   glEnableVertexAttribArray(3)
   
   var indices = @[
-    0'u32, 1'u32, 2'u32, 2'u32, 1'u32, 3'u32
+    0'u32, 1'u32, 2'u32, 2'u32, 3'u32, 0'u32
   ]
   glGenBuffers(1, ebo.addr)
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
@@ -282,7 +282,7 @@ const maxVertexCount = maxQuadCount * 4;
 const maxIndexCount = maxQuadCount * 6;
 
 
-#var batch* = newSeq[Sprite](maxQuadCount)
+var batch* = newSeq[Sprite](maxQuadCount)
 var nextBatchID* : int = 0
 var quadCount*   : int = 0
 var vertexCount* : int = 0
