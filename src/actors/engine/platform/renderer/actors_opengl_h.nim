@@ -15,18 +15,18 @@ const
   MODE_RGBA*            : ARenum = GL_RGBA
 
 const vert_default: cstring = """
-    #version 330 core
-    layout (location = 0) in vec3 aPos;
-    void main()
-    {
-        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-    } """
+  #version 330 core
+  layout (location = 0) in vec3 aPos;
+  void main()
+  {
+      gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+  } """
 const frag_default: cstring = """
-    #version 330 core
-    out vec4 FragColor;
-    void main()
-    {
-        FragColor=vec4(1,.5f,.2f,1);
-    } """
+  #version 330 core
+  out vec4 FragColor;
+  void main()
+  {
+      FragColor=vec4(1,.5f,.2f,1);
+  } """
 
 

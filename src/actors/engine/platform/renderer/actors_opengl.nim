@@ -282,7 +282,7 @@ const maxVertexCount = maxQuadCount * 4;
 const maxIndexCount = maxQuadCount * 6;
 
 
-var batch* = newSeq[Sprite](maxQuadCount)
+#var batch* = newSeq[Sprite](maxQuadCount)
 var nextBatchID* : int = 0
 var quadCount*   : int = 0
 var vertexCount* : int = 0

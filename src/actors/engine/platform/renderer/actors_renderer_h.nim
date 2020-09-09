@@ -5,6 +5,10 @@ import ../../actors_math
 when defined(renderer_opengl):
   include actors_opengl_h
 
+const MAX_QUADS    = 1_000_000
+const MAX_VERTICES = MAX_QUADS * 4
+const MAX_INDICES  = MAX_QUADS * 6
+
 type ShaderIndex* = distinct uint32
 
 type ShaderCompileType*   = enum
@@ -36,3 +40,18 @@ type Sprite* = ref object
   shader*  : ShaderIndex
   texId*    : uint32
 
+
+type DataRenderer* = object
+  ## data for batch renderer
+  vbo         : uint32 # vertex buffer
+  vao         : uint32 # vertex array
+  ibo         : uint32 # indices
+  vertexCount : uint32 # current vertex
+  vertexBatch : array[MAX_VERTICES,Vertex]
+
+# var vboBatch : uint32 # vertex buffer 
+# var vaoBatch : uint32 # vertex array
+# var eboBatch : uint32 # element buffer
+
+# var vertBatch {.noinit.} : array[maxVertexCount,Vertex]
+# var textures {.noinit.}  : array[32,uint32]
