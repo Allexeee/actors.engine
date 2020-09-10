@@ -55,13 +55,11 @@ proc update() =
 
 var size = vec(546f/app.meta.ppu,500f/app.meta.ppu)
 var med_size = vec(36f/app.meta.ppu,26f/app.meta.ppu)
+var r = 0f
 proc draw() =
-  sprite2.draw(p2,size,0)
-  sprite2.draw(p3,size,0)
-  sprite2.draw(p4,size,0)
-  sprite2.draw(p5,size,0)
-  sprite2.draw(p6,size,0)
-  sprite1.draw(p,med_size,0)
+  for i in 0..<100_000:
+    sprite1.draw(p,med_size,r)
+  r+=1
   #echo p
 
   igBegin("Camera")

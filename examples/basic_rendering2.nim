@@ -50,7 +50,7 @@ proc init() =
   var w = h * 1920/1080
   cam.ortho(w,h,0.1,1000)
   for i in 0..<amount:
-    makeQuad(positions[i].x+rand(-2f..2f),positions[i].y+rand(-2f..2f),colors[i],0)
+    makeQuad(positions[i].x,positions[i].y,colors[i],0)
 
 
 #op
@@ -81,8 +81,9 @@ proc update() =
 proc draw() =
   var s : Vec = (1f,1f)
   var r  = 0f
+  #test()
   for i in 0..<amount:
-    updatePos(positions[i].x+rand(-2f..2f),positions[i].y+rand(-2f..2f))
+   updatePos(positions[i].x,positions[i].y)
   
   for ui in uis:
     ui.draw()
