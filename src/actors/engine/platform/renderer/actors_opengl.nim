@@ -282,8 +282,9 @@ const maxVertexCount = maxQuadCount * 4;
 const maxIndexCount = maxQuadCount * 6;
 
 
-var batch* = newSeq[Sprite](maxQuadCount)
-var nextBatchID* : int = 0
+var renderers = newSeq[DataRenderer]()
+var spriteRenderer* : ptr DataRenderer
+
 var quadCount*   : int = 0
 var vertexCount* : int = 0
 var indexCount*  : int = 0
@@ -297,29 +298,29 @@ var eboBatch : uint32 # element buffer
 var vertBatch {.noinit.} : array[maxVertexCount,Vertex]
 var textures {.noinit.}  : array[32,uint32]
 
-var cachedQuad : Quad
+#var cachedQuad : Quad
 
 proc rendererRelease*() = discard
 
-proc drawQuad*(pos: Vec, size: Vec, rotate: float) =
-  let shader = shaders[0]
-  shader.use()
-  let sizex = 1f/app.meta.ppu*size.x
-  let sizey = 1f/app.meta.ppu*size.y
-  var model = matrix()
-  model.scale(sizex,sizey,1)
-  model.translate(vec(-sizex*0.5, -sizey*0.5 , 0, 1))
-  model.rotate(rotate.radians, vec_forward)
-  model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
+# proc drawQuad*(pos: Vec, size: Vec, rotate: float) =
+#   let shader = shaders[0]
+#   shader.use()
+#   let sizex = 1f/app.meta.ppu*size.x
+#   let sizey = 1f/app.meta.ppu*size.y
+#   var model = matrix()
+#   model.scale(sizex,sizey,1)
+#   model.translate(vec(-sizex*0.5, -sizey*0.5 , 0, 1))
+#   model.rotate(rotate.radians, vec_forward)
+#   model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
 
-  shader.setMatrix("mx_model",model)
+#   shader.setMatrix("mx_model",model)
   
-  glBindTexture(GL_TEXTURE_2D, whiteTexture)
-  glBindVertexArray(cachedQuad.vao)
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
+#   glBindTexture(GL_TEXTURE_2D, whiteTexture)
+#   glBindVertexArray(cachedQuad.vao)
+#   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
 
-  stats.sprites += 1
-  stats.drawcalls += 1
+#   stats.sprites += 1
+#   stats.drawcalls += 1
 
 proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   self.shader.use()
@@ -342,9 +343,9 @@ proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   stats.sprites += 1
   stats.drawcalls += 1
 
-proc genWhiteTexture() {.inline.} =
-  glCreateTextures(GL_TEXTURE_2D, 1, whiteTexture.addr)
-  glBindTexture(GL_TEXTURE_2D, whiteTexture)
+proc genWhiteTexture(texture: ptr uint32) {.inline.} =
+  glCreateTextures(GL_TEXTURE_2D, 1, texture)
+  glBindTexture(GL_TEXTURE_2D, texture[])
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR.Glint)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR.Glint)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE.Glint)
@@ -354,8 +355,58 @@ proc genWhiteTexture() {.inline.} =
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA.Glint,1,1,0,GL_RGBA, GL_UNSIGNED_BYTE, color.addr)
 
 #working
+proc getSpriteRenderer*(): ptr DataRenderer {.discardable.} =
+  result = renderers.inc()
+
+  glCreateVertexArrays(1,result.vao.addr)
+  glBindVertexArray(result.vao)
+
+  glCreateBuffers(1,result.vbo.addr)
+  glBindBuffer(GL_ARRAY_BUFFER, result.vbo)
+  glBufferData(GL_ARRAY_BUFFER, sizeof(result.vertexBatch), nil, GL_DYNAMIC_DRAW)
+
+  glEnableVertexAttribArray(0)
+  glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, position)))
+
+  glEnableVertexAttribArray(1)
+  glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, color)))
+
+  glEnableVertexAttribArray(2)
+  glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texCoords)))
+
+  glEnableVertexAttribArray(3)
+  glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texID)))
+
+  ## indices allows to reduce number of vertices for drawing a quad
+  var offset = 0'u32
+  for i in countup(0,result.vertexIndices.high,6):
+    result.vertexIndices[i+0] = 0 + offset
+    result.vertexIndices[i+1] = 1 + offset
+    result.vertexIndices[i+2] = 2 + offset
+
+    result.vertexIndices[i+3] = 2 + offset
+    result.vertexIndices[i+4] = 1 + offset
+    result.vertexIndices[i+5] = 3 + offset
+    offset += 4
+  
+  glCreateBuffers(1, result.ibo.addr)
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboBatch)
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(result.vertexIndices), result.vertexIndices[0].addr, GL_STATIC_DRAW);
+
+  # texture 1x1
+  genWhiteTexture(result.textureWhite.addr)
+
+  result.textures[0] = result.textureWhite
+  for i in 1..result.textures.high:
+    result.textures[i] = i.uint32
+
 proc rendererInit*() =
-  cachedQuad = getQuad()
+  spriteRenderer = getSpriteRenderer()
+
+
+proc rendererInitOld*() =
+
+  #cachedQuad = getQuad()
 
   glCreateVertexArrays(1,vaoBatch.addr)
   glBindVertexArray(vaoBatch)
@@ -394,7 +445,7 @@ proc rendererInit*() =
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices[0].addr, GL_STATIC_DRAW);
   
   # texture 1x1
-  genWhiteTexture()
+  #genWhiteTexture()
 
   textures[0] = whiteTexture
   for i in 1..<32:

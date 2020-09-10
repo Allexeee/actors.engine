@@ -70,7 +70,7 @@ proc inc*[T](this: var seq[T]): ptr T {.inline.} =
 
 
 
-proc add_new*[T](this: var seq[T]): ptr T {.inline.} =
+proc addNew*[T](this: var seq[T]): ptr T {.inline.} =
     this.add(T())
     addr this[this.high]
 

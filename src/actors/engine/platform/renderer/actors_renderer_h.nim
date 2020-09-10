@@ -40,18 +40,15 @@ type Sprite* = ref object
   shader*  : ShaderIndex
   texId*    : uint32
 
-
 type DataRenderer* = object
   ## data for batch renderer
-  vbo         : uint32 # vertex buffer
-  vao         : uint32 # vertex array
-  ibo         : uint32 # indices
-  vertexCount : uint32 # current vertex
-  vertexBatch : array[MAX_VERTICES,Vertex]
+  vbo           : uint32 # vertex buffer
+  vao           : uint32 # vertex array
+  ibo           : uint32 # indices
+  vertexCount   : uint32 # current vertex
+  vertexBatch   : array[MAX_VERTICES,Vertex]
+  vertexIndices : array[MAX_INDICES,uint32]
+  textures      : array[32,uint32]
+  textureWhite  : uint32
 
-# var vboBatch : uint32 # vertex buffer 
-# var vaoBatch : uint32 # vertex array
-# var eboBatch : uint32 # element buffer
 
-# var vertBatch {.noinit.} : array[maxVertexCount,Vertex]
-# var textures {.noinit.}  : array[32,uint32]
