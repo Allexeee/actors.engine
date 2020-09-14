@@ -2,9 +2,14 @@ import macros
 {.used.}
 
 
-#converter floatToInt*(f: float): int = f.int
-#converter float64ToInt*(f: float64): int = f.int
-#converter intToFloat*(f: int): float = f.float
+template `&`*(self: any): untyped =
+  self.addr
+
+template `*`*(self: ptr any): untyped =
+  self[]
+
+# template `->`*(self: ptr any, arg: any): untyped =
+#   self[]=arg
 
 template `!`*(arg: bool): bool =
   var result : bool

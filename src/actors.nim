@@ -1,4 +1,4 @@
-## Created by Pixeye | dev@pixeye.com   
+## Created by Pixeye | dev@pixeye.com
 ##   
 ## ❒ The game engine
 ## * ``actors_math``    gamedev specific math api and types

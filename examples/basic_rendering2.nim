@@ -25,7 +25,6 @@ var colors = newSeq[Vec](amount)
 
 var cam : Camera # ent
 
-
 for i in 0..<amount:
   positions[i].rnd(6,4)
   let r = rand(0..3)

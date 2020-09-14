@@ -31,9 +31,9 @@ when defined(linux):
 when not defined(cpp) or defined(cimguiDLL):
   when defined(windows):
     when defined(x64):
-      const imgui_dll* = "cimgui64.dll"
-    else:
       const imgui_dll* = "cimgui.dll"
+    else:
+      const imgui_dll* = "cimgui32.dll"
   elif defined(macosx):
     const imgui_dll* = "cimgui.dylib"
   else:
