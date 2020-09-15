@@ -1,8 +1,2 @@
-import runtime/[
-  c_camera,
-  c_transform
-]
-
-export 
-  c_camera,
-  c_transform
+import runtime/px_components
+export px_components
