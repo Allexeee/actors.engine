@@ -1,5 +1,5 @@
 {.used.}
-{.compile: "actors_math.c".}
+{.compile: "px_math.c".}
 import math
 import random
 
