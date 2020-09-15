@@ -13,23 +13,24 @@ import sets
 import algorithm
 import hashes
 
-#----------------------------------------
+
+#-----------------------------------------------------------------------------------------------------------------------
 #@types
-#----------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
 type ent* = tuple[id: int, age: int]
 type eid* = distinct int
 type cid* = uint16
 type Ent* = ent
 
-type CompType*  = enum
+type CompMode* = enum
     AsComp,
     AsTag
-type EntMeta*   = object
+type EntMeta   = object
     childs*    : seq[eid]
     sig*       : seq[cid]
     sig_groups*: seq[cid]
     parent*    : eid
-type EcsGroup*  = ref object
+type EcsGroup* = ref object
     id*        : cid
     indices*   : seq[int]
     ents*      : seq[eid]
@@ -37,31 +38,35 @@ type EcsGroup*  = ref object
     incl_sig*  : seq[cid]
     excl_hash* : int      # exclude
     excl_sig*  : seq[cid]
-type IStorage*  = object
+type IStorage  = object
     remove* : proc (self: eid)
     cleanup*: proc ()
-type CompMeta*  = ref object
+type CompMeta  = ref object
     indices*: ptr seq[int]
     ents*   : ptr seq[eid]
     groups* : seq[EcsGroup]
     actions*: IStorage
-
-#----------------------------------------
+type DebugStorageInfo = object
+  indices*: ptr seq[int]
+  ents*   : ptr seq[eid]
+  name*   : string
+#-----------------------------------------------------------------------------------------------------------------------
 #@variables
-#----------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
 const ECS_ENTITY_BATCH* {.intdefine.}: int = 0
 var   ECS_ENTITY_FREE* = 0
 var   ECS_GROUP_SIZE*  = 0
 
 var px_ecs_dirty     : bool
 var px_ecs_meta      : seq[EntMeta]
-var px_ecs_ents      : seq[ent]
+var px_ecs_ents*     : seq[ent]
 var px_ecs_groups    : seq[EcsGroup]
 var px_ecs_meta_comp : seq[CompMeta]
 
-#----------------------------------------
+
+#-----------------------------------------------------------------------------------------------------------------------
 #@utils
-#----------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
 template  `nil`*(T: typedesc[ent]): ent = (int.high, 0)
 template  `nil`*(T: typedesc[eid]): eid = int.high.eid
 template     id*(self: eid): int  = self.int
@@ -80,13 +85,14 @@ when defined(debug):
   type
     EcsError* = object of ValueError
 
-template px_ecs_debug_remove(self: ent|eid, st_indices: ptr seq[int],st_ents: ptr seq[eid], t: typedesc): untyped {.used.}=
+template px_ecs_debug_remove*(self: ent|eid, info: DebugStorageInfo): untyped {.used.} =
   when defined(debug):
     block:
-      let arg1 {.inject.} = $t
+      let arg1 {.inject.} = info.name
       let arg2 {.inject.} = self.id
-      if st_indices[][self.id] < st_ents[].len:
+      if info.ents[].high == -1 or info.indices[][self.id] < info.ents[].high:
         raise newException(EcsError,&"\n\nYou are trying to remove a {arg1} that is not attached to entity with id {arg2}\n")
+
 template px_ecs_debug_release(self: ent|eid): untyped {.used.} =
   when defined(debug):
     block:
@@ -109,6 +115,7 @@ proc  px_ecs_comp_format_name_alias(s: var string) {.used.}=
   if index>=2:
     delete(s,1,indexes[1]-1)
   s = toUpperAscii(s[0]) & substr(s, 1)
+
 proc  px_ecs_comp_format_name(s: var string) {.used.}=
   var indexes : array[8,int]
   var i = 0
@@ -123,7 +130,8 @@ proc  px_ecs_comp_format_name(s: var string) {.used.}=
   if index>=2:
     delete(s,1,indexes[1]-1)
   s = toLowerAscii(s[0]) & substr(s, 1)
-macro px_ecs_comp_format_alias_long(T: typedesc, mode: static CompType): untyped {.used.}=
+
+macro px_ecs_comp_format_alias_long(T: typedesc, mode: static CompMode): untyped {.used.}=
   let tName = strVal(T)
   var proc_name = tName  
   proc_name  = toLowerAscii(proc_name[0]) & substr(proc_name, 1)
@@ -140,7 +148,8 @@ macro px_ecs_comp_format_alias_long(T: typedesc, mode: static CompType): untyped
           px_ecs_tag_get(self,{tName})
           """)
   result = parseStmt(source)
-macro px_ecs_comp_format_alias(t: typedesc, mode: static CompType): untyped {.used.}=
+
+macro px_ecs_comp_format_alias(t: typedesc, mode: static CompMode): untyped {.used.}=
   let tName = strVal(t)
   var proc_name = tName  
   px_ecs_comp_format_name(proc_name)
@@ -160,7 +169,7 @@ macro px_ecs_comp_format_alias(t: typedesc, mode: static CompType): untyped {.us
 
   result = parseStmt(source)
 
-proc px_ecs_init*()  =
+proc px_ecs_init*() =
   ECS_ENTITY_FREE      = ECS_ENTITY_BATCH
   ECS_GROUP_SIZE       = (ECS_ENTITY_BATCH/2).int
   px_ecs_groups        = newSeq[EcsGroup]()
@@ -197,9 +206,10 @@ iterator ecsAll*: eid =
   for i in countdown(px_ecs_ents.high,0):
     yield px_ecs_ents[i].id.eid
 
-#--------------------------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------------------------------------------------
 #@groups
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
 var incl_sig  : set[cid]
 var excl_sig  : set[cid]
 
@@ -339,9 +349,10 @@ macro px_ecs_group_gen*(t: varargs[untyped]) =
   n.insert(i,newCall(bindSym("px_ecs_group_init",brForceOpen)))
   result = n
 
-#--------------------------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------------------------------------------------
 #@entities
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
 template px_ecs_ent_get(): untyped =
   var e1 {.inject.} = px_ecs_ents[ECS_ENTITY_BATCH-ECS_ENTITY_FREE].addr
   var e2 {.inject.} = px_ecs_ents[e1.id].addr 
@@ -383,10 +394,10 @@ template entGet*(code: untyped): ent =
   var result : ent
   block:
     px_ecs_ent_get()
-    let e {.inject,used.} : ent = (e1.id,e2.age)
+    let e {.inject.} : ent = (e1.id,e2.age)
     result = e
     code
-    ecs_group.bind(e.id.eid)
+    px_ecs.bind(e.id.eid)
   result
 
 proc     entGet*(): ent =
@@ -400,6 +411,7 @@ proc exist*(self:ent): bool =
 
 proc  parent*(self: ent): ent =
   self.meta.parent
+
 proc `parent=`*(self: ent ,other: ent) =
   let meta = self.meta
   if other == ent.nil or meta.parent.int != eid.nil.int:
@@ -415,26 +427,32 @@ proc `parent=`*(self: ent ,other: ent) =
 
 template has*(self:ent|eid, T: typedesc): bool =
   T.has(self)
+
 template has*(self:ent|eid, T: typedesc): bool =
   T.has(self)
+
 template has*(self:ent|eid, T,Y: typedesc): bool =
   T.has(self) and 
   Y.has(self)
+
 template has*(self:ent|eid, T,Y,U: typedesc): bool =
   T.has(self) and
   Y.has(self) and
   U.has(self)
+
 template has*(self:ent|eid, T,Y,U,I: typedesc): bool =
   T.has(self) and
   Y.has(self) and
   U.has(self) and
   I.has(self)
+
 template has*(self:ent|eid, T,Y,U,I,O: typedesc): bool =
   T.has(self) and
   Y.has(self) and
   U.has(self) and
   I.has(self) and
   O.has(self)
+
 template has*(self:ent|eid, T,Y,U,I,O,P: typedesc): bool =
   T.has(self) and
   Y.has(self) and
@@ -480,12 +498,13 @@ macro tryGet*(this: ent, args: varargs[untyped]): untyped =
   )
   result = node_head
 
-#--------------------------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------------------------------------------------
 #@components
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
 var next_storage_id = 0
 
-template px_ecs_storage(T: typedesc, mode: CompType) {.used.} =
+template px_ecs_storage(T: typedesc, mode: CompMode) {.used.} =
   var st_id      : int
   var st_indices : seq[int]
   var st_ents    : seq[eid]
@@ -522,12 +541,15 @@ template px_ecs_storage(T: typedesc, mode: CompType) {.used.} =
   
   proc px_ecs_comp_get(self: ent|eid, _: typedesc[T]): ptr T {.inline, discardable, used.} =
     addr st_comps[st_indices[self.id]] 
-  
+
   proc px_ecs_tag_get(self: ent|eid, _: typedesc[T]): int {.inline, discardable, used.} =
     st_comps[st_indices[self.id]].int
 
-  proc px_ecs_comp_get_storage(_:typedesc[T]): ptr seq[T] {.inline, used.} =
+  proc px_ecs_comp_get_storage*(_:typedesc[T]): ptr seq[T] {.inline, used.} =
     st_comps.addr
+
+  proc px_ecs_comp_get_ents*(_:typedesc[T]): ptr seq[eid] {.inline, used.} =
+    st_ents.addr
 
   proc has*(_:typedesc[T], self: eid): bool {.inline,discardable.} =
     st_indices[self.int] < st_ents.len
@@ -548,9 +570,10 @@ template px_ecs_storage(T: typedesc, mode: CompType) {.used.} =
     st_comps.add(T())
     st_comps[len].addr
   
-  proc remove*(self: ent|eid, _: typedesc[T]) =
-    px_ecs_debug_remove(self, st_indices.addr, st_ents.addr,_)
-    let last = st_indices[st_ents[st_ents.high].int]
+  proc del*(self: ent|eid, _: typedesc[T]) =
+    var debug_info {.global.} = DebugStorageInfo(indices: st_indices.addr, ents: st_ents.addr, name: $_)
+    px_ecs_debug_remove(self, debug_info)
+    let last  = st_indices[st_ents[st_ents.high].int]
     let index = st_indices[self.id]
 
     st_ents.del(index)
@@ -560,7 +583,7 @@ template px_ecs_storage(T: typedesc, mode: CompType) {.used.} =
     let meta = self.meta
     meta.sig.del(meta.sig.find(st_id.cid))
     if meta.sig.len == 0:
-      self.release()
+      px_ecs_ent_del(self)
     else:
       px_ecs_groups_update(self.id.eid,st_id.cid)
 
@@ -586,7 +609,7 @@ template px_ecs_storage(T: typedesc, mode: CompType) {.used.} =
     let temp =  st_comps[st_indices[self.id]].int - arg
     
     if temp <= 0:
-      remove(self, T)
+      del(self, T)
     else:
       st_comps[st_indices[self.id]] = temp.T
   
@@ -596,22 +619,22 @@ template px_ecs_storage(T: typedesc, mode: CompType) {.used.} =
   px_ecs_comp_format_alias_long(T, mode)
 
 iterator ecsQuery*(E: typedesc[Ent], T: typedesc): (eid, ptr T) =
-  let st_comps = T.px_ecs_comp_get_storage
-  let st_ents =  T.px_ecs_ents
+  let st_comps = T.px_ecs_comp_get_storage()
+  let st_ents =  T.px_ecs_comp_get_ents()
   for i in countdown(st_comps[].high,0):
     yield (st_ents[][i], st_comps[][i].addr)
 
 iterator ecsQuery*(T: typedesc): ptr T=
-  let st_comps = T.px_ecs_comp_get_storage
+  let st_comps = T.px_ecs_comp_get_storage()
   for i in countdown(st_comps[].high,0):
     yield st_comps[][i].addr
 
 iterator ecsQuerye*(T: typedesc): eid =
-  let st_ents =  T.px_ecs_comp_get_storage
+  let st_ents =  T.px_ecs_comp_get_ents()
   for i in countdown(st_ents[].high,0):
     yield st_ents[i]
 
-macro ecsAdd*(component: untyped, mode: static[CompType] = CompType.AsComp): untyped =
+macro ecsAdd*(component: untyped, mode: static[CompMode] = CompMode.AsComp): untyped =
   let node_storage = nnkCommand.newTree()
 
   node_storage.insert(0,bindSym("px_ecs_storage", brForceOpen))
@@ -634,4 +657,3 @@ macro ecsAdd*(component: untyped, mode: static[CompType] = CompType.AsComp): unt
       newIdentNode($component)
       ))
       result.add(node)
-
