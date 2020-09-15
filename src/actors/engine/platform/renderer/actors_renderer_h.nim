@@ -1,6 +1,6 @@
 import ../../../actors_h
 import ../../../actors_tools
-import ../../actors_math
+import ../../px_math
 
 when defined(renderer_opengl):
   include actors_opengl_h

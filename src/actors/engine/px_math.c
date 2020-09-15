@@ -1,4 +1,3 @@
-
 float invSqrt( float number ) //easter egg XD
 {
     long i;

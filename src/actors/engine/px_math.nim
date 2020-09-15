@@ -1,18 +1,212 @@
-import actors_math_h
-import actors_math_vec
+{.used.}
+{.compile: "actors_math.c".}
+import math
+import random
 
-#@ahead
-proc identity*(mx: var Matrix) {.inline.}
+export math
 
-#@init
-proc matrix*(): Matrix =
-    result.identity()
+
+#-----------------------------------------------------------------------------------------------------------------------
+#@misc
+#-----------------------------------------------------------------------------------------------------------------------
+type rad* = distinct float32
+
+const rad_per_deg*  = PI / 180.0 
+const epsilon_sqrt* = 1e-15F
+const epsilon*      = 0.00001 #for floating-point inaccuracies.
+
+proc invSqrt*(number: cfloat): cfloat {.importc.}
+proc radians*(angle: float32): float32 {.inline.} = angle * rad_per_deg
+proc rads*(angle: float32): rad {.inline.} = (angle * rad_per_deg).rad
+proc max*(val1: float32, val2: float32): float32 =
+  if val1 < val2: val2 else: val1
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+#@vec
+#-----------------------------------------------------------------------------------------------------------------------
+type Vec*    = tuple[x,y,z,w: float32]
+type Vec2*   = tuple[x,y: float32]
+type Vec3*   = tuple[x,y,z: float32]
+
+proc vec*(x,y,z,w: float32 = 0): Vec {.inline.} =
+  (x,y,z,w)
+
+const #identity
+  vec_zero*     = vec()
+  vec_right*    = vec(1,0,0,0)
+  vec_left*     = vec(-1,0,0,0)
+  vec_up*       = vec(0,1,0,0)
+  vec_down*     = vec(0,-1,0,0)
+  vec_forward*  = vec(0,0,1,0)
+  vec_backward* = vec(0,0,-1,0)
+  vec_one*      = vec(1,1,1,1)
+
+proc xy*(self: var Vec): Vec2 = (self.x,self.y)
+proc xyz*(self: var Vec): Vec3 = result = (self.x,self.y,self.z)
+proc xy*(self: var Vec, x,y: float32) = self.x = x; self.y = y
+proc vec2*(x,y: float32 = 0): Vec2 {.inline.} = (x,y)
+proc vec3*(x,y,z: float32 = 0): Vec3 {.inline.} = (x,y,z)
+proc col*(r,g,b,a: float32 = 1): Vec {.inline.} = (r,g,b,a)
+proc rgb*(r,g,b,a: float32 = 255): Vec {.inline.} = (r/255f,g/255f,b/255f,a/255f)
+
+proc r*(this: Vec): float32 = this.x
+proc g*(this: Vec): float32 = this.y
+proc b*(this: Vec): float32 = this.z
+proc a*(this: Vec): float32 = this.w
+
+proc hex*(s: string = "FFFFFFFF"): Vec {.inline.} =
+  var rgba {.global.} = [255f,255f,255f,255f]
+  var i = 0
+  var index = 0
+  rgba = [255f,255f,255f,255f]
+  while i<s.len:
+     if s[i] in {' ','#','_'}:
+        i+=1
+     var temp = 0
+     case s[i]
+        of '0'..'9':
+           temp = (s[i].ord-'0'.ord) shl 4
+           discard
+        of 'a'..'f':
+           temp = (s[i].ord-'a'.ord+10) shl 4
+        of 'A'..'F':
+           temp = (s[i].ord-'A'.ord+10) shl 4
+        else: discard
+     case s[i+1]:
+        of '0'..'9':
+           temp += (s[i+1].ord-'0'.ord)
+        of 'a'..'f':
+           temp += (s[i].ord-'a'.ord+10) 
+        of 'A'..'F':
+           temp = (s[i].ord-'A'.ord+10)
+        else: discard
+     rgba[index] = temp.float32
+     index+=1
+     i+=2 
+  (rgba[0]/255.0f, rgba[1]/255.0f, rgba[2]/255.0f, rgba[3]/255.0f)
+
+proc `==`*(a,b:var Vec):bool {.inline.} =
+  a.x == b.x and
+  a.y == b.y and
+  a.z == b.z and
+  a.w == b.w
+
+proc `+`*(a: Vec, b: Vec): Vec {.inline.} =
+  (a.x+b.x, a.y+b.y, a.z+b.z, a.w+b.w)
+
+proc `-`*(a: Vec, b: Vec): Vec {.inline.} =
+  (a.x-b.x, a.y-b.y, a.z-b.z, a.w-b.w)
+
+proc `*`*(a: Vec, b: SomeNumber): Vec {.inline.} =
+  (a.x*b.float32, a.y*b.float32, a.z*b.float32, a.w)
+
+proc `*`*(b: SomeNumber, a: Vec): Vec {.inline.} =
+  (a.x*b.float32, a.y*b.float32, a.z*b.float32, a.w)
+
+proc `-`*(this: var Vec) {.inline.} =
+  this.x = -this.x
+  this.y = -this.y
+  this.z = -this.z
+  this.w = -this.w
+
+proc `+=`*(this: var Vec, other: Vec) {.inline.} =
+  this.x = this.x+other.x
+  this.y = this.y+other.y
+  this.z = this.z+other.z
+  this.w = this.w+other.w
+
+proc `-=`*(this: var Vec, other: Vec) {.inline.} =
+  this.x = this.x-other.x
+  this.y = this.y-other.y
+  this.z = this.z-other.z
+  this.w = this.w-other.w
+
+proc `*=`*(this: var Vec, other: Vec) {.inline.} =
+  this.x = this.x*other.x
+  this.y = this.y*other.y
+  this.z = this.z*other.z
+  this.w = this.w*other.w
+
+proc `*=`*(this: var Vec, other: float32 = 1) {.inline.} =
+  this.x = this.x*other
+  this.y = this.y*other
+  this.z = this.z*other
+  this.w = this.w*other
+
+proc `/=` *(this: var Vec, other: Vec) {.inline.} =
+  this.x = this.x/other.x
+  this.y = this.y/other.y
+  this.z = this.z/other.z
+  this.w = this.w/other.w
+
+proc `/=` *(this: var Vec, other: float32 = 1) {.inline.} =
+  this.x = this.x/other
+  this.y = this.y/other
+  this.z = this.z/other
+  this.w = this.w/other
+
+proc magnitudeSquare*(vec: Vec): float32 {.inline.} =
+  vec.x * vec.x + vec.y * vec.y + vec.z * vec.z
+
+proc magnitude*(vec: Vec): float32 {.inline.} =
+  sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z)
+
+proc normalize*(vec: var Vec) {.inline.} =
+  var arg = vec.magnitude
+
+  if arg != 0:
+     arg = 1.0/arg
+  
+  vec.x *= arg
+  vec.y *= arg
+  vec.z *= arg
+
+proc normalize*(vec: Vec): Vec {.inline.} =
+  var v = vec
+  normalize(v)
+
+proc cross*(vec1, vec2: Vec): Vec {.inline.} =
+  vec(
+     #x 
+     vec1.y * vec2.z - vec1.z * vec2.y,
+     #y 
+     vec1.z * vec2.x - vec1.x * vec2.z,
+     #z
+     vec1.x * vec2.y - vec1.y * vec2.x,
+     #w
+     0)
+
+proc dot*(vec1, vec2: Vec): float32 {.inline.} =
+  vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z
+
+proc dot4*(vec1, vec2: Vec): float32 {.inline.} =
+  vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z + vec1.w * vec2.w
+
+proc rnd*(self: var Vec, arg: float32) =
+  self.x = rand(-arg..arg)
+  self.y = rand(-arg..arg)
+  self.z = rand(-arg..arg)
+
+proc rnd*(self: var Vec, x: float32, y: float32) =
+  self.x = rand(-x..x)
+  self.y = rand(-y..y)
+
+converter toVec*(v: Vec2): Vec {.inline.} = (v.x,v.y,0f,0f) 
+converter toVec*(v: Vec3): Vec {.inline.} = (v.x,v.y,v.z,0f) 
+
+#-----------------------------------------------------------------------------------------------------------------------
+#@matrix
+#-----------------------------------------------------------------------------------------------------------------------
+type Matrix* = tuple[e11,e12,e13,e14,e21,e22,e23,e24,e31,e32,e33,e34,e41,e42,e43,e44: float32]
 
 proc identity*(mx: var Matrix) {.inline.} =
     mx.e11 = 1; mx.e12 = 0; mx.e13 = 0; mx.e14 = 0;
     mx.e21 = 0; mx.e22 = 1; mx.e23 = 0; mx.e24 = 0;
     mx.e31 = 0; mx.e32 = 0; mx.e33 = 1; mx.e34 = 0;
     mx.e41 = 0; mx.e42 = 0; mx.e43 = 0; mx.e44 = 1
+
+proc matrix*(): Matrix = result.identity()
 
 proc normalize*(x,y,z : var float32) {.inline.} =
     let d = sqrt(x*x + y*y + z*z)
@@ -113,10 +307,8 @@ proc initRotationZ*(mx: var Matrix, a: float32) {.inline.} =
     mx.e31 = 0.0; mx.e32 =  0.0; mx.e33 = 1.0; mx.e34 = 0.0;
     mx.e41 = 0.0; mx.e42 =  0.0; mx.e43 = 0.0; mx.e44 = 1.0
 
-proc matrix*(x,y,z: float32): Matrix =
-    result.initScale(x,y,z)
+proc matrix*(x,y,z: float32): Matrix = result.initScale(x,y,z)
 
-#@equlity
 proc `==`*(mx1: var Matrix, mx2: var Matrix): bool {.inline.} =
     mx1.e11 == mx2.e11 and
     mx1.e12 == mx2.e12 and
@@ -153,10 +345,8 @@ proc `!=`*(mx1: var Matrix, mx2: var Matrix): bool {.inline.} =
     mx1.e43 != mx2.e43 or
     mx1.e44 != mx2.e44
 
-proc equal*(mx1: var Matrix, mx2: var Matrix): bool {.inline.} =
-    mx1 == mx2
+proc equal*(mx1: var Matrix, mx2: var Matrix): bool {.inline.} = mx1 == mx2
 
-#@operations
 proc `*`*(mx: var Matrix, v: float32) {.inline.} =
     mx.e11 *= v
     mx.e12 *= v
@@ -246,7 +436,6 @@ proc multiply*(mxl:  Matrix, mxr:  Matrix): Matrix {.inline.} =
     result.e42 = mxl.e41 * mxr.e12 + mxl.e42 * mxr.e22 + mxl.e43 * mxr.e32 + mxl.e44 * mxr.e42
     result.e43 = mxl.e41 * mxr.e13 + mxl.e42 * mxr.e23 + mxl.e43 * mxr.e33 + mxl.e44 * mxr.e43
     result.e44 = mxl.e41 * mxr.e14 + mxl.e42 * mxr.e24 + mxl.e43 * mxr.e34 + mxl.e44 * mxr.e44
- 
 
 proc `*`*(mx1: Matrix, mx2: Matrix): Matrix {.inline.} =
     result.e11 = mx1.e11 * mx2.e11 + mx1.e12 * mx2.e21 + mx1.e13 * mx2.e31 + mx1.e14 * mx2.e41
@@ -268,8 +457,6 @@ proc `*`*(mx1: Matrix, mx2: Matrix): Matrix {.inline.} =
     result.e42 = mx1.e41 * mx2.e12 + mx1.e42 * mx2.e22 + mx1.e43 * mx2.e32 + mx1.e44 * mx2.e42
     result.e43 = mx1.e41 * mx2.e13 + mx1.e42 * mx2.e23 + mx1.e43 * mx2.e33 + mx1.e44 * mx2.e43
     result.e44 = mx1.e41 * mx2.e14 + mx1.e42 * mx2.e24 + mx1.e43 * mx2.e34 + mx1.e44 * mx2.e44
-
-
 
 proc setPosition*(mx: var Matrix, x,y,z: float32 = 0) {.inline.} =
     mx.e41 = x
@@ -296,7 +483,7 @@ proc translate*(mx: var Matrix, x,y,z : float32 = 0) {.inline.} =
     mx.e41 += x * mx.e44
     mx.e42 += y * mx.e44
     mx.e43 += z * mx.e44
-    
+
 proc translate*(mx: var Matrix, vec: Vec) {.inline.} =
     mx.e11 += vec.x * mx.e14
     mx.e12 += vec.y * mx.e14
@@ -342,8 +529,6 @@ proc scale*(mx: var Matrix, vec: Vec) {.inline.} =
     mx.e23 *= vec.z
     mx.e33 *= vec.z
     mx.e44 *= vec.z
-
-
 
 proc rotate*(mx: var Matrix, angle: rad, x: float32 = 1, y,z: float32 = 0) {.inline.} =
     var tmp = matrix()
@@ -476,58 +661,57 @@ proc invert*(mx: var Matrix) {.inline.} =
     mx.e42 = ( e11*b10 - e12*b08 + e13*b07)*det_inv
     mx.e43 = (-e41*b04 + e42*b02 - e43*b01)*det_inv
     mx.e44 = ( e31*b04 - e32*b02 + e33*b01)*det_inv
- 
 
 when defined(renderer_opengl):
-    proc ortho*(mx: var Matrix, left, right, bottom, top, near, far : float) {.inline.} =
-        let rl = right - left
-        let tb = top - bottom
-        let fn = far - near
+  proc ortho*(mx: var Matrix, left, right, bottom, top, near, far : float) {.inline.} =
+    let rl = right - left
+    let tb = top - bottom
+    let fn = far - near
 
-        mx.e11 = 2.0/rl
-        mx.e12 = 0
-        mx.e13 = 0
-        mx.e14 = -(right + left) / rl
+    mx.e11 = 2.0/rl
+    mx.e12 = 0
+    mx.e13 = 0
+    mx.e14 = -(right + left) / rl
 
-        mx.e21 = 0
-        mx.e22 = 2.0/tb
-        mx.e23 = 0
-        mx.e24 = -(top + bottom) / tb
+    mx.e21 = 0
+    mx.e22 = 2.0/tb
+    mx.e23 = 0
+    mx.e24 = -(top + bottom) / tb
 
-        mx.e31 = 0
-        mx.e32 = 0
-        mx.e33 = -2.0/fn
-        mx.e34 = -(far + near) / fn
+    mx.e31 = 0
+    mx.e32 = 0
+    mx.e33 = -2.0/fn
+    mx.e34 = -(far + near) / fn
 
-        mx.e41 = 0
-        mx.e42 = 0
-        mx.e43 = 0
-        mx.e44 = 1
+    mx.e41 = 0
+    mx.e42 = 0
+    mx.e43 = 0
+    mx.e44 = 1
 else:
-    proc ortho*(mx: var Matrix, left, right, bottom, top, near, far : float) {.inline.} =
-        let rl = right - left
-        let tb = top - bottom
-        let fn = far - near
+  proc ortho*(mx: var Matrix, left, right, bottom, top, near, far : float) {.inline.} =
+    let rl = right - left
+    let tb = top - bottom
+    let fn = far - near
 
-        mx.e11 = 2.0/rl
-        mx.e12 = 0
-        mx.e13 = 0
-        mx.e14 = 0
+    mx.e11 = 2.0/rl
+    mx.e12 = 0
+    mx.e13 = 0
+    mx.e14 = 0
 
-        mx.e21 = 0
-        mx.e22 = 2.0/tb
-        mx.e23 = 0
-        mx.e24 = 0
+    mx.e21 = 0
+    mx.e22 = 2.0/tb
+    mx.e23 = 0
+    mx.e24 = 0
 
-        mx.e31 = 0
-        mx.e32 = 0
-        mx.e33 = -2.0/fn
-        mx.e34 = 0
+    mx.e31 = 0
+    mx.e32 = 0
+    mx.e33 = -2.0/fn
+    mx.e34 = 0
 
-        mx.e41 = -(right + left) / rl
-        mx.e42 = -(top + bottom) / tb
-        mx.e43 = -(far + near) / fn
-        mx.e44 = 1
+    mx.e41 = -(right + left) / rl
+    mx.e42 = -(top + bottom) / tb
+    mx.e43 = -(far + near) / fn
+    mx.e44 = 1
 
 proc frustrum(mx: var Matrix, left, right, bottom, top, near, far: float) {.inline.} =
     let n2 = near * 2
@@ -590,4 +774,3 @@ proc lookAt*(eye: Vec, target: Vec, up: Vec): Matrix {.inline.} =
    result.e44 = 1
 
    result.invert()
-
