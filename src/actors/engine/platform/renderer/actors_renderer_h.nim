@@ -1,5 +1,5 @@
-import ../../../actors_h
-import ../../../actors_tools
+import ../../../px_h
+import ../../../px_tools
 import ../../px_math
 
 when defined(renderer_opengl):

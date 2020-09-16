@@ -1,17 +1,31 @@
+## Created by Pixeye | dev@pixeye.com
+## 
+## ❒ This module contains user interface types and API
+
 {.used.}
 
-import ../../actors_h
-import ../../actors_plugins
-import ../actors_input
-import ../actors_platform
-import actors_ui_h
+import ../px_h
+import ../px_plugins
+import px_input
+import actors_platform
 
 
+type UiWindow* = ref object of RootObj
+  show* : bool
+  base* : UiWindow
+
+method draw*(self: UiWindow) {.base,  locks: "unknown".} = 
+  discard
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+#@window debug
+#-----------------------------------------------------------------------------------------------------------------------
 type UiDebugGame* = ref object of UiWindow
   vsync_toggle*: bool
   framerate: int
   ups:       int
-  #drawcalls: int
+
 
 func getDebugWindow*(): UiDebugGame {.discardable.} =
   result = UiDebugGame()
@@ -22,10 +36,9 @@ func getDebugWindow*(uiStorage: var seq[UiWindow]): UiDebugGame {.discardable.} 
   uiStorage.add result
 
 method draw*(self: UiDebugGame) {.locks: "unknown".}=
-  #просто для теста показываем/скрываем интерфейс по кнопке space
+  
   if input.press Key.Tilde:
     self.show = not self.show
-  # не рисуем интерфейс если не показываем
   if not self.show:
     return
 

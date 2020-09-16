@@ -1,5 +1,5 @@
 ## Created by Pixeye | dev@pixeye.com
-##   
+##
 ## ❒ The game engine
 ## * ``actors_math``    gamedev specific math api and types
 ## * ``actors_ecs``     entity-component-system (ECS)
@@ -7,22 +7,21 @@
 ## * ``actors_plugins`` third party libraries
 
 
-
 {.used.}
 {.experimental: "codeReordering".}
 
-import actors/actors_h       
-import actors/actors_plugins as plugins
-import actors/actors_tools   as tools
-import actors/actors_engine  as engine
+import actors/px_h       
+import actors/px_plugins as plugins
+import actors/px_tools   as tools
+import actors/px_engine  as engine
 
 export tools
 export engine
 export plugins
-export actors_h.LayerId
-export actors_h.AppTime
-export actors_h.db
-export actors_h.app
+export px_h.LayerId
+export px_h.AppTime
+export px_h.db
+export px_h.app
 
 
 proc quit*(self: App) =

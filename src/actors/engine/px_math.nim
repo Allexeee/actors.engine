@@ -1,5 +1,5 @@
 {.used.}
-{.compile: "px_math.c".}
+{.compile: "include/px_math.c".}
 import math
 import random
 

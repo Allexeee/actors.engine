@@ -1,6 +1,6 @@
 {.used.}
 
-import ../../../actors_plugins
+import ../../../px_plugins
 
 type ARenum* = GLenum # ActorsRender
 

@@ -1,3 +1,8 @@
+## Created by Pixeye | dev@pixeye.com
+## 
+## ❒ This module contains high level types and API for making actual game
+
+
 import px_ecs
 import px_math
 

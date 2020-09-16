@@ -1,9 +1,9 @@
 {.used.}
-import ../../../actors_h
+import ../../../px_h
 import ../../../plugins/actors_gl
 import ../../../plugins/actors_glfw
-import ../../../actors_tools
-import ../../../actors_plugins
+import ../../../px_tools
+import ../../../px_plugins
 
 const Tilde = 96
 

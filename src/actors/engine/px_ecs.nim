@@ -1,6 +1,4 @@
 ## Created by Pixeye | dev@pixeye.com
-## * ``types``
-## * ``variables``
 ## * ``utils``
 ## * ``groups``
 ## * ``entities``

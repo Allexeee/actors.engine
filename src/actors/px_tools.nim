@@ -1,13 +1,128 @@
 ## Created by Pixeye | dev@pixeye.com   
 ##
-## This module is used for async logging.
+## ❒ auxiliary tools
+## * ``px_log``        async logging
+## * ``px_profile``    measuring performance
+## * ``px_extensions`` syntax sugar
+
 {.used.}
 
+import os
+import macros
 import times
 import strutils
 import strformat
 import system
+import std/monotimes
+import tables
+import hashes
+import random
 
+export os
+export times
+export strformat
+export strutils
+export random
+
+#-----------------------------------------------------------------------------------------------------------------------
+#@px_extensions
+#-----------------------------------------------------------------------------------------------------------------------
+template `&`*(self: any): untyped =
+  self.addr
+
+template `*`*(self: ptr any): untyped =
+  self[]
+
+template `!`*(arg: bool): bool =
+  var result : bool
+  if arg == true: result = false
+  else: result = true
+  result
+
+proc push*[T](self: var seq[T], elem: T) {.inline.} =
+  self.add(elem)
+
+proc getref*[T](self: var seq[T]) : var T {.inline.} =
+  self.add(T())
+  self[self.high]
+
+# proc push_addr*[T](self: var seq[T], grow_size: int): ptr T {.inline.} =
+#   self.setLen(self.len+grow_size)
+#   addr self[self.high]
+
+proc push_addr*[T](self: var seq[T]): ptr T =
+  self.add(T())
+  addr self[self.high]
+
+template usePtr*[T]() =
+  template `+`(p: ptr T, off: SomeInteger ): ptr T =
+    cast[ptr type(p[])](cast[ByteAddress](p) +% int(off) * sizeof(p[]))
+  
+  template `+=`(p: ptr T, off: SomeInteger ) =
+    p = p + off
+  
+  template `-`(p: ptr T, off: SomeInteger): ptr T =
+    cast[ptr type(p[])](cast[ByteAddress](p) -% int(off) * sizeof(p[]))
+  
+  template `-=`(p: ptr T, off: SomeInteger ) =
+    p = p - int(off)
+  
+  template `[]`(p: ptr T, off: SomeInteger ): T =
+    (p + int(off))[]
+  
+  template `[]=`(p: ptr T, off: SomeInteger , val: T) =
+    (p + off)[] = val
+
+proc debug_macro*(arg: string): NimNode =
+    nnkStmtList.newTree(
+        nnkCommand.newTree(
+            newIdentNode("echo"),
+            newLit(arg)
+            )
+        )
+
+proc remove*[T](this: var openArray[T], elem: T) =
+  this.remove(elem)
+
+proc add_new_delegate*[T](this: var seq[T], arg: T)=
+    this.add(arg)
+
+proc inc*[T](this: var seq[T]): ptr T {.inline.} =
+    this.add(T())
+    addr this[this.high]
+
+
+proc addNew*[T](this: var seq[T]): ptr T {.inline.} =
+    this.add(T())
+    addr this[this.high]
+
+proc add_new_ref*[T](this: var seq[T]): var T {.inline.} =
+    this.add(T())
+    this[this.high]
+
+proc toString*(str: var seq[cchar], len: int = 0): string =
+  var lenCalculated = 0
+  if len == 0:
+    lenCalculated = len(str)
+  else:
+    lenCalculated = len
+  result = newStringOfCap(lenCalculated)
+  for i in 0..<lenCalculated:
+    add(result,str[i])
+
+template to_uint32*(t: openArray[int]): seq[uint32]= 
+  var arg {.inject.} = newSeq[uint32](t.len)
+  for i in 0..arg.high:
+    arg[i] = (uint32)t[i]    
+  arg
+
+template size*[T](t: openArray[T]): cint =
+  cint(T.sizeof * t.len)
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+#@px_log
+#-----------------------------------------------------------------------------------------------------------------------
 type Logger* = object
   file: File
 
@@ -207,3 +322,62 @@ template logError*(args: varargs[string, `$`]) =
 open channel
 createThread thread, px_log_execute
 addQuitProc px_log_stop
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+#@px_profile
+#-----------------------------------------------------------------------------------------------------------------------
+type ProfileElement = object
+  name: string
+  t0, t1: MonoTime
+  total_calls: int
+  total_time: int64
+  cache: seq[Duration]
+
+var pairs = initTable[int,ProfileElement]()
+
+proc profile_start(arg: string): ptr ProfileElement {.inline.} =
+  if not pairs.hasKey(arg.hash):
+   var el: ProfileElement   
+   pairs.add(arg.hash,el)
+  let el = addr pairs[arg.hash]
+  el.t0 = getMonoTime()
+  el.name = arg
+  el
+
+proc profile_end(el: ptr ProfileElement) {.inline.} =
+  el.t1 = getMonoTime()
+  var v = el.t1-el.t0
+  el.total_time += v.inNanoseconds
+  el.total_calls+=1
+  el.cache.add(v)
+
+proc profileLog*()= 
+  var benches = ""
+  for pe in pairs.mvalues:
+      let elapsed_raw = pe.total_time.float64/1000000000.float64
+      let total =  pe.total_calls
+      if pe.total_calls>1:
+          let elapsed     = formatFloat(elapsed_raw,format = ffDecimal,precision = 4)
+          let elapsed_avr = formatFloat(elapsed_raw / total.float64,format = ffDecimal,precision = 9)
+          let elapsed_min = formatFloat(pe.cache.min.inNanoseconds.float64/1000000000.float64,format = ffDecimal,precision = 9)
+          let elapsed_max = formatFloat(pe.cache.max.inNanoseconds.float64/1000000000.float64,format = ffDecimal,precision = 9)
+          benches.add(&"⯈ {pe.name}: {elapsed}s -> {total} iterations, avg: {elapsed_avr}s min: {elapsed_min}s max: {elapsed_max}s\n")
+      else:
+          let elapsed     = formatFloat(elapsed_raw,format = ffDecimal,precision = 9)
+          benches.add(&"⯈ {pe.name}: {elapsed}s\n")
+  px_log_bench benches 
+
+proc logProfile*()= 
+  profileLog() 
+
+template profile*(benchmarkName: string, code: untyped): untyped  =
+  block:
+    let el = profile_start(benchmarkName)
+    code
+    profile_end(el) 
+
+proc profileClear*()=
+  pairs = initTable[int,ProfileElement]()
+
+
