@@ -45,7 +45,7 @@ method draw*(self: UiDebugGame) {.locks: "unknown".}=
   if app.meta.vsync == 0:
     self.vsync_toggle = false
   else: self.vsync_toggle = true
-  
+
   igBegin("App Debug", self.show.addr, ImGuiWindowFlags.AlwaysAutoResize )
   igPushItemWidth(320)
   igSliderFloat(" Fps", app.meta.fps.addr, 5f, 1000f, "%.0f")

@@ -41,7 +41,7 @@ proc getMousePositionImpl*(): tuple[x: cfloat,y: cfloat] {.inline.} =
 ##@Setup
 ##=====================================================
 
-proc glfwErrorCheck(error_code: int32, description: cstring):void {.cdecl.} =
+proc glfwErrorCheck(error_code: int32, description: cstring):void {.used,cdecl.} =
   logError description
 
 when not defined(release) and not defined(danger):
@@ -63,10 +63,10 @@ proc targetInit*() =
     logInfo &"OpenGL {glVersion}"
   
  # discard glfwSetErrorCallback(glfwErrorCheck)
-  var glfwInitState = 0
+  var glfwInitState = false
   var glInitState = false
   glfwInitState = glfwInit()
-  if glfwInitState == 0:
+  if glfwInitState == false:
     logError "The GLFW library is not initialized"
     quit(-1)
  
@@ -118,7 +118,7 @@ proc setFullScreen*(app:App, arg:bool) =
     window.setWindowMonitor(nil,0,0,(cint)screen.width, (cint)screen.height, 0)
 
 
-proc quit*() = window.setWindowShouldClose(1)
+proc quit*() = window.setWindowShouldClose(true)
 
 proc shouldQuit*():bool {.inline.} = (bool)window.windowShouldClose
 

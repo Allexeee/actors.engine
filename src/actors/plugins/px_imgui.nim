@@ -1,10 +1,10 @@
 {.used.}
-import dear_imgui/imgui
-import dear_imgui/imgui/[impl_opengl, impl_glfw]
+import nimgl/imgui
+import nimgl/imgui/impl_opengl
+import nimgl/imgui/impl_glfw
 
 export imgui, impl_opengl, impl_glfw
 
-#from ../actors_engine import window
 
 proc releaseImpl*()=
   impl_opengl.igOpenGL3Shutdown()
@@ -29,4 +29,3 @@ proc initImpl*(obj: ptr object)=
   let context {.used.} = igCreateContext()
   discard igGlfwInitForOpenGL(obj, true)
   igStyleColorsCherry()
-  echo "haha"

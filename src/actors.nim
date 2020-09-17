@@ -83,6 +83,7 @@ template fixedUpdate(code: untyped): untyped =
 
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   engineInit()
+
   pluginsInit(window)
 
   init()

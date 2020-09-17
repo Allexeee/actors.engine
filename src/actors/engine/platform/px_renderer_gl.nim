@@ -205,6 +205,7 @@ proc getTexture(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: 
   var textureID : GLuint
   stbi_set_flip_vertically_on_load(true.ord)
   var data = stbi_load(app.meta.assets_path & path, w, h, bits, 0)
+  log $stbi_failure_reason()
   glCreateTextures(GL_TEXTURE_2D, 1, textureID.addr)
   glBindTexture(GL_TEXTURE_2D, textureID)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mode_filter.Glint)
@@ -218,6 +219,7 @@ proc getTexture(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: 
 
 proc getSprite(db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], shader: ShaderIndex) : Sprite =
   result = Sprite()
+
   result.texId = texture.id.uint32
   result.shader = shader
   result.quad = quad(0.0f,0.0f,vec(1,1,1,1),texture.id.cfloat)
@@ -228,7 +230,6 @@ proc getSprite(db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], s
   
   #res
   shader.use()
-
   var vbo : uint32
   var ebo : uint32
   glGenVertexArrays(1, result.quad.vao.addr)

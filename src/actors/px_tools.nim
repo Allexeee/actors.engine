@@ -339,7 +339,8 @@ var pairs = initTable[int,ProfileElement]()
 proc profile_start(arg: string): ptr ProfileElement {.inline.} =
   if not pairs.hasKey(arg.hash):
    var el: ProfileElement   
-   pairs.add(arg.hash,el)
+   pairs[arg.hash]=el
+   #pairs.add(arg.hash,el)
   let el = addr pairs[arg.hash]
   el.t0 = getMonoTime()
   el.name = arg

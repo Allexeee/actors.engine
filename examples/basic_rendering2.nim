@@ -41,10 +41,15 @@ var mode = 0
 
 proc init() =
   cam       = getCamera();
+
   ui_debug  = uis.getDebugWindow()
+
   shader1   = db.getShader("basic")
+
   sprite    = db.getSprite("tex_aidKit2.png", shader1)
+
   sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
+
   var h = sizeca
   var w = h * 1920/1080
   cam.ortho(w,h,0.1,1000)
