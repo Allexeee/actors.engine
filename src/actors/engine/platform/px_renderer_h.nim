@@ -1,9 +1,10 @@
-import ../../../px_h
-import ../../../px_tools
-import ../../px_math
+import ../../px_h
+import ../../px_tools
+import ../px_math
 
-when defined(renderer_opengl):
-  include actors_opengl_h
+
+# when defined(renderer_opengl):
+#   include px_renderer_gl
 
 const MAX_QUADS    = 1_000_000
 const MAX_VERTICES = MAX_QUADS * 4
@@ -50,5 +51,3 @@ type DataRenderer* = object
   vertexIndices : array[MAX_INDICES,uint32]
   textures      : array[32,uint32]
   textureWhite  : uint32
-
-

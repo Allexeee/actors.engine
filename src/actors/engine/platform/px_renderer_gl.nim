@@ -1,20 +1,36 @@
-## Created by Pixeye | dev@pixeye.com
-##
-## Opengl implementation.   
-## Submodules:   
-## * ```shaders```
-
-## vbo: the vertex buffer object VBO is a memory buffer area opened in the graphics card storage space 
-## for storing various attribute information of the vertex: coords,color,and like
-## vao: stores all of the state needed to supply vertex data
-## ebo: a vertex buffer object, that stores indices that OpenGL uses to decide what vertices to draw
-
-## {.noinit.}: nim pragma that allows to use unitialized arrays
-
 {.used.}
 {.experimental: "codeReordering".}
 
-include actors_renderer_h
+import ../../px_plugins
+
+type ARenum* = GLenum # ActorsRender
+
+const
+  MODE_LINEAR*          : ARenum = GL_LINEAR
+  MODE_NEAREST*         : ARenum = GL_NEAREST
+  MODE_REPEAT*          : ARenum = GL_REPEAT
+  MODE_CLAMP_TO_BORDER* : ARenum = GL_CLAMP_TO_BORDER
+  MODE_CLAMP_TO_EDGE*   : ARenum = GL_CLAMP_TO_EDGE
+  MODE_REPEAT_MIRRORED* : ARenum = GL_MIRRORED_REPEAT
+  MODE_RGB*             : ARenum = GL_RGB8
+  MODE_RGBA*            : ARenum = GL_RGBA
+
+const vert_default: cstring = """
+  #version 330 core
+  layout (location = 0) in vec3 aPos;
+  void main()
+  {
+      gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+  } """
+const frag_default: cstring = """
+  #version 330 core
+  out vec4 FragColor;
+  void main()
+  {
+      FragColor=vec4(1,.5f,.2f,1);
+  } """
+
+include px_renderer_h
 
 ##=====================================================
 ##@shaders

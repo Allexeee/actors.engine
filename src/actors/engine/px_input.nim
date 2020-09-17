@@ -3,7 +3,7 @@
 {.used.}
 
 import ../px_h
-import actors_platform as platform
+import px_platform as platform
 
 type Key* {.pure, size: int32.sizeof.} = enum
   Space = 32

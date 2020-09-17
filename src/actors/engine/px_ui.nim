@@ -7,7 +7,7 @@
 import ../px_h
 import ../px_plugins
 import px_input
-import actors_platform
+import px_platform
 
 
 type UiWindow* = ref object of RootObj

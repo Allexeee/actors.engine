@@ -1,9 +1,13 @@
+## Created by Pixeye | dev@pixeye.com
+## 
+## ❒ API for windows OS
+
 {.used.}
-import ../../../px_h
-import ../../../plugins/actors_gl
-import ../../../plugins/actors_glfw
-import ../../../px_tools
-import ../../../px_plugins
+import ../../px_h
+import ../../plugins/actors_gl
+import ../../plugins/actors_glfw
+import ../../px_tools
+import ../../px_plugins
 
 const Tilde = 96
 
@@ -163,5 +167,3 @@ proc renderEnd*() =
 
 proc getTime*(): float64 =
   glfwGetTime()
-#window.setInputMode(GLFWCursorSpecial,GLFWCursorHidden)
-

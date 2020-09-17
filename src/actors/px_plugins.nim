@@ -8,11 +8,11 @@ export
     actors_glfw
 
 import
-  plugins/actors_stb_image,
+  plugins/px_stb_image,
   plugins/actors_imgui as imgui_impl
 
 export
-  actors_stb_image,
+  px_stb_image,
   imgui_impl
 
 
