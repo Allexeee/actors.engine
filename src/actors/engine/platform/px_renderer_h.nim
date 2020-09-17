@@ -2,10 +2,6 @@ import ../../px_h
 import ../../px_tools
 import ../px_math
 
-
-# when defined(renderer_opengl):
-#   include px_renderer_gl
-
 const MAX_QUADS    = 1_000_000
 const MAX_VERTICES = MAX_QUADS * 4
 const MAX_INDICES  = MAX_QUADS * 6

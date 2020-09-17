@@ -8,7 +8,7 @@
 ##
 ## HACK: To be honest, there are a lot of things to optimize in here if you have control of every step.
 
-import ../imgui, ../../actors_gl
+import ../imgui, ../../px_gl
 
 var
   gGlslVersionString: cstring = "#version 330 core"

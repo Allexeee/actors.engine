@@ -29,3 +29,4 @@ proc initImpl*(obj: ptr object)=
   let context {.used.} = igCreateContext()
   discard igGlfwInitForOpenGL(obj, true)
   igStyleColorsCherry()
+  echo "haha"

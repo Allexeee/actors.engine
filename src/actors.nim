@@ -49,11 +49,11 @@ proc metricsEnd()=
     counter.frames  = 0
 
 proc renderBegin()=
-  plugins.imgui_impl.renderBegin()
+  plugins.px_imgui.renderBegin()
   engine.target.renderBegin()
 
 proc renderEnd() =
-  plugins.imgui_impl.renderEnd()
+  plugins.px_imgui.renderEnd()
   engine.target.renderEnd()
   stats.sprites_prev = stats.sprites
   stats.drawcalls_prev = stats.drawcalls

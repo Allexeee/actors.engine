@@ -6,7 +6,7 @@
 ## Feel free to use and modify this implementation.
 ## This needs to be used along with a Renderer.
 
-import ../imgui, ../../actors_glfw
+import ../imgui, ../../px_glfw
 
 type
   GlfwClientApi = enum

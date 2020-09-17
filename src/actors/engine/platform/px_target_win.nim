@@ -4,8 +4,8 @@
 
 {.used.}
 import ../../px_h
-import ../../plugins/actors_gl
-import ../../plugins/actors_glfw
+import ../../plugins/px_gl
+import ../../plugins/px_glfw
 import ../../px_tools
 import ../../px_plugins
 
