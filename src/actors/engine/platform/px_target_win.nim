@@ -62,7 +62,6 @@ proc targetInit*() =
     var glVersion = cast[cstring](glGetString(GL_VERSION))
     logInfo &"OpenGL {glVersion}"
   
- # discard glfwSetErrorCallback(glfwErrorCheck)
   var glfwInitState = false
   var glInitState = false
   glfwInitState = glfwInit()
@@ -99,10 +98,10 @@ proc targetInit*() =
   
   getOpenglVersion()
 
-  when not defined(release) and not defined(danger):
-    glEnable(GL_DEBUG_OUTPUT)
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glDebugMessageCallback(OpenGLMessageCallback, cast[ptr Glvoid](0));
+  # when not defined(release) and not defined(danger):
+  #   glEnable(GL_DEBUG_OUTPUT)
+  #   glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+  #   glDebugMessageCallback(OpenGLMessageCallback, cast[ptr Glvoid](0));
   glEnable(GL_BLEND)
   glEnable(GL_CULL_FACE)
   glCullFace(GL_BACK)
