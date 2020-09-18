@@ -390,7 +390,7 @@ proc del*(self: ent|eid) {.inline.} =
   px_ecs_debug_release(self)
   px_ecs_ent_del(self)
 
-template entGet*(code: untyped): ent =
+template getEnt*(code: untyped): ent =
   var result : ent
   block:
     px_ecs_ent_get()
@@ -400,7 +400,7 @@ template entGet*(code: untyped): ent =
     px_ecs.bind(e.id.eid)
   result
 
-proc     entGet*(): ent =
+proc     getEnt*(): ent =
   px_ecs_ent_get()
   result.id  = e1.id
   result.age = e2.age

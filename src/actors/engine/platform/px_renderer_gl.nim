@@ -11,7 +11,6 @@ const
  MAX_VERTICES = MAX_QUADS * 4
  MAX_INDICES  = MAX_QUADS * 6
 
-type ARenum* = GLenum # ActorsRender
 
 type ShaderIndex* = distinct uint32
 
@@ -55,16 +54,17 @@ type DataRenderer* = object
   textures      : array[32,uint32]
   textureWhite  : uint32
 
+type PXenum* = GLenum
 
 const
-  MODE_LINEAR*          : ARenum = GL_LINEAR
-  MODE_NEAREST*         : ARenum = GL_NEAREST
-  MODE_REPEAT*          : ARenum = GL_REPEAT
-  MODE_CLAMP_TO_BORDER* : ARenum = GL_CLAMP_TO_BORDER
-  MODE_CLAMP_TO_EDGE*   : ARenum = GL_CLAMP_TO_EDGE
-  MODE_REPEAT_MIRRORED* : ARenum = GL_MIRRORED_REPEAT
-  MODE_RGB*             : ARenum = GL_RGB8
-  MODE_RGBA*            : ARenum = GL_RGBA
+  PX_LINEAR*          : PXenum = GL_LINEAR
+  PX_NEAREST*         : PXenum = GL_NEAREST
+  PX_REPEAT*          : PXenum = GL_REPEAT
+  PX_CLAMP_TO_BORDER* : PXenum = GL_CLAMP_TO_BORDER
+  PX_CLAMP_TO_EDGE*   : PXenum = GL_CLAMP_TO_EDGE
+  PX_REPEAT_MIRRORED* : PXenum = GL_MIRRORED_REPEAT
+  PX_RGB*             : PXenum = GL_RGB8
+  PX_RGBA*            : PXenum = GL_RGBA
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -206,56 +206,7 @@ proc setMatrix*(this: ShaderIndex, name: cstring, arg: var Matrix) {.inline.} =
 #-----------------------------------------------------------------------------------------------------------------------
 #@2d
 #-----------------------------------------------------------------------------------------------------------------------
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
-#@3d
-#-----------------------------------------------------------------------------------------------------------------------
-
-
-
-##=====================================================
-##@renderer
-##=====================================================
-
-let GL_FLOAT = 0x1406.GLenum
-let GL_FALSE = false
-
-var tempQuad : array[4,Vertex]
-var drawcalls* = 0
-var drawcallsLast* = 0
-
-
-proc quad(x,y: cfloat, color: Vec, texID: cfloat): Quad {.discardable.} =
-  const size = 1.0f
-
-  tempQuad[0].color     = color
-  tempQuad[0].position  = vec3(x,y,0f)
-  tempQuad[0].texCoords = vec2(0.0f, 0.0f)
-  tempQuad[0].texID     = texID
-  
-
-  tempQuad[3].color     = color
-  tempQuad[3].position  = vec3(x+size, y, 0.0)
-  tempQuad[3].texCoords = vec2(1.0, 0.0)
-  tempQuad[3].texID     = texID
-
-
-  tempQuad[2].color     = color
-  tempQuad[2].position  = vec3(x+size, y+size, 0.0)
-  tempQuad[2].texCoords = vec2(1.0, 1.0)
-  tempQuad[2].texID     = texID
-
-
-  tempQuad[1].color     = color
-  tempQuad[1].position  = vec3(x, y+size, 0.0)
-  tempQuad[1].texCoords = vec2(0.0, 1.0)
-  tempQuad[1].texID     = texID
-  
-  result.verts = tempQuad
-
-proc getTexture(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: ARenum): tuple[id: TextureIndex, w: int, h: int] =
+proc getTexture(db: DataBase, path: string, mode_rgb: PXenum, mode_filter: PXenum, mode_wrap: PXenum): tuple[id: TextureIndex, w: int, h: int] =
   var w,h,bits : cint
   var textureID : GLuint
   stbi_set_flip_vertically_on_load(true.ord)
@@ -272,8 +223,8 @@ proc getTexture(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: 
   glTexImage2D(GL_TEXTURE_2D, 0, mode_rgb.Glint, w, h, 0, mode_rgb.Glenum, GL_UNSIGNED_BYTE, data)
   stbi_image_free(data)
   (textureID.TextureIndex,w.int,h.int)
- 
-proc getSprite(db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], shader: ShaderIndex) : Sprite =
+
+proc getSprite (db: DataBase,texture: tuple[id: TextureIndex, w: int, h: int], shader: ShaderIndex) : Sprite =
   result = Sprite()
 
   result.texId = texture.id.uint32
@@ -317,8 +268,52 @@ proc getSprite(db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], s
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size, indices[0].addr, GL_STATIC_DRAW);
   glBindTextureUnit(1, result.texID)
 
-proc getSprite*(db: DataBase, filename: string, shader: ShaderIndex) : Sprite =
-  db.getSprite(getTexture(filename,MODE_RGBA, MODE_NEAREST, MODE_REPEAT), shader)
+proc getSprite*(db: DataBase,filename: string, shader: ShaderIndex) : Sprite =
+  db.getSprite(db.getTexture(filename,PX_RGBA, PX_NEAREST, PX_REPEAT),shader)
+#-----------------------------------------------------------------------------------------------------------------------
+#@3d
+#-----------------------------------------------------------------------------------------------------------------------
+proc quad(x,y: cfloat, color: Vec, texID: cfloat): Quad {.discardable.} =
+  const size = 1.0f
+
+  tempQuad[0].color     = color
+  tempQuad[0].position  = vec3(x,y,0f)
+  tempQuad[0].texCoords = vec2(0.0f, 0.0f)
+  tempQuad[0].texID     = texID
+  
+
+  tempQuad[3].color     = color
+  tempQuad[3].position  = vec3(x+size, y, 0.0)
+  tempQuad[3].texCoords = vec2(1.0, 0.0)
+  tempQuad[3].texID     = texID
+
+
+  tempQuad[2].color     = color
+  tempQuad[2].position  = vec3(x+size, y+size, 0.0)
+  tempQuad[2].texCoords = vec2(1.0, 1.0)
+  tempQuad[2].texID     = texID
+
+
+  tempQuad[1].color     = color
+  tempQuad[1].position  = vec3(x, y+size, 0.0)
+  tempQuad[1].texCoords = vec2(0.0, 1.0)
+  tempQuad[1].texID     = texID
+  
+  result.verts = tempQuad
+
+
+
+
+let GL_FLOAT = 0x1406.GLenum
+let GL_FALSE = false
+
+var tempQuad : array[4,Vertex]
+var drawcalls* = 0
+var drawcallsLast* = 0
+
+
+
+
 
 const maxQuadCount = 1_000_000
 const maxVertexCount = maxQuadCount * 4;
@@ -364,7 +359,8 @@ proc rendererRelease*() = discard
 
 #   stats.sprites += 1
 #   stats.drawcalls += 1
-
+proc draw*(self: Sprite, x,y,z: float, w,h: float, rotate: float) =
+  draw(self,vec(x,y,z),vec(w,h), rotate)
 proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   self.shader.use()
  
@@ -379,7 +375,7 @@ proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
 
   self.shader.setMatrix("mx_model",model)
   
-  glBindTexture(GL_TEXTURE_2D, 2)
+  glBindTexture(GL_TEXTURE_2D, self.texId)
   glBindVertexArray(self.quad.vao)
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
 

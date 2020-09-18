@@ -32,7 +32,7 @@ type CompCamera* = object
 ecsAdd CompCamera
 
 proc getCamera*(): Camera =
-  result = entGet():
+  result = getEnt():
     let ccamera = e.get CompCamera
     let ctr     = e.get CompTransform
     ccamera.main = true

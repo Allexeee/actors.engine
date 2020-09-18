@@ -12,11 +12,11 @@ app.meta.ups = 50
 app.meta.ppu = 32 
 app.meta.assetsPath = "assets/"
 
-var sprite : Sprite
+var sprite  : Sprite
 var sprite2 : Sprite
 var shader1 : ShaderIndex
-var ui_debug : UiDebugGame
-var uis* = newSeq[UiWindow]()
+var uiw_debug : UiDebugGame
+var ui* = newSeq[UiWindow]()
 var sizeca = 4f
 
 var amount = 1_000_000
@@ -34,22 +34,37 @@ for i in 0..<amount:
   of 1:
     colors[i] = vec(0,1,0,1)
   of 2:
-    colors[i] = vec(0,0,1,1)
+    colors[i]     = vec(0,0,1,1)
   else: colors[i] = vec(1,1,1,1)
 
-var mode = 0
 
 proc init() =
   cam       = getCamera();
 
-  ui_debug  = uis.getDebugWindow()
+  uiw_debug  = ui.getWindowDebug()
 
   shader1   = db.getShader("basic")
+
+  #dbGet
 
   sprite    = db.getSprite("tex_aidKit2.png", shader1)
 
   sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
+  sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
+  sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
+  
 
+  #db_get_sprite
+  #db_get_shader
+  #db_get_font
+  #rt_get_camera
+  #rt_get_ent
+  #ecs_get_ent
+  #getEnt()
+
+  #sprite2   = sprite_get()
+  #sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
+  
   var h = sizeca
   var w = h * 1920/1080
   cam.ortho(w,h,0.1,1000)
@@ -89,8 +104,8 @@ proc draw() =
   for i in 0..<amount:
    updatePos(positions[i].x,positions[i].y)
   
-  for ui in uis:
-    ui.draw()
+  for elem in ui:
+    elem.draw()
 
 
 app.run(init,update,draw)

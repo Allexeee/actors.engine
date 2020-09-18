@@ -27,10 +27,10 @@ type UiDebugGame* = ref object of UiWindow
   ups:       int
 
 
-func getDebugWindow*(): UiDebugGame {.discardable.} =
+func getWindowDebug*(): UiDebugGame {.discardable.} =
   result = UiDebugGame()
   result.base = result
-func getDebugWindow*(uiStorage: var seq[UiWindow]): UiDebugGame {.discardable.} =
+func getWindowDebug*(uiStorage: var seq[UiWindow]): UiDebugGame {.discardable.} =
   result = UiDebugGame()
   result.base = result
   uiStorage.add result

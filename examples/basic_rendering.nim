@@ -19,7 +19,7 @@ var sizeca = 4f
 
 var cam : Camera # ent
 proc init() =
-  ui_debug  = uis.getDebugWindow()
+  ui_debug  = uis.getWindowDebug()
   cam = getCamera();
   shader1 = db.getShader("basic")
   #sprite1 = getSprite("tex_larva_idle_01.png", shader1)
@@ -53,12 +53,11 @@ proc update() =
   if input.press Key.E:
     sizeca += 1
 
-var size = vec(546f/app.meta.ppu,500f/app.meta.ppu)
-var med_size = vec(36f/app.meta.ppu,26f/app.meta.ppu)
 var r = 0f
 proc draw() =
-  for i in 0..<100_000:
-    sprite1.draw(p,med_size,r)
+  for i in 0..<1:
+    sprite2.draw(0,0,0,1,1,0)
+    sprite1.draw(p.x,p.y,1,1,1,r)
   r+=1
   #echo p
 

@@ -108,6 +108,7 @@ proc targetInit*() =
   glFrontFace(GL_CW)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
   glEnable(GL_DEPTH_TEST)
+  glDepthFunc(GL_ALWAYS)
 
 proc setFullScreen*(app:App, arg:bool) =
   let screen = app.meta.screen_size
