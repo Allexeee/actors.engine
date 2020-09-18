@@ -1,9 +1,60 @@
 {.used.}
 {.experimental: "codeReordering".}
 
+import ../../px_h
 import ../../px_plugins
+import ../../px_tools
+import ../px_math
+
+const 
+ MAX_QUADS    = 1_000_000
+ MAX_VERTICES = MAX_QUADS * 4
+ MAX_INDICES  = MAX_QUADS * 6
 
 type ARenum* = GLenum # ActorsRender
+
+type ShaderIndex* = distinct uint32
+
+type ShaderCompileType*   = enum
+  VERTEX_INFO = 0,
+  FRAGMENT_INFO,
+  GEOMETRY_INFO,
+  PROGRAM_INFO
+
+type ShaderLoadError*     = object of ValueError
+
+type ShaderCompileError*  = object of ValueError
+
+type TextureIndex* = distinct uint32
+
+type Vertex* = object
+  position* : Vec3
+  color*    : Vec
+  texCoords*: Vec2
+  texID*    : cfloat
+
+type Quad* = object
+  verts*: array[4,Vertex]
+  vao  *: uint32
+
+type Sprite* = ref object
+  quad* : Quad
+  w*,h* : float32
+  x*,y* : float32
+  shader*  : ShaderIndex
+  texId*    : uint32
+
+type DataRenderer* = object
+  ## data for batch renderer
+  vbo           : uint32 # vertex buffer
+  vao           : uint32 # vertex array
+  ibo           : uint32 # indices
+  vertexCount   : uint32 # current vertex
+  vertexBatch   : array[MAX_VERTICES,Vertex]
+  vertexIndices : array[MAX_INDICES,uint32]
+  textures      : array[32,uint32]
+  textureWhite  : uint32
+
 
 const
   MODE_LINEAR*          : ARenum = GL_LINEAR
@@ -15,6 +66,10 @@ const
   MODE_RGB*             : ARenum = GL_RGB8
   MODE_RGBA*            : ARenum = GL_RGBA
 
+
+#-----------------------------------------------------------------------------------------------------------------------
+#@shaders
+#-----------------------------------------------------------------------------------------------------------------------
 const vert_default: cstring = """
   #version 330 core
   layout (location = 0) in vec3 aPos;
@@ -30,41 +85,41 @@ const frag_default: cstring = """
       FragColor=vec4(1,.5f,.2f,1);
   } """
 
-include px_renderer_h
-
-##=====================================================
-##@shaders
-##=====================================================
-
 var shaders* = newSeq[ShaderIndex]()
 
-template `$`*(this: ShaderIndex): uint32 =
-  this.uint32
+template `$`*(this: ShaderIndex): uint32 = this.uint32
 
-template checkErrorShaderCompile(obj: uint32, errType: ShaderCompileType): untyped =
-  block:
-     let error {.inject.} = $errType
-     var success {.inject.}: Glint
-     var messageBuffer {.inject.} = newSeq[cchar](1024)
-     var len {.inject.} : int32 = 0
-     if errType == PROGRAM_INFO:
-         glGetProgramiv(obj, GL_LINK_STATUS, success.addr)
-         if success != GL_TRUE.ord:
-             glGetProgramInfoLog(obj, 1024, len.addr, messageBuffer[0].addr)
-             var message {.inject.}= ""
-             if len!=0:
-                 message = toString(messageBuffer,len)
-             logError &"Type: {error} Message: {message}"
-             quit()
-     else:
-         glGetShaderiv(obj, GL_COMPILE_STATUS, success.addr);
-         if success != GL_TRUE.ord:
-             glGetShaderInfoLog(obj, 1024, len.addr, messageBuffer[0].addr)
-             var message {.inject.}= ""
-             if len!=0:
-                 message = toString(messageBuffer,len)
-             logError &"Type: {error} Message: {message}"
-             quit()
+template px_get_shader_log(obj: uint32, errType: ShaderCompileType): untyped =
+  when defined(debug):
+    block:
+      let error {.inject.} = $errType
+      var success {.inject.}: Glint
+      var messageBuffer {.inject.} = newSeq[cchar](1024)
+      var len {.inject.} : int32 = 0
+      if errType == PROGRAM_INFO:
+          glGetProgramiv(obj, GL_LINK_STATUS, success.addr)
+          if success != GL_TRUE.ord:
+              glGetProgramInfoLog(obj, 1024, len.addr, messageBuffer[0].addr)
+              var message {.inject.}= ""
+              if len!=0:
+                  message = toString(messageBuffer,len)
+              logError &"Type: {error} Message: {message}"
+              quit()
+      else:
+          glGetShaderiv(obj, GL_COMPILE_STATUS, success.addr);
+          if success != GL_TRUE.ord:
+              glGetShaderInfoLog(obj, 1024, len.addr, messageBuffer[0].addr)
+              var message {.inject.}= ""
+              if len!=0:
+                  message = toString(messageBuffer,len)
+              logError &"Type: {error} Message: {message}"
+              quit()
+
+proc use*(self: ShaderIndex) =
+  var inUse {.global.} : ShaderIndex
+  if self.int == inuse.int: return
+  inuse = self
+  glUseProgram(self.GLuint) 
 
 proc getShader*(db: DataBase, shader_path: string): ShaderIndex =    
     var path: string
@@ -98,18 +153,18 @@ proc getShader*(db: DataBase, shader_path: string): ShaderIndex =
     vertex = glCreateShader(GL_VERTEX_SHADER)
     glShaderSource(vertex,1, vert_code.addr, nil)
     glCompileShader(vertex)
-    checkErrorShaderCompile(vertex, VERTEX_INFO)
+    px_get_shader_log(vertex, VERTEX_INFO)
     ##fragment
     fragment = glCreateShader(GL_FRAGMENT_SHADER)
     glShaderSource(fragment,1'i32,frag_code.addr, nil)
     glCompileShader(fragment)
-    checkErrorShaderCompile(fragment, FRAGMENT_INFO)
+    px_get_shader_log(fragment, FRAGMENT_INFO)
     ##geom
     if geom_code!=default(cstring):
        geom = glCreateShader(GL_GEOMETRY_SHADER)
        glShaderSource(geom, 1'i32,geom_code.addr, nil)
        glCompileShader(geom)
-       checkErrorShaderCompile(geom, GEOMETRY_INFO)
+       px_get_shader_log(geom, GEOMETRY_INFO)
     ##program
     id = glCreateProgram()
     glAttachShader(id,vertex)
@@ -117,48 +172,48 @@ proc getShader*(db: DataBase, shader_path: string): ShaderIndex =
     if geom_code!=default(cstring):
         glAttachShader(id,geom)
     glLinkProgram(id)
-    checkErrorShaderCompile(id, PROGRAM_INFO)
+    px_get_shader_log(id, PROGRAM_INFO)
     glDeleteShader(vertex)
     glDeleteShader(fragment)
     shaders.add(id.ShaderIndex)
     result = id.ShaderIndex
 
-proc use*(self: ShaderIndex) =
-  var inUse {.global.} : ShaderIndex
-  if self.int == inuse.int: return
-  inuse = self
-  glUseProgram(self.GLuint) 
-
 proc setSampler*(this: ShaderIndex, name: cstring, count: GLsizei, arg: ptr uint32) {.inline.} =
    glUniform1iv(glGetUniformLocation(this.GLuint,name),count, cast[ptr Glint](arg))
 
 proc setBool*(this: ShaderIndex, name: cstring, arg: bool) {.inline.} =
-  ## dont forget to set use before changing shader
   glUniform1i(glGetUniformLocation(this.GLuint,name),arg.Glint)
 
 proc setInt*(this: ShaderIndex, name: cstring, arg: int) {.inline.} =
-  ## dont forget to set use before changing shader
   glUniform1i(glGetUniformLocation(this.GLuint,name),arg.Glint)
 
 proc setFloat*(this: ShaderIndex, name: cstring, arg: float32) {.inline.} =
-  ## dont forget to set use before changing shader
   glUniform1f(glGetUniformLocation(this.GLuint,name),arg)
 
 proc setVec*(this: ShaderIndex, name: cstring, arg: Vec) {.inline.} =
-  ## dont forget to set use before changing shader
   glUniform4f(glGetUniformLocation(this.GLuint,name),arg.x,arg.y,arg.z,arg.w)
 
 proc setVec3*(this: ShaderIndex, name: cstring, arg: Vec) {.inline.} =
-  ## dont forget to set use before changing shader
   glUniform3f(glGetUniformLocation(this.GLuint,name),arg.x,arg.y,arg.z)
 
 proc setColor*(this: ShaderIndex, name: cstring, arg: Vec) {.inline.} =
-  ## dont forget to set use before changing shader
   glUniform4f(glGetUniformLocation(this.GLuint,name),arg.x,arg.y,arg.z,arg.w)
 
 proc setMatrix*(this: ShaderIndex, name: cstring, arg: var Matrix) {.inline.} =
-  ## dont forget to set use before changing shader
   glUniformMatrix4fv(glGetUniformLocation(this.GLuint,name), 1, false, arg.e11.addr)
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+#@2d
+#-----------------------------------------------------------------------------------------------------------------------
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+#@3d
+#-----------------------------------------------------------------------------------------------------------------------
+
+
 
 ##=====================================================
 ##@renderer
@@ -206,7 +261,7 @@ proc getTexture(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: 
   stbi_set_flip_vertically_on_load(true.ord)
   var data = stbi_load(app.meta.assets_path & path, w, h, bits, 0)
   var reason = $stbi_failure_reason()
-  if reason != "no SOI": #png file always gives this error. it's ok
+  if reason != "no SOI": #png file  always gives this error. it's ok
     log $stbi_failure_reason()
   glCreateTextures(GL_TEXTURE_2D, 1, textureID.addr)
   glBindTexture(GL_TEXTURE_2D, textureID)
@@ -217,8 +272,7 @@ proc getTexture(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: 
   glTexImage2D(GL_TEXTURE_2D, 0, mode_rgb.Glint, w, h, 0, mode_rgb.Glenum, GL_UNSIGNED_BYTE, data)
   stbi_image_free(data)
   (textureID.TextureIndex,w.int,h.int)
-
-
+ 
 proc getSprite(db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], shader: ShaderIndex) : Sprite =
   result = Sprite()
 
