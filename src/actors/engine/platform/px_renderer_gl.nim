@@ -205,7 +205,9 @@ proc getTexture(path: string, mode_rgb: ARenum, mode_filter: ARenum, mode_wrap: 
   var textureID : GLuint
   stbi_set_flip_vertically_on_load(true.ord)
   var data = stbi_load(app.meta.assets_path & path, w, h, bits, 0)
-  log $stbi_failure_reason()
+  var reason = $stbi_failure_reason()
+  if reason != "no SOI": #png file always gives this error. it's ok
+    log $stbi_failure_reason()
   glCreateTextures(GL_TEXTURE_2D, 1, textureID.addr)
   glBindTexture(GL_TEXTURE_2D, textureID)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mode_filter.Glint)
