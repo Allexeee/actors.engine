@@ -122,3 +122,5 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   plugins.release()
   engine.release()
 
+## asserts - check engine errors, never user-side (game-engine-architecture, 147)
+## 

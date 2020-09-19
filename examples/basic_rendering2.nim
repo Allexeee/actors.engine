@@ -4,7 +4,7 @@ import actors
 logAdd stdout
 
 app.meta.name = "Pixeye Game"
-app.meta.screenSize = (1920,1080)
+app.meta.screenSize = (800,600)
 app.meta.fullScreen = false
 app.meta.showCursor = false
 app.meta.fps = 1000
@@ -19,7 +19,7 @@ var uiw_debug : UiDebugGame
 var ui* = newSeq[UiWindow]()
 var sizeca = 4f
 
-var amount = 1_000_000
+var amount = 1_500_000
 var positions = newSeq[Vec](amount)
 var colors = newSeq[Vec](amount)
 
@@ -50,8 +50,6 @@ proc init() =
   sprite    = db.getSprite("tex_aidKit2.png", shader1)
 
   sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
-  sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
-  sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
   
 
   #db_get_sprite
@@ -66,14 +64,14 @@ proc init() =
   #sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
   
   var h = sizeca
-  var w = h * 1920/1080
+  var w = h * 800/600
   cam.ortho(w,h,0.1,1000)
   for i in 0..<amount:
     makeQuad(positions[i].x,positions[i].y,colors[i],0)
 
 
 #op
-var pos  = vec(0,-19)
+var pos  = vec(0,0)
 
 proc update() =
   if input.down Key.Esc:
@@ -89,21 +87,23 @@ proc update() =
   if input.down Key.A:
     pos.x -= 1
   if input.down Key.D:
-    pos.x += 1
+    pos.x += 0.2
   if input.press Key.Q:
     sizeca -= 1
   if input.press Key.E:
     sizeca += 1
 
 
-
+var r  = 0f
 proc draw() =
   var s : Vec = (1f,1f)
-  var r  = 0f
-  #test()
-  for i in 0..<amount:
-   updatePos(positions[i].x,positions[i].y)
-  
+
+  for i in 0..<1_000_000:
+    let x = rand(-6f..6f)
+    let y = rand(-4f..4f)
+    updatePose(x,y)
+    #updateAll(x,y,64,r)
+  r += 0.01
   for elem in ui:
     elem.draw()
 
