@@ -519,30 +519,44 @@ var vertices : array[maxQuadCount*4,Vertex]
 
 var vertId = 0
 
-
+const am = 25_000
 
 proc updatePos*(x,y: cfloat) =
-  const size = 0.04f
+  const size = 0.008f * 2
 
-  if vertId >= 4*10000:
+  if vertId >= 4*am:
     batchEnd()
     flush()
     batchBegin()
-  
+  #var offset = stats.drawcalls
   var v  = vertBatch[0+vertId].addr
   var v2 = vertBatch[3+vertId].addr
   var v3 = vertBatch[2+vertId].addr
   var v4 = vertBatch[1+vertId].addr
   v.position   = vec3(x,y,0f)
-  v2.position  = vec3(x+0.004f,y,0f)
-  v3.position  = vec3(x+0.004f,y+0.004f,0f)
-  v4.position  = vec3(x,y+0.004f,0f)
+  v2.position  = vec3(x+size,y,0f)
+  v3.position  = vec3(x+size,y+size,0f)
+  v4.position  = vec3(x,y+size,0f)
   vertId += 4
+
+
+proc updateNose*() =
+
+  if vertId >= 4*am:
+    batchEnd()
+    flush()
+    batchBegin()
+
+  vertId += 4
+  #vertId = 4*1_000_000
+ # batchEnd()
+ # flush()
+ # batchBegin()
 
 proc updatePose*(x,y: cfloat) =
   const size = 0.004f * 32f
 
-  if vertId >= 4*10000:
+  if vertId >= 4*100000:
     batchEnd()
     flush()
     batchBegin()
@@ -568,21 +582,21 @@ proc updatePose*(x,y: cfloat) =
 #  v4.position  = vec3(x,y+size,0f)
   vertId += 4
 
-proc updateAll*(x,y: cfloat, scale: cfloat = 1, ang: cfloat = 0) =
+proc updateAll*(x,y: cfloat, scale: cfloat = 1, ccos: cfloat, csin: cfloat) =
   const ddsize = 0.004f
-  const ddsize2 = 0.002f
+  const ddsize2 = -0.002f
 
-  if vertId >= 4*100000:
+  if vertId >= 4*am:
     batchEnd()
     flush()
     batchBegin()
 
-  let dx = -ddsize2 * scale
-  let dy = -ddsize2 * scale
+  let dx = ddsize2 * scale
+  let dy = ddsize2 * scale
   let w = ddsize * scale
   let h = w
-  let ccos = cos(ang)
-  let csin = sin(ang)
+ # let ccos = cos(ang)
+ # let csin = sin(ang)
 
   let v  = vertBatch[0+vertId].addr
   let v2 = vertBatch[3+vertId].addr
@@ -591,32 +605,92 @@ proc updateAll*(x,y: cfloat, scale: cfloat = 1, ang: cfloat = 0) =
   
   v.position.x  = x + dx * ccos - dy * csin
   v.position.y  = y + dx * csin + dy * ccos;
-  v.position.z = 0
+  #v.position.z = 0
 
   v2.position.x = x + (dx+w) * ccos - dy * csin
   v2.position.y = y + (dx+w) * csin + dy * ccos;
-  v2.position.z = 0
+  #v2.position.z = 0
 
   v3.position.x = x + (dx+w) * ccos - (dy+h) * csin
   v3.position.y = y + (dx+w) * csin + (dy+h) * ccos;
-  v3.position.z = 0
+  #v3.position.z = 0
     
   v4.position.x = x + dx * ccos - (dy+h) * csin
   v4.position.y = y + dx * csin + (dy+h) * ccos;
-  v4.position.z = 0
+ # v4.position.z = 0
   
   vertId += 4
 
+# var zsin = sin(0f)
+# var zcos = cos(0f)
 
-proc makeQuad*(x,y: cfloat, color: Vec, texID: cfloat) {.discardable.} =
-  const size = 0.008f
+# var ztable : array[360,float]
+# var ctable : array[360,float]
+# for i in 0..360:
+#   ztable[i] = sin(i.float)#sin(360f/i.float*0.02f)
+#   ctable[i] = cos(i.float)#cos(360f/i.float*0.02f)
 
-  if vertId >= 4*10000:
+
+# func sinn*(x:float): float = 
+#   const B = 4 / PI
+#   const C = -4 / (PI*PI)
+#   -(B*x+C*x*(if x < 0: -x else: x))
+proc updateAll*(x,y: cfloat, scale: cfloat = 1, ang: float ) =
+  var ang_temp {.global.} : float
+  var ccos {.global.} : float
+  var csin {.global.} : float
+  #var xx {.global.} : float
+  #var yy {.global.} : float
+
+  const ddsize = 0.004f
+  const ddsize2 = -0.002f
+
+  if vertId >= 4*am:
     batchEnd()
     flush()
     batchBegin()
 
-  #var v = vertBatch[0+vertId].addr
+  let dx = ddsize2 * scale
+  let dy = ddsize2 * scale
+  let w  = ddsize  * scale
+  let h  = w
+
+  if ang != ang_temp:
+    ang_temp = ang
+    ccos = cos(ang)
+    csin = sin(ang)
+ 
+
+  let v  = vertBatch[0+vertId].addr
+  let v2 = vertBatch[3+vertId].addr
+  let v3 = vertBatch[2+vertId].addr
+  let v4 = vertBatch[1+vertId].addr
+  
+  v.position.x  = x + dx * ccos - dy * csin
+  v.position.y  = y + dx * csin + dy * ccos;
+  #v.position.z = 0
+
+  v2.position.x = x + (dx+w) * ccos - dy * csin
+  v2.position.y = y + (dx+w) * csin + dy * ccos;
+  #v2.position.z = 0
+
+  v3.position.x = x + (dx+w) * ccos - (dy+h) * csin
+  v3.position.y = y + (dx+w) * csin + (dy+h) * ccos;
+  #v3.position.z = 0
+    
+  v4.position.x = x + dx * ccos - (dy+h) * csin
+  v4.position.y = y + dx * csin + (dy+h) * ccos;
+ # v4.position.z = 0
+  
+  vertId += 4
+proc makeQuad*(x,y: cfloat, color: Vec, texID: cfloat) {.discardable.} =
+  const size = 0.008f
+
+  if vertId >= 4*am:
+    batchEnd()
+    flush()
+    batchBegin()
+ 
   vertBatch[0+vertId].position  = vec3(x,y)
   vertBatch[0+vertId].color     = color
  #v.texCoords = vec2(0.0f, 0.0f)
@@ -641,19 +715,36 @@ proc makeQuad*(x,y: cfloat, color: Vec, texID: cfloat) {.discardable.} =
   vertBatch[1+vertId].addr.texID     = texID
   vertId += 4
 
-
+#var offset
+var offset : int
 proc batchBegin*()=
+  #if vertId >= max_amount*4:
+  vertId = 0
   #echo stats.drawcalls
-  vertId = 0#stats.drawcalls*10000
+ # offset = stats.drawcalls* 4*100000
+  #vertId = 0 #stats.drawcalls*4*100000#stats.drawcalls*10000
+  #offset = stats.drawcalls
 
 proc batchEnd*()=
+  
+  #echo vertId
  # let amount = vertId.GLint
   glBindBuffer(GL_ARRAY_BUFFER, vboBatch)
  # echo amount
-  glBufferSubData(GL_ARRAY_BUFFER,0,vertId*sizeof(Vertex),vertBatch[0].addr)
+  glBufferSubData(GL_ARRAY_BUFFER,stats.drawcalls*4*am*sizeof(Vertex),4*am*sizeof(Vertex),vertBatch[0].addr)
+  
 
 proc flush*() =
   let amount = (vertId / 4).GLint
+  #if amount == 0:
+  #echo amount
+  stats.drawcalls+=1
+  stats.sprites += amount
+  vertId = 0
+
+proc renderBegin*() =
+  discard
+proc renderEnd*() =
   shaders[0].use()
   var model = matrix()
 
@@ -661,7 +752,4 @@ proc flush*() =
 
   glBindTexture(GL_TEXTURE_2D, whiteTexture)
   glBindVertexArray(vaoBatch)
-  glDrawElements(GL_TRIANGLES, amount*6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
-  vertId = 0
-  stats.drawcalls+=1
-  stats.sprites += amount
+  glDrawElements(GL_TRIANGLES, stats.sprites.GLint*6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))

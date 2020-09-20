@@ -4,7 +4,7 @@ import actors
 logAdd stdout
 
 app.meta.name = "Pixeye Game"
-app.meta.screenSize = (800,600)
+app.meta.screenSize = (1920,1080)
 app.meta.fullScreen = false
 app.meta.showCursor = false
 app.meta.fps = 1000
@@ -19,14 +19,14 @@ var uiw_debug : UiDebugGame
 var ui* = newSeq[UiWindow]()
 var sizeca = 4f
 
-var amount = 1_500_000
+var amount = 1_000_000
 var positions = newSeq[Vec](amount)
 var colors = newSeq[Vec](amount)
 
 var cam : Camera # ent
 
 for i in 0..<amount:
-  positions[i].rnd(6,4)
+  positions[i].rnd(8,4)
   let r = rand(0..3)
   case r:
   of 0:
@@ -34,7 +34,7 @@ for i in 0..<amount:
   of 1:
     colors[i] = vec(0,1,0,1)
   of 2:
-    colors[i]     = vec(0,0,1,1)
+    colors[i]     = vec(0,0.5,1,1)
   else: colors[i] = vec(1,1,1,1)
 
 
@@ -64,7 +64,7 @@ proc init() =
   #sprite2   = db.getSprite("tex_st1_wall1_03.png", shader1)
   
   var h = sizeca
-  var w = h * 800/600
+  var w = h * 1920/1080
   cam.ortho(w,h,0.1,1000)
   for i in 0..<amount:
     makeQuad(positions[i].x,positions[i].y,colors[i],0)
@@ -95,15 +95,24 @@ proc update() =
 
 
 var r  = 0f
+
+
 proc draw() =
   var s : Vec = (1f,1f)
 
-  for i in 0..<1_000_000:
-    let x = rand(-6f..6f)
+  #updateNose()
+  var ccos = cos(r)
+  var csin = sin(r)
+  for i in 0..<amount:
+    let x = rand(-8f..8f)
     let y = rand(-4f..4f)
-    updatePose(x,y)
+    #updateNose()
+    updatePos(x,y)
+    #updateAll(0,0,36,r)
+    #updateNose()
+  #   updateNose()
     #updateAll(x,y,64,r)
-  r += 0.01
+  r += 0.2
   for elem in ui:
     elem.draw()
 

@@ -53,6 +53,7 @@ proc renderBegin()=
   engine.target.renderBegin()
 
 proc renderEnd() =
+  engine.renderer.renderEnd()
   plugins.px_imgui.renderEnd()
   engine.target.renderEnd()
   stats.sprites_prev = stats.sprites

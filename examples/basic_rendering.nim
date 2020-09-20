@@ -55,10 +55,10 @@ proc update() =
 
 var r = 0f
 proc draw() =
-  for i in 0..<60000:
+  for i in 0..<50_000:
    # sprite2.draw(0,0,0,1,1,0)
-    sprite1.draw(p.x,p.y,1,1,1,r)
-  r+=1
+    sprite1.draw(0,0,1,1,1,r)
+  r+=0.2
   #echo p
 
   igBegin("Camera")
