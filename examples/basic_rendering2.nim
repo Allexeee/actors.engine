@@ -19,7 +19,7 @@ var uiw_debug : UiDebugGame
 var ui* = newSeq[UiWindow]()
 var sizeca = 4f
 
-var amount = 1_000_000
+var amount = 1
 var positions = newSeq[Vec](amount)
 var colors = newSeq[Vec](amount)
 
@@ -95,24 +95,39 @@ proc update() =
 
 
 var r  = 0f
+var ccos : float
+var csin : float
+var p = 0f
+var a = 1f
 
+proc test(a,b:float) =
+  p = 1 * a - 2 * b
 
 proc draw() =
   var s : Vec = (1f,1f)
-
-  #updateNose()
-  var ccos = cos(r)
-  var csin = sin(r)
-  for i in 0..<amount:
-    let x = rand(-8f..8f)
-    let y = rand(-4f..4f)
+  
+  if input.press Key.Space:
+    profile "COS":
+      for i in 0..<250_000:
+        var rr = rand(-1f..1f)
+        ccos = cos(r)*rr
+        csin = sin(r)*rr
+      r += 2
+    profilelog()
+    #test(ccos,csin)
+   #let x = rand(-8f..8f)
+   #let y = rand(-4f..4f)
     #updateNose()
-    updatePos(x,y)
+    #updatePos(x,y)
+  #updateTiles()
     #updateAll(0,0,36,r)
     #updateNose()
   #   updateNose()
     #updateAll(x,y,64,r)
-  r += 0.2
+  
+  # p = r * csin - r * ccos
+  # if p == a:
+  #   echo "T"
   for elem in ui:
     elem.draw()
 

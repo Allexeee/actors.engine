@@ -521,6 +521,9 @@ var vertId = 0
 
 const am = 25_000
 
+proc updateTiles*() = 
+  vertId = 1_000_000*4
+
 proc updatePos*(x,y: cfloat) =
   const size = 0.008f * 2
 
