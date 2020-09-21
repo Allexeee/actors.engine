@@ -53,7 +53,6 @@ proc renderBegin()=
   engine.target.renderBegin()
 
 proc renderEnd() =
-  engine.renderer.renderEnd()
   plugins.px_imgui.renderEnd()
   engine.target.renderEnd()
   stats.sprites_prev = stats.sprites
@@ -82,6 +81,10 @@ template fixedUpdate(code: untyped): untyped =
       timer.counter.updates += 1
 
 
+
+proc drawui() =
+  drawLine(0,1,shaders[1])
+
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   engineInit()
 
@@ -100,8 +103,10 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
     for e, cCamera in ecsQuery(Ent,CompCamera):
       if cCamera.main == true:
         cam = e
-    
+    renderBegin()
+
     if cam != ent.default:
+      var pos = cam.cTransform.pos
       var сm =  cam.cTransform.model
       сm.scale(1,1,1)
       сm.rotate(0, vec_forward)
@@ -109,19 +114,41 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
       сm.invert()
       var m = cam.cCamera.projection * сm
       shaders[0].use()
-      shaders[0].setMatrix("mx_projection",m)
-      renderBegin()
+      shaders[0].setMat("m_projection",m)
+      shaders[1].use()
+      shaders[1].setMat("m_projection",m)
+      
       batchBegin()
       draw()
       batchEnd()
       flush()
-      renderEnd()
-    
+      engine.renderer.renderEnd()
+      #renderEnd()
+      
+     # сm.scale(1,1,1)
+    #  сm.rotate(0, vec_forward)
+     # сm.translate(vec(cam.cTransform.pos.x,cam.cTransform.pos.y,0,1)) 
+     # сm.invert()
+      cam.cTransform.model.setPosition(0,0,0)
+      m = cam.cCamera.projection * cam.cTransform.model
+      shaders[0].use()
+      shaders[0].setMat("m_projection",m)
+      shaders[1].use()
+      shaders[1].setMat("m_projection",m)
+      #renderBegin()
+      #batchBegin()
+      drawui()
+     # batchEnd()
+     # flush()
+      #renderEnd()
+    renderEnd()
     metricsEnd()
   
   #release
   plugins.release()
   engine.release()
+
+
 
 ## asserts - check engine errors, never user-side (game-engine-architecture, 147)
 ## 

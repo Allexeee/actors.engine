@@ -458,13 +458,13 @@ proc `*`*(mx1: Matrix, mx2: Matrix): Matrix {.inline.} =
     result.e43 = mx1.e41 * mx2.e13 + mx1.e42 * mx2.e23 + mx1.e43 * mx2.e33 + mx1.e44 * mx2.e43
     result.e44 = mx1.e41 * mx2.e14 + mx1.e42 * mx2.e24 + mx1.e43 * mx2.e34 + mx1.e44 * mx2.e44
 
-proc setPosition*(mx: var Matrix, x,y,z: float32 = 0) {.inline.} =
+proc setPosition*(mx: var Matrix, x,y,z: float32 = 0) =
     mx.e41 = x
     mx.e42 = y
     mx.e43 = z
     mx.e44 = 1
 
-proc setPosition*(mx: var Matrix, vec: Vec) {.inline.} =
+func setPosition*(mx: var Matrix, vec: Vec) =
     mx.e41 = vec.x
     mx.e42 = vec.y
     mx.e43 = vec.z

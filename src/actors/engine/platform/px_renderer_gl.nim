@@ -199,7 +199,7 @@ proc setVec3*(this: ShaderIndex, name: cstring, arg: Vec) {.inline.} =
 proc setColor*(this: ShaderIndex, name: cstring, arg: Vec) {.inline.} =
   glUniform4f(glGetUniformLocation(this.GLuint,name),arg.x,arg.y,arg.z,arg.w)
 
-proc setMatrix*(this: ShaderIndex, name: cstring, arg: var Matrix) {.inline.} =
+proc setMat*(this: ShaderIndex, name: cstring, arg: var Matrix) {.inline.} =
   glUniformMatrix4fv(glGetUniformLocation(this.GLuint,name), 1, false, arg.e11.addr)
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -274,9 +274,8 @@ proc getSprite*(db: DataBase, filename: string, shader: ShaderIndex) : Sprite {.
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 #@2d
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 proc draw*(self: Sprite, x,y,z: float, w,h: float, rotate: float) {.inline.} = draw(self,vec(x,y,z),vec(w,h), rotate)
-var calc : bool = false
-var model : Matrix = matrix()
 proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   self.shader.use()
  
@@ -289,7 +288,7 @@ proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
   model.rotate(rotate.radians, vec_forward)
   model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
 
-  self.shader.setMatrix("mx_model",model)
+  self.shader.setMat("m_model",model)
 
   glBindTexture(GL_TEXTURE_2D, self.texId)
   glBindVertexArray(self.quad.vao)
@@ -341,7 +340,79 @@ var drawcallsLast* = 0
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 #@shapes
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
+var lineVAO : GLuint
+proc initLine() =
+  var segments = @[
+    0.0f,0.0f,0.0f,
+    0.2f,0.2f,0.0f]
+  var lineVBO : GLuint
+  glGenVertexArrays(1, lineVAO.addr)
+  glGenBuffers(1, lineVBO.addr)
+  glBindVertexArray(lineVAO)
+  glBindBuffer(GL_ARRAY_BUFFER, lineVBO)
+  glBufferData(GL_ARRAY_BUFFER, sizeof(uint32)*6, segments[0].addr, GL_STATIC_DRAW);
+  glEnableVertexAttribArray(0)
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), cast[ptr Glvoid](0))
+  var width = @[1f,100f]
+#GLfloat lineWidthRange[2] = {0.0f, 0.0f};
+  glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, width[0].addr);
 
+#   GLfloat lineSeg[] =
+# {
+#     0.0f, 0.0f, 0.0f, // first vertex
+#     2.0f, 0.0f, 2.0f // second vertex
+# };
+
+# GLuint lineVAO, lineVBO;
+# glGenVertexArrays(1, &lineVAO);
+# glGenBuffers(1, &lineVBO);
+# glBindVertexArray(lineVAO);
+# glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+# glBufferData(GL_ARRAY_BUFFER, sizeof(lineSeg), &lineSeg, GL_STATIC_DRAW);
+# glEnableVertexAttribArray(0);
+# glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
+
+proc drawLine*(x,y: float, shader: ShaderIndex) =
+  shader.use()
+  
+
+  var model = matrix()
+  # let sizex = self.w.float32/app.meta.ppu * size.x
+  # let sizey = self.h.float32/app.meta.ppu * size.y
+
+  #model.scale(1,1,1)
+ # model.translate(vec(-1*0.5, -1*0.5 , 0, 1))
+ # model.rotate(rotate.radians, vec_forward)
+  model.translate(vec(x,y)) 
+  shader.setMat("m_model",model)
+  # self.shader.setMatrix("mx_model",model)
+  # shader.setMat4("view", view);
+  # model = glm::mat4(1.0f);
+  # model = glm::translate(model, glm::vec3(0.0f, 0.5f, 0.0f));
+  # shader.setMat4("model", model);
+  #glEnable(GL_LINE_SMOOTH);
+  #glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+  glEnable(GL_LINE_SMOOTH)
+  glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+  glBindVertexArray(lineVAO)
+  glLineWidth(12f)
+  glDrawArrays(GL_LINES, 0, 2)
+  glLineWidth(1f)
+  # var model = matrix()
+  # let sizex = self.w.float32/app.meta.ppu * size.x
+  # let sizey = self.h.float32/app.meta.ppu * size.y
+
+  # model.scale(sizex,sizey,1)
+  # model.translate(vec(-sizex*0.5, -sizey*0.5 , 0, 1))
+  # model.rotate(rotate.radians, vec_forward)
+  # model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
+
+  # self.shader.setMatrix("mx_model",model)
+
+  # glBindTexture(GL_TEXTURE_2D, self.texId)
+  # glBindVertexArray(self.quad.vao)
+  # glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
+  discard
 
 
 
@@ -407,6 +478,7 @@ proc genWhiteTexture(texture: ptr uint32) {.inline.} =
 
 proc rendererInit*() =
 
+  initLine()
   #cachedQuad = getQuad()
 
   glCreateVertexArrays(1,vaoBatch.addr)
@@ -529,7 +601,7 @@ proc updateTiles*() =
   vertId = 1_000_000*4
 
 proc updatePos*(x,y: cfloat) =
-  const size = 0.008f * 2
+  const size = 0.008f * 12
 
   if vertId >= 4*am:
     batchEnd()
@@ -754,9 +826,7 @@ proc renderBegin*() =
 proc renderEnd*() =
   shaders[0].use()
   var model = matrix()
-
-  shaders[0].setMatrix("mx_model",model)
-
+  shaders[0].setMat("m_model",model)
   glBindTexture(GL_TEXTURE_2D, whiteTexture)
   glBindVertexArray(vaoBatch)
   glDrawElements(GL_TRIANGLES, stats.sprites.GLint*6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))

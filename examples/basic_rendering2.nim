@@ -15,11 +15,12 @@ app.meta.assetsPath = "assets/"
 var sprite  : Sprite
 var sprite2 : Sprite
 var shader1 : ShaderIndex
+var shader2 : ShaderIndex
 var uiw_debug : UiDebugGame
 var ui* = newSeq[UiWindow]()
 var sizeca = 4f
 
-var amount = 1
+var amount = 111
 var positions = newSeq[Vec](amount)
 var colors = newSeq[Vec](amount)
 
@@ -44,6 +45,7 @@ proc init() =
   uiw_debug  = ui.getWindowDebug()
 
   shader1   = db.getShader("basic")
+  shader2   = db.getShader("test")
 
   #dbGet
 
@@ -106,14 +108,22 @@ proc test(a,b:float) =
 proc draw() =
   var s : Vec = (1f,1f)
   
-  if input.press Key.Space:
-    profile "COS":
-      for i in 0..<250_000:
-        var rr = rand(-1f..1f)
-        ccos = cos(r)*rr
-        csin = sin(r)*rr
-      r += 2
-    profilelog()
+  for i in 0..<amount:
+    updatePos(0,0)
+  
+  
+ # drawLine(cam.x,cam.y,shader2)
+  # drawLine(0,1,shader2)
+  # drawLine(2,1,shader2)
+  # drawLine(0,0,shader2)
+  # if input.press Key.Space:
+  #   profile "COS":
+  #     for i in 0..<250_000:
+  #       var rr = rand(-1f..1f)
+  #       ccos = cos(r)*rr
+  #       csin = sin(r)*rr
+  #     r += 2
+  #   profilelog()
     #test(ccos,csin)
    #let x = rand(-8f..8f)
    #let y = rand(-4f..4f)
