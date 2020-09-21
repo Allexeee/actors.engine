@@ -343,8 +343,8 @@ var drawcallsLast* = 0
 var lineVAO : GLuint
 proc initLine() =
   var segments = @[
-    0.0f,0.0f,0.0f,
-    0.2f,0.2f,0.0f]
+    0.0f,0.0f,10.0f,
+    0.2f,0.2f,10.0f]
   var lineVBO : GLuint
   glGenVertexArrays(1, lineVAO.addr)
   glGenBuffers(1, lineVBO.addr)
@@ -600,8 +600,8 @@ const am = 25_000
 proc updateTiles*() = 
   vertId = 1_000_000*4
 
-proc updatePos*(x,y: cfloat) =
-  const size = 0.008f * 12
+proc updatePos*(x,y,z: cfloat) =
+  const size = 0.008f * 24
 
   if vertId >= 4*am:
     batchEnd()
@@ -612,10 +612,10 @@ proc updatePos*(x,y: cfloat) =
   var v2 = vertBatch[3+vertId].addr
   var v3 = vertBatch[2+vertId].addr
   var v4 = vertBatch[1+vertId].addr
-  v.position   = vec3(x,y,0f)
-  v2.position  = vec3(x+size,y,0f)
-  v3.position  = vec3(x+size,y+size,0f)
-  v4.position  = vec3(x,y+size,0f)
+  v.position   = vec3(x,y,z)
+  v2.position  = vec3(x+size,y,z)
+  v3.position  = vec3(x+size,y+size,z)
+  v4.position  = vec3(x,y+size,z)
   vertId += 4
 
 

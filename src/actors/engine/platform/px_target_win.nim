@@ -107,8 +107,11 @@ proc targetInit*() =
   glCullFace(GL_BACK)
   glFrontFace(GL_CW)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+  #glDepthFunc(GL_ALWAYS)
   glEnable(GL_DEPTH_TEST)
-  glDepthFunc(GL_ALWAYS)
+  glDepthMask(true)
+  glDepthFunc(GL_LEQUAL)
+  glDepthRange(-100f,100f)
 
 proc setFullScreen*(app:App, arg:bool) =
   let screen = app.meta.screen_size
@@ -158,8 +161,9 @@ proc handleCursor() =
 
 proc renderBegin*() =
   handleCursor()
-  glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f)
+  glClearDepth(1.0f)
+  glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 
 proc renderEnd*() =
   window.swapBuffers()

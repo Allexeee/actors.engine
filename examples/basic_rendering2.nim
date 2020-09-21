@@ -67,7 +67,7 @@ proc init() =
   
   var h = sizeca
   var w = h * 1920/1080
-  cam.ortho(w,h,0.1,1000)
+  cam.ortho(w,h,-1000,1000)
   for i in 0..<amount:
     makeQuad(positions[i].x,positions[i].y,colors[i],0)
 
@@ -108,10 +108,21 @@ proc test(a,b:float) =
 proc draw() =
   var s : Vec = (1f,1f)
   
-  for i in 0..<amount:
-    updatePos(0,0)
+
+  updatePos(0,0,1)
+  updatePos(0,0.1,-1)
+
+  # for i in 0..<amount:
+  #   updatePos(0,0)
   
-  
+  var pos = cam.ctransform.pos
+  cam.ctransform.model.setPosition(0,0,0)
+  shaders[1].use()
+  var m = cam.ccamera.projection * cam.ctransform.model
+  shaders[1].setMat("m_projection",m)
+ 
+  drawLine(0,1,shaders[1])
+  cam.ctransform.model.setPosition(pos)
  # drawLine(cam.x,cam.y,shader2)
   # drawLine(0,1,shader2)
   # drawLine(2,1,shader2)
