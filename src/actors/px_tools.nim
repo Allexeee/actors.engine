@@ -32,7 +32,8 @@ template `&`*(self: any): untyped =
 
 template `*`*(self: ptr any): untyped =
   self[]
-
+template `->`*(self: ptr any, code: untyped): untyped =
+  self[].code
 template `!`*(arg: bool): bool =
   var result : bool
   if arg == true: result = false

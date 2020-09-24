@@ -11,7 +11,7 @@ export
     px_stb_image,
     px_imgui
 
-proc pluginsInit*(window: ptr object) =
+proc plugins_init*(window: ptr object) =
   px_imgui.initImpl(window)
 
 proc release*() =

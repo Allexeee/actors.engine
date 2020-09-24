@@ -14,10 +14,10 @@ export px_platform
 export px_ui
 export px_runtime
 
-proc engineInit*() =
-  px_platform.targetInit()
- # px_platform.rendererInit()
+proc engine_init*() =
+  px_platform.target_init()
+  px_platform.render_init()
 
 proc release*()=
-  px_platform.targetRelease()
+  px_platform.target_release()
   #px_platform.rendererRelease()

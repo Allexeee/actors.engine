@@ -8,12 +8,10 @@ import ../../plugins/px_gl
 import ../../plugins/px_glfw
 import ../../px_tools
 import ../../px_plugins
+import       px_gl_h
 
 const Tilde = 96
 
-type Window* = GLFWWindow
-
-var window* : GLFWWindow
 var monitor : GLFWMonitor
 var cursorMode : int32
 
@@ -55,7 +53,7 @@ when not defined(release) and not defined(danger):
     of GL_DEBUG_SEVERITY_NOTIFICATION: logInfo message
     else: discard
   
-proc targetInit*() = 
+proc target_init*() = 
   proc getOpenglVersion() =
     var glGetString = cast[proc (name: GLenum): ptr GLubyte {.stdcall.}](glGetProc("glGetString"))
     if glGetString == nil: return
@@ -99,9 +97,9 @@ proc targetInit*() =
   getOpenglVersion()
 
   # when not defined(release) and not defined(danger):
-  #   glEnable(GL_DEBUG_OUTPUT)
-  #   glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-  #   glDebugMessageCallback(OpenGLMessageCallback, cast[ptr Glvoid](0));
+  # glEnable(GL_DEBUG_OUTPUT)
+  # glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+  # glDebugMessageCallback(OpenGLMessageCallback, cast[ptr Glvoid](0));
   glEnable(GL_BLEND)
   glEnable(GL_CULL_FACE)
   glCullFace(GL_BACK)
@@ -159,15 +157,15 @@ proc handleCursor() =
   window.setInputMode(GLFWCursorSpecial,cursorMode)
   
 
-proc renderBegin*() =
-  handleCursor()
-  glClearColor(0.2f, 0.3f, 0.3f, 1.0f)
-  glClearDepth(1.0f)
-  glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
+# proc renderBegint*() =
+#   handleCursor()
+#   glClearColor(0.2f, 0.3f, 0.3f, 1.0f)
+#   glClearDepth(1.0f)
+#   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 
-proc renderEnd*() =
-  window.swapBuffers()
-  glFlush()
+# proc renderEndt*() =
+#   window.swapBuffers()
+#   glFlush()
 
 proc getTime*(): float64 =
   glfwGetTime()

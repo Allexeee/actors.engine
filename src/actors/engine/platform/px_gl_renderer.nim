@@ -4,7 +4,8 @@
 import ../../px_h
 import ../../px_plugins
 import ../../px_tools
-import ../px_math
+import    ../px_math
+import       px_gl_h
 
 const 
  MAX_QUADS    = 1_000_000
@@ -26,11 +27,23 @@ type ShaderCompileError*  = object of ValueError
 
 type TextureIndex* = distinct uint32
 
+type Mesh* = object
+  verts*   : seq[Vertex]
+  indices* : seq[uint32]
+  vbo*     : uint32
+  vao*     : uint32
+  ibo*     : uint32
+
+type SpriteBatch* = object
+  mesh* : Mesh
+  vertex_id* : uint32
+
+
 type Vertex* = object
-  position* : Vec3
-  color*    : Vec
-  texCoords*: Vec2
-  texID*    : cfloat
+  position*   : Vec3
+  color*      : Vec
+  texcoords*  : Vec2
+  texture_id* : GLfloat
 
 type Quad* = object
   verts*: array[4,Vertex]
@@ -41,7 +54,7 @@ type Sprite* = ref object
   w*,h* : float32
   x*,y* : float32
   shader*  : ShaderIndex
-  texId*    : uint32
+  texId*   : uint32
 
 type DataRenderer* = object
   ## data for batch renderer
@@ -66,7 +79,13 @@ const
   PX_RGB*             : PXenum = GL_RGB8
   PX_RGBA*            : PXenum = GL_RGBA
 
+const SPRITES_PER_BATCH  = 20_000
+const VERTICES_PER_BATCH = SPRITES_PER_BATCH * 4
 
+var spritebatch  : SpriteBatch
+var texturewhite : GLuint
+var textures {.noinit.} : array[32,Glint]
+var texture_next_id = 0
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 #@shaders
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -178,8 +197,9 @@ proc getShader*(db: DataBase, shader_path: string): ShaderIndex =
     shaders.add(id.ShaderIndex)
     result = id.ShaderIndex
 
-proc setSampler*(this: ShaderIndex, name: cstring, count: GLsizei, arg: ptr uint32) {.inline.} =
-   glUniform1iv(glGetUniformLocation(this.GLuint,name),count, cast[ptr Glint](arg))
+proc setSamplers*(this: ShaderIndex, name: cstring, count: GLsizei, arg: ptr Glint) {.inline.} =
+   glUniform1iv(glGetUniformLocation(this.GLuint,name), count, arg)
+
 
 proc setBool*(this: ShaderIndex, name: cstring, arg: bool) {.inline.} =
   glUniform1i(glGetUniformLocation(this.GLuint,name),arg.Glint)
@@ -201,10 +221,12 @@ proc setColor*(this: ShaderIndex, name: cstring, arg: Vec) {.inline.} =
 
 proc setMat*(this: ShaderIndex, name: cstring, arg: var Matrix) {.inline.} =
   glUniformMatrix4fv(glGetUniformLocation(this.GLuint,name), 1, false, arg.e11.addr)
+  #echo glGetUniformLocation(this.GLuint,name), "        AAAAAAAAAAAAAAAAAAA"
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 #@db
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 proc getTexture(db: DataBase, path: string, mode_rgb: PXenum, mode_filter: PXenum, mode_wrap: PXenum): tuple[id: TextureIndex, w: int, h: int] =
   var w,h,bits : cint
   var textureID : GLuint
@@ -221,18 +243,20 @@ proc getTexture(db: DataBase, path: string, mode_rgb: PXenum, mode_filter: PXenu
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mode_wrap.Glint)
   glTexImage2D(GL_TEXTURE_2D, 0, mode_rgb.Glint, w, h, 0, mode_rgb.Glenum, GL_UNSIGNED_BYTE, data)
   stbi_image_free(data)
+  glBindTexture(GL_TEXTURE_2D, 0)
+  texture_next_id += 1
   (textureID.TextureIndex,w.int,h.int)
 
 proc getSprite (db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], shader: ShaderIndex) : Sprite =
   result = Sprite()
 
-#   result.texId = texture.id.uint32
-#   result.shader = shader
-#  # result.quad = quad(0.0f,0.0f,vec(1,1,1,1),texture.id.cfloat)
-#   result.w = texture.w.float32
-#   result.h = texture.h.float32
-#   result.x = result.w/app.meta.ppu
-#   result.y = result.h/app.meta.ppu
+  result.texId = texture.id.uint32
+  result.shader = shader
+ # result.quad = quad(0.0f,0.0f,vec(1,1,1,1),texture.id.cfloat)
+  result.w = texture.w.float32
+  result.h = texture.h.float32
+  result.x = result.w/app.meta.ppu
+  result.y = result.h/app.meta.ppu
   
 #   #res
 #   shader.use()
@@ -270,3 +294,222 @@ proc getSprite (db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], 
 proc getSprite*(db: DataBase, filename: string, shader: ShaderIndex) : Sprite {.inline.} =
   db.getSprite(db.getTexture(filename,PX_RGBA, PX_NEAREST, PX_REPEAT),shader)
 
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------
+#@3d
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------
+let GL_FLOAT = 0x1406.GLenum
+let GL_FALSE = false
+
+proc get_mesh_quads*(total_quads: int): Mesh =
+  let total_verts   = total_quads * 4
+  let total_indices = total_quads * 6
+  result.verts = newSeq[Vertex](total_verts)
+
+  glCreateVertexArrays(1,result.vao.addr)
+  glBindVertexArray(result.vao)
+
+  glCreateBuffers(1,result.vbo.addr)
+  glBindBuffer(GL_ARRAY_BUFFER, result.vbo)
+  
+  glBufferData(GL_ARRAY_BUFFER, total_verts*sizeof(Vertex), nil, GL_DYNAMIC_DRAW)
+  
+  glEnableVertexAttribArray(0)
+  glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, position)))
+  
+  glEnableVertexAttribArray(1)
+  glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, color)))
+  
+  glEnableVertexAttribArray(2)
+  glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texcoords)))
+  
+  glEnableVertexAttribArray(3)
+  glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texture_id)))
+
+  result.indices = newSeq[uint32](total_indices)
+  let indices = result.indices.addr
+  var offset  = 0'u32
+  for i in countup(0,indices[].high,6):
+    indices[][i+0] = 1 + offset
+    indices[][i+1] = 3 + offset
+    indices[][i+2] = 0 + offset
+ 
+    indices[][i+3] = 2 + offset
+    indices[][i+4] = 3 + offset
+    indices[][i+5] = 1 + offset
+    offset += 4
+  
+  glCreateBuffers(1, result.ibo.addr)
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, result.ibo)
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, total_indices * sizeof(uint32), indices[][0].addr, GL_STATIC_DRAW)
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------
+#@2d
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+proc render_begin*() = 
+  glClearColor(0.2f, 0.3f, 0.3f, 1.0f)
+  glClearDepth(1.0f)
+  glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
+
+  #for shader in shaders:
+  # shader.setSampler("u_textures",32,textures[0].addr)
+
+proc render_end*() = 
+  spritebatch.end()
+  window.swapBuffers()
+  glFlush()
+
+proc flush(self: var SpriteBatch) =
+
+  #for i in 0..texture_next_id:
+  #  glBindTextureUnit(i.GLuint,i.GLuint)
+
+  #glBindTextureUnit(0,0)
+  #glBindTextureUnit(1,1)
+  #glBindTextureUnit(2,2)
+  #glBindTextureUnit(3,3)
+
+  stats.sprites   += (self.vertex_id.int / 4).int
+  glBindBuffer(GL_ARRAY_BUFFER, self.mesh.vbo)
+  glBufferSubData(GL_ARRAY_BUFFER,stats.drawcalls*VERTICES_PER_BATCH*sizeof(Vertex),VERTICES_PER_BATCH*sizeof(Vertex),self.mesh.verts[0].addr)
+  glBindVertexArray(self.mesh.vao)
+  glDrawElements(GL_TRIANGLES, stats.sprites.GLint*6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
+  stats.drawcalls += 1
+  
+
+  self.vertex_id = 0
+
+proc start(self: var SpriteBatch)   = discard
+proc `end`  (self: var SpriteBatch) = 
+  if self.vertex_id == 0: return
+  self.flush()
+
+
+proc draw_quad*(x,y,z: float, w,h: float = 1, tex: GLfloat = 0) =
+  let sizex = 0.004f * app.meta.ppu * w
+  let sizey = 0.004f * app.meta.ppu * h
+
+  let vertex_id = spritebatch.vertex_id
+  
+  if vertex_id >= VERTICES_PER_BATCH:
+    spritebatch.flush()
+  
+  var mesh = spritebatch.mesh.addr
+  
+  var v  = mesh.verts[0+vertex_id].addr
+  var v2 = mesh.verts[3+vertex_id].addr
+  var v3 = mesh.verts[2+vertex_id].addr
+  var v4 = mesh.verts[1+vertex_id].addr
+
+  v.position.x = x
+  v.position.y = y
+  v.position.z = z
+  v.color      = col(1,1,1,1)
+  v.texcoords  = (0f,0f)
+  v.texture_id = tex
+
+  v2.position.x = x + sizex
+  v2.position.y = y
+  v2.position.z = z
+  v2.color      = col(1,1,1,1)
+  v2.texcoords  = (1f,0f)
+  v2.texture_id = tex
+
+  v3.position.x = x + sizex
+  v3.position.y = y + sizey
+  v3.position.z = z
+  v3.color      = col(1,1,1,1)
+  v3.texcoords  = (1f,1f)
+  v3.texture_id = tex
+  
+  v4.position.x = x
+  v4.position.y = y + sizey
+  v4.position.z = z
+  v4.color      = col(1,1,1,1)
+  v4.texcoords  = (0f,1f)
+  v4.texture_id = tex
+  
+  spritebatch.vertex_id += 4
+
+proc draw_quadd*(x,y: float, size: float = 1) =
+  let scale = 0.004f * app.meta.ppu * size
+
+  let vertex_id = spritebatch.vertex_id
+  
+  if vertex_id >= VERTICES_PER_BATCH:
+    spritebatch.flush()
+  
+  let mesh = spritebatch.mesh.addr
+  
+  let v  = mesh.verts[0+vertex_id].addr
+  let v2 = mesh.verts[3+vertex_id].addr
+  let v3 = mesh.verts[2+vertex_id].addr
+  let v4 = mesh.verts[1+vertex_id].addr
+
+  v.position.x = x
+  v.position.y = y
+  v.color.x = 1
+  v.color.y = 1
+  v.color.z = 1
+  v.color.w = 1
+  #v.color      = col(1,1,1,1)
+
+  v2.position.x = x + scale
+  v2.position.y = y
+  v2.color.x = 1
+  v2.color.y = 1
+  v2.color.z = 1
+  v2.color.w = 1
+  #v2.color      = col(1,1,1,1)
+
+  v3.position.x = x + scale
+  v3.position.y = y + scale
+  v3.color.x = 1
+  v3.color.y = 1
+  v3.color.z = 1
+  v3.color.w = 1
+  #v3.color      = col(1,1,1,1)
+  
+  v4.position.x = x
+  v4.position.y = y + scale
+  v4.color.x = 1
+  v4.color.y = 1
+  v4.color.z = 1
+  v4.color.w = 1
+  #v4.color      = col(1,1,1,1)
+  
+  spritebatch.vertex_id += 4
+
+proc get_texture_white(texture: ptr uint32) {.inline.} =
+  glCreateTextures(GL_TEXTURE_2D, 1, texture)
+  glBindTexture(GL_TEXTURE_2D, texture[])
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR.Glint)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR.Glint)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE.Glint)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE.Glint)
+  var color = 0xffffffff
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA.Glint,1,1,0,GL_RGBA, GL_UNSIGNED_BYTE, color.addr)
+  texture_next_id += 1
+
+proc get_sprite_batch(): SpriteBatch = 
+  const total_quads   = 1_000_000
+  result = SpriteBatch()
+  result.mesh = get_mesh_quads(total_quads)
+
+proc render_init*() = 
+  spritebatch = get_sprite_batch()
+  
+  
+  #  shader.use()
+  #  shader.setSampler("u_textures",32,textures[0].unsafeAddr)
+  
+proc render_init_finish*() =
+  get_texture_white(texturewhite.addr)
+  textures[0] = texturewhite.Glint
+  for i in 0..textures.high:
+    textures[i] = i.GLint
+
+  for shader in shaders:
+    shader.use()
+    shader.setSamplers("u_textures",32,textures[0].addr)

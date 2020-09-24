@@ -33,12 +33,12 @@ proc appSleep(t: float32) =
     sleep(0)
     timeCurrent = engine.getTime()
 
-proc metricsBegin()=
+proc metrics_begin()=
   let timer = app.time #ref
   timer.counter.frames += 1
   timer.frames += 1
 
-proc metricsEnd()=
+proc metrics_end()=
   let timer = app.time #ref
   let counter = app.time.counter.addr #pointer
   if engine.getTime() - timer.seconds > 1.0:
@@ -48,13 +48,16 @@ proc metricsEnd()=
     counter.updates = 0
     counter.frames  = 0
 
-proc renderBegin()=
-  plugins.px_imgui.renderBegin()
-  engine.target.renderBegin()
-
-proc renderEnd() =
-  plugins.px_imgui.renderEnd()
-  engine.target.renderEnd()
+proc render_begin()=
+  plugins.px_imgui.render_begin()
+  engine.px_platform.render_begin()
+  #engine.target.renderBegin()
+  #engine.px_platform.render_begin()
+  #engine.platform.render_begin()
+proc render_end() =
+  plugins.px_imgui.render_end()
+  engine.px_platform.render_end()
+  #engine.target.renderEnd()
   stats.sprites_prev = stats.sprites
   stats.drawcalls_prev = stats.drawcalls
   stats.sprites = 0
@@ -85,7 +88,7 @@ template fixedUpdate(code: untyped): untyped =
 #proc drawui() =
  # drawLine(0,1,shaders[1])
 
-proc update_camera() =
+proc camera_update() =
   var cam : Camera
 
   for e, ccamera in ecsquery(Ent,CCamera):
@@ -102,54 +105,34 @@ proc update_camera() =
     cm.invert()
 
     var m = cam.ccamera.projection * cm
+    var model = matrix()
     for shader in shaders:
+      shader.use()
       shader.setMat("m_projection",m)
+      shader.setMat("m_model",model)
+        #shaders[0].use()
+ # var model = matrix()
+ # shaders[0].setMat("m_model",model)
 
 
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
-  engineInit()
-
-  pluginsInit(window)
-
+  engine_init()
+  plugins_init(window)
   init()
+  render_init_finish()
   
   while not engine.target.shouldQuit():
-    metricsBegin()
+    metrics_begin()
     #logic
     fixedUpdate:
       update()
 
     #draw & ui
-  
-    update_camera()
-
-    renderBegin()
-
-    #batchBegin()
+    camera_update()
+    render_begin()
     draw()
-    #batchEnd()
-   # flush()
-   # engine.renderer.renderEnd()
-      #renderEnd()
-      
-     # сm.scale(1,1,1)
-    #  сm.rotate(0, vec_forward)
-     # сm.translate(vec(cam.cTransform.pos.x,cam.cTransform.pos.y,0,1)) 
-     # сm.invert()
-      # cam.cTransform.model.setPosition(0,0,0)
-      # m = cam.cCamera.projection * cam.cTransform.model
-      # shaders[0].use()
-      # shaders[0].setMat("m_projection",m)
-      # shaders[1].use()
-      # shaders[1].setMat("m_projection",m)
-      #renderBegin()
-      #batchBegin()
-      #drawui()
-     # batchEnd()
-     # flush()
-      #renderEnd()
-    renderEnd()
-    metricsEnd()
+    render_end()
+    metrics_end()
   
   #release
   plugins.release()

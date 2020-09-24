@@ -22,17 +22,17 @@ proc init() =
   ui_debug  = uis.getWindowDebug()
   cam = getCamera();
   shader1 = db.getShader("basic")
-  #sprite1 = getSprite("tex_larva_idle_01.png", shader1)
   sprite1 = db.getSprite("tex_aidKit2.png", shader1)
   sprite2 = db.getSprite("tex_st1_wall1_03.png", shader1)
   
 
 var p  = vec(0,-19)
-var p2 = vec(0,20)
-var p3 = vec(546,20)
-var p4 = vec(-546,20)
-var p5 = vec(-546*2,20)
-var p6 = vec(546*2,20)
+# var p2 = vec(0,20)
+# var p3 = vec(546,20)
+# var p4 = vec(-546,20)
+#var p5 = vec(-546 *2,20)
+#var p6 = vec(546 * 2,20)
+
 proc update() =
   if input.down Key.Esc:
     app.quit()
@@ -54,17 +54,35 @@ proc update() =
     sizeca += 1
 
 var r = 0f
+import random
+
+const amount = 550000
+
+var poses {.noinit.} : array[amount,Vec2]
+
+for i in 0..<amount:
+  #var x = rand(-)
+  poses[i] = vec2(rand(-8f..8f),rand(-4f..4f))#vec2(rand(-3f,3f).float32,rand(-3f,3f).float32)
+
+
 proc draw() =
+
+  
+
   #for i in 0..<50_000:
    # sprite2.draw(0,0,0,1,1,0)
     #sprite1.draw(0,0,1,1,1,r)
-  r+=0.2
-  #echo p
-
-  igBegin("Camera")
-  igPushItemWidth(320)
-  igSliderFloat(" Size", sizeca.addr, 1, 1000, "%.0f")
-  igEnd()
+ # draw_quad(-2,0,0,10,10,0)
+ # draw_quad(0,0,0,10,10, 1)
+  #draw_quad(2,0,0,10,10 ,2)
+  for i in 0..<amount:
+    draw_quadd(poses[i].x,poses[i].y,0.1f)
+    #draw_quad(0,0,0,0.1f,0.1f,3)
+  
+  ig_begin("Camera")
+  ig_pushItemWidth(320)
+  ig_sliderFloat(" Size", sizeca.addr, 1, 1000, "%.0f")
+  ig_end()
 
   var h = 1*sizeca
   var w = h * 1920f/1080f
