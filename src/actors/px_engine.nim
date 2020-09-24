@@ -16,8 +16,8 @@ export px_runtime
 
 proc engineInit*() =
   px_platform.targetInit()
-  px_platform.rendererInit()
+ # px_platform.rendererInit()
 
 proc release*()=
   px_platform.targetRelease()
-  px_platform.rendererRelease()
+  #px_platform.rendererRelease()

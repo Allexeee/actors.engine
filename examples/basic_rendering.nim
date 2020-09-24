@@ -55,9 +55,9 @@ proc update() =
 
 var r = 0f
 proc draw() =
-  for i in 0..<50_000:
+  #for i in 0..<50_000:
    # sprite2.draw(0,0,0,1,1,0)
-    sprite1.draw(0,0,1,1,1,r)
+    #sprite1.draw(0,0,1,1,1,r)
   r+=0.2
   #echo p
 

@@ -82,8 +82,8 @@ template fixedUpdate(code: untyped): untyped =
 
 
 
-proc drawui() =
-  drawLine(0,1,shaders[1])
+#proc drawui() =
+ # drawLine(0,1,shaders[1])
 
 proc update_camera() =
   var cam : Camera
@@ -125,13 +125,11 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
 
     renderBegin()
 
-    
-      
-    batchBegin()
+    #batchBegin()
     draw()
-    batchEnd()
-    flush()
-    engine.renderer.renderEnd()
+    #batchEnd()
+   # flush()
+   # engine.renderer.renderEnd()
       #renderEnd()
       
      # сm.scale(1,1,1)
