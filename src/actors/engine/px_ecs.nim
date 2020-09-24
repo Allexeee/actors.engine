@@ -128,7 +128,7 @@ proc  px_ecs_comp_format_name(s: var string) {.used.}=
      i+=1
   if index>=2:
     delete(s,1,indexes[1]-1)
-  s = toLowerAscii(s[0]) & substr(s, 1)
+  s = toLowerAscii(s)#toLowerAscii(s[0]) & substr(s, 1)
 
 macro px_ecs_comp_format_alias_long(T: typedesc, mode: static CompMode): untyped {.used.}=
   let tName = strVal(T)

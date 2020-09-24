@@ -85,6 +85,27 @@ template fixedUpdate(code: untyped): untyped =
 proc drawui() =
   drawLine(0,1,shaders[1])
 
+proc update_camera() =
+  var cam : Camera
+
+  for e, ccamera in ecsquery(Ent,CCamera):
+    if ccamera.main == true:
+      cam = e
+  
+  if cam != ent.default:
+    let pos = cam.ctransform.pos
+    var cm  = cam.ctransform.model
+    
+    cm.scale(1,1,1)
+    cm.rotate(0,vec_forward)
+    cm.translate(vec(pos.x,pos.y,0,1))
+    cm.invert()
+
+    var m = cam.ccamera.projection * cm
+    for shader in shaders:
+      shader.setMat("m_projection",m)
+
+
 proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
   engineInit()
 
@@ -99,30 +120,18 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
       update()
 
     #draw & ui
-    var cam : Camera
-    for e, cCamera in ecsQuery(Ent,CompCamera):
-      if cCamera.main == true:
-        cam = e
+  
+    update_camera()
+
     renderBegin()
 
-    if cam != ent.default:
-      var pos = cam.cTransform.pos
-      var сm =  cam.cTransform.model
-      сm.scale(1,1,1)
-      сm.rotate(0, vec_forward)
-      сm.translate(vec(cam.cTransform.pos.x,cam.cTransform.pos.y,0,1)) 
-      сm.invert()
-      var m = cam.cCamera.projection * сm
-      shaders[0].use()
-      shaders[0].setMat("m_projection",m)
-      shaders[1].use()
-      shaders[1].setMat("m_projection",m)
+    
       
-      batchBegin()
-      draw()
-      batchEnd()
-      flush()
-      engine.renderer.renderEnd()
+    batchBegin()
+    draw()
+    batchEnd()
+    flush()
+    engine.renderer.renderEnd()
       #renderEnd()
       
      # сm.scale(1,1,1)
