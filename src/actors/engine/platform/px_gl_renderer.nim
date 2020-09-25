@@ -43,7 +43,7 @@ type Vertex* = object
   position*   : Vec3
   color*      : Vec
   texcoords*  : Vec2
-  texture_id* : GLfloat
+  texid* : GLfloat
 
 type Quad* = object
   verts*: array[4,Vertex]
@@ -226,6 +226,34 @@ proc setMat*(this: ShaderIndex, name: cstring, arg: var Matrix) {.inline.} =
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 #@db
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
+var tempQuad : array[4,Vertex]
+proc quad(x,y: cfloat, color: Vec, texID: cfloat): Quad {.discardable.} =
+  const size = 1.0f
+
+  tempQuad[0].color     = color
+  tempQuad[0].position  = vec3(x,y,0f)
+  tempQuad[0].texCoords = vec2(0.0f, 0.0f)
+  tempQuad[0].texid     = texID
+  
+
+  tempQuad[3].color     = color
+  tempQuad[3].position  = vec3(x+size, y, 0.0)
+  tempQuad[3].texCoords = vec2(1.0, 0.0)
+  tempQuad[3].texid     = texID
+
+
+  tempQuad[2].color     = color
+  tempQuad[2].position  = vec3(x+size, y+size, 0.0)
+  tempQuad[2].texCoords = vec2(1.0, 1.0)
+  tempQuad[2].texid     = texID
+
+
+  tempQuad[1].color     = color
+  tempQuad[1].position  = vec3(x, y+size, 0.0)
+  tempQuad[1].texCoords = vec2(0.0, 1.0)
+  tempQuad[1].texid     = texID
+  
+  result.verts = tempQuad
 
 proc getTexture(db: DataBase, path: string, mode_rgb: PXenum, mode_filter: PXenum, mode_wrap: PXenum): tuple[id: TextureIndex, w: int, h: int] =
   var w,h,bits : cint
@@ -252,44 +280,44 @@ proc getSprite (db: DataBase, texture: tuple[id: TextureIndex, w: int, h: int], 
 
   result.texId = texture.id.uint32
   result.shader = shader
- # result.quad = quad(0.0f,0.0f,vec(1,1,1,1),texture.id.cfloat)
+  result.quad = quad(0.0f,0.0f,vec(1,1,1,1),texture.id.cfloat)
   result.w = texture.w.float32
   result.h = texture.h.float32
   result.x = result.w/app.meta.ppu
   result.y = result.h/app.meta.ppu
   
-#   #res
-#   shader.use()
-#   var vbo : uint32
-#   var ebo : uint32
-#   glGenVertexArrays(1, result.quad.vao.addr)
-#   glGenBuffers(1, vbo.addr)
+  #res
+  shader.use()
+  var vbo : uint32
+  var ebo : uint32
+  glGenVertexArrays(1, result.quad.vao.addr)
+  glGenBuffers(1, vbo.addr)
     
-#   glBindBuffer(GL_ARRAY_BUFFER, vbo)
-#   glBufferData(GL_ARRAY_BUFFER, 4*sizeof(Vertex), result.quad.verts[0].addr, GL_STATIC_DRAW)
+  glBindBuffer(GL_ARRAY_BUFFER, vbo)
+  glBufferData(GL_ARRAY_BUFFER, 4*sizeof(Vertex), result.quad.verts[0].addr, GL_STATIC_DRAW)
 
-#   glBindVertexArray(result.quad.vao)
+  glBindVertexArray(result.quad.vao)
   
-#   glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, position)))
-#   glEnableVertexAttribArray(0)
+  glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, position)))
+  glEnableVertexAttribArray(0)
 
-#   glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, color)))
-#   glEnableVertexAttribArray(1)
+  glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, color)))
+  glEnableVertexAttribArray(1)
   
-#   glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texCoords)))
-#   glEnableVertexAttribArray(2)
+  glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texCoords)))
+  glEnableVertexAttribArray(2)
   
-#   glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texID)))
-#   glEnableVertexAttribArray(3)
+  glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texID)))
+  glEnableVertexAttribArray(3)
   
-#   var indices = @[
-#      1'u32, 3'u32, 0'u32, 2'u32, 3'u32,1'u32
-#   ]
+  var indices = @[
+     1'u32, 3'u32, 0'u32, 2'u32, 3'u32,1'u32
+  ]
   
-#   glGenBuffers(1, ebo.addr)
-#   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
-#   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size, indices[0].addr, GL_STATIC_DRAW);
-#   glBindTextureUnit(1, result.texID)
+  glGenBuffers(1, ebo.addr)
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size, indices[0].addr, GL_STATIC_DRAW);
+  glBindTextureUnit(1, result.texID)
 
 proc getSprite*(db: DataBase, filename: string, shader: ShaderIndex) : Sprite {.inline.} =
   db.getSprite(db.getTexture(filename,PX_RGBA, PX_NEAREST, PX_REPEAT),shader)
@@ -324,7 +352,7 @@ proc get_mesh_quads*(total_quads: int): Mesh =
   glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texcoords)))
   
   glEnableVertexAttribArray(3)
-  glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texture_id)))
+  glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,Vertex.sizeof.GLsizei,cast[ptr Glvoid](offsetOf(Vertex, texid)))
 
   result.indices = newSeq[uint32](total_indices)
   let indices = result.indices.addr
@@ -347,6 +375,28 @@ proc get_mesh_quads*(total_quads: int): Mesh =
 #@2d
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
+proc draw*(self: Sprite, pos: Vec, size: Vec, rotate: float) =
+  self.shader.use()
+ 
+  var model = matrix()
+  let sizex = self.w.float32/app.meta.ppu * size.x
+  let sizey = self.h.float32/app.meta.ppu * size.y
+
+  model.scale(sizex,sizey,1)
+  model.translate(vec(-sizex*0.5, -sizey*0.5 , 0, 1))
+  model.rotate(rotate.radians, vec_forward)
+  model.translate(vec(pos.x/app.meta.ppu,pos.y/app.meta.ppu,0,1)) 
+
+  self.shader.setMat("m_model",model)
+
+  glBindTexture(GL_TEXTURE_2D, self.texId)
+  glBindVertexArray(self.quad.vao)
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[ptr Glvoid](0))
+
+  stats.sprites += 1
+  stats.drawcalls += 1
+
 proc render_begin*() = 
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f)
   glClearDepth(1.0f)
@@ -354,6 +404,9 @@ proc render_begin*() =
 
   #for shader in shaders:
   # shader.setSampler("u_textures",32,textures[0].addr)
+
+proc render_update*(amount: uint32)=
+  spritebatch.vertex_id = amount*4
 
 proc render_end*() = 
   spritebatch.end()
@@ -395,40 +448,43 @@ proc draw_quad*(x,y,z: float, w,h: float = 1, tex: GLfloat = 0) =
   if vertex_id >= VERTICES_PER_BATCH:
     spritebatch.flush()
   
-  var mesh = spritebatch.mesh.addr
+  let mesh = spritebatch.mesh.addr
   
-  var v  = mesh.verts[0+vertex_id].addr
-  var v2 = mesh.verts[3+vertex_id].addr
-  var v3 = mesh.verts[2+vertex_id].addr
-  var v4 = mesh.verts[1+vertex_id].addr
-
-  v.position.x = x
-  v.position.y = y
+  let v  = mesh.verts[0+vertex_id].addr
+  let v2 = mesh.verts[3+vertex_id].addr
+  let v3 = mesh.verts[2+vertex_id].addr
+  let v4 = mesh.verts[1+vertex_id].addr
+  
+  let xx = x / app.meta.ppu
+  let yy = y / app.meta.ppu
+  
+  v.position.x = xx
+  v.position.y = yy
   v.position.z = z
   v.color      = col(1,1,1,1)
   v.texcoords  = (0f,0f)
-  v.texture_id = tex
+  v.texid = tex
 
-  v2.position.x = x + sizex
-  v2.position.y = y
+  v2.position.x = xx + sizex
+  v2.position.y = yy
   v2.position.z = z
   v2.color      = col(1,1,1,1)
   v2.texcoords  = (1f,0f)
-  v2.texture_id = tex
+  v2.texid = tex
 
-  v3.position.x = x + sizex
-  v3.position.y = y + sizey
+  v3.position.x = xx + sizex
+  v3.position.y = yy + sizey
   v3.position.z = z
   v3.color      = col(1,1,1,1)
   v3.texcoords  = (1f,1f)
-  v3.texture_id = tex
+  v3.texid = tex
   
-  v4.position.x = x
-  v4.position.y = y + sizey
+  v4.position.x = xx
+  v4.position.y = yy + sizey
   v4.position.z = z
   v4.color      = col(1,1,1,1)
   v4.texcoords  = (0f,1f)
-  v4.texture_id = tex
+  v4.texid = tex
   
   spritebatch.vertex_id += 4
 
@@ -507,7 +563,7 @@ proc render_init*() =
 proc render_init_finish*() =
   get_texture_white(texturewhite.addr)
   textures[0] = texturewhite.Glint
-  for i in 0..textures.high:
+  for i in 1..textures.high:
     textures[i] = i.GLint
 
   for shader in shaders:
