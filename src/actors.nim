@@ -106,11 +106,11 @@ proc run*(app: App, init: proc(), update: proc(), draw: proc()) =
     renderBegin()
 
     if cam != ent.default:
-      var pos = cam.cTransform.pos
-      var сm =  cam.cTransform.model
+      var pos = cam.ctransform.pos
+      var сm =  cam.ctransform.model
       сm.scale(1,1,1)
       сm.rotate(0, vec_forward)
-      сm.translate(vec(cam.cTransform.pos.x,cam.cTransform.pos.y,0,1)) 
+      сm.translate(vec(cam.ctransform.pos.x,cam.cTransform.pos.y,0,1)) 
       сm.invert()
       var m = cam.cCamera.projection * сm
       shaders[0].use()
