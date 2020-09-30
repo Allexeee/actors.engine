@@ -10,7 +10,7 @@ binDir        = "bin"
 
 # Dependencies
 
-requires "nim == 1.0.8"
+requires "nim >= 1.0.8"
 
 task releasec, "Build":
    exec "nim c -d:release --passC:-flto --passL:-s --gc:refc --out: bin/game examples/test.nim"
